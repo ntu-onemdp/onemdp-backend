@@ -2,12 +2,17 @@ FROM golang:1.23.3-alpine3.20 AS builder
 
 WORKDIR /app
 
+ENV PORT=8080
+
 # Check for any changes to dependencies.
 COPY ./go.mod ./go.mod
 COPY ./go.sum ./go.sum
 
 # Download dependencies
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+# Copy migrations
+COPY ./migrations ./migrations
 
 # Copy main
 COPY ./main.go ./main.go
