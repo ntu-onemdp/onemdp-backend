@@ -37,7 +37,9 @@ func main() {
 	}
 
 	// Create connection pool to db
-	connection_string := fmt.Sprintf("postgres://postgres:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
+	connection_string := fmt.Sprintf("postgres://postgres:%s@localhost:5432/%s?sslmode=disable", string(db_pw), postgres_db)
+	// Use below if using container
+	// connection_string := fmt.Sprintf("postgres://postgres:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
 	dbpool, err := pgxpool.New(context.Background(), connection_string)
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error creating connection pool")
