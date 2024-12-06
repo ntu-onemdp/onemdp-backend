@@ -21,7 +21,7 @@ func GeneratePassword() string {
 	return strings.Join(list, "-")
 }
 
-func GenerateSalt() string {
+func GenerateSalt() []byte {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
 	const length = 16
 
@@ -31,10 +31,9 @@ func GenerateSalt() string {
 		index, err := rand.Int(rand.Reader, charsetLength)
 		if err != nil {
 			Logger.Error().Err(err).Msg("Error generating salt")
-			return ""
 		}
 		salt[i] = charset[index.Int64()]
 	}
 
-	return string(salt)
+	return salt
 }

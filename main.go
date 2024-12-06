@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ntu-onemdp/onemdp-backend/users"
 	utils "github.com/ntu-onemdp/onemdp-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -69,6 +70,10 @@ func main() {
 
 	r.POST("/api/v1/auth/login", func(c *gin.Context) {
 		auth.HandleLogin(c, dbpool)
+	})
+
+	r.POST("/api/v1/users/create", func(c *gin.Context) {
+		users.CreateUsers(c, dbpool)
 	})
 	r.Run("localhost:8080") // listen and serve on 0.0.0.0:8080
 }

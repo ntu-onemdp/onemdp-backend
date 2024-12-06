@@ -4,23 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alexedwards/argon2id"
 	utils "github.com/ntu-onemdp/onemdp-backend/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginForm struct {
 	Username string `form:"username" binding:"required"`
-	Password string `form:"password" binding:"required"`
+	Password string `form:"password" binding:"required"` // Plaintext password
 }
 
 type LoginResponse struct {
 	Status string `json:"status"`
 }
 
+// Handle log in requests from frontend.
 func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 	var form LoginForm
 	var loginResponse LoginResponse
@@ -39,8 +40,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 	// Query database
 	var username string
 	var password string // Stored hashed password h2(h1(pw) + s)
-	var salt string
-	err := pool.QueryRow(context.Background(), "SELECT username, password, salt from users where username=$1 and status='active'", form.Username).Scan(&username, &password, &salt)
+	err := pool.QueryRow(context.Background(), "SELECT username, password from users where username=$1 and status='active'", form.Username).Scan(&username, &password)
 	if err != nil {
 		// Check logs. If error=="no rows in result set", the username does not exist in the database.
 		utils.Logger.Error().Err(err).Msg("Error fetching username from database. ")
@@ -50,20 +50,13 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Scanned Username: %s, Password: %s, Salt: %s", username, password, salt))
-
-	// Hash user's password with salt
-	utils.Logger.Debug().Msg(form.Password + salt)
-	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(form.Password+salt)); err != nil {
-		utils.Logger.Error().Err(err).Msg("Error hashing user's password")
+	// Authenticate user
+	match, err := argon2id.ComparePasswordAndHash(form.Password, password)
+	if !match && err != nil {
+		utils.Logger.Trace().Msg("Invalid login attempt")
 		loginResponse.Status = "unauthorized"
-
 		c.JSON(401, &loginResponse)
-		return
 	} else {
-		// Success
-		utils.Logger.Debug().Msg("Password matches hash")
-
 		// Retrieve role
 		var role string
 		if err = pool.QueryRow(context.Background(), "SELECT role FROM users where username=$1 and status='active' and password=$2", username, password).Scan(&role); err != nil {
@@ -73,7 +66,6 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(401, &loginResponse)
 			return
 		}
-
 		loginResponse.Status = "success"
 		c.JSON(200, &loginResponse)
 		return
