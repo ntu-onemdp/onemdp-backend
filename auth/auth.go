@@ -8,7 +8,6 @@ import (
 	utils "github.com/ntu-onemdp/onemdp-backend/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,11 +22,12 @@ type LoginResponse struct {
 
 // Handle log in requests from frontend.
 func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
+	utils.Logger.Info().Msg("Login request received")
 	var form LoginForm
 	var loginResponse LoginResponse
 
 	// Bind with form
-	if err := c.MustBindWith(&form, binding.FormPost); err != nil {
+	if err := c.ShouldBind(&form); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error processing login request")
 		loginResponse.Status = "Malformed request"
 
@@ -35,11 +35,12 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
+	// REMOVE THIS LINE
 	utils.Logger.Debug().Msg(fmt.Sprintf("Username: %s, Password: %s", form.Username, form.Password))
 
 	// Query database
 	var username string
-	var password string // Stored hashed password h2(h1(pw) + s)
+	var password string // Stored hashed password
 	err := pool.QueryRow(context.Background(), "SELECT username, password from users where username=$1 and status='active'", form.Username).Scan(&username, &password)
 	if err != nil {
 		// Check logs. If error=="no rows in result set", the username does not exist in the database.

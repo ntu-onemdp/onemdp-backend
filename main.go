@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/ntu-onemdp/onemdp-backend/auth"
 	"github.com/pressly/goose/v3"
+	cors "github.com/rs/cors/wrapper/gin"
 )
 
 func main() {
@@ -61,6 +62,9 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	r.Use(cors.Default())
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
