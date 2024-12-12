@@ -47,7 +47,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		utils.Logger.Error().Err(err).Msg("Error fetching username from database. ")
 		loginResponse.Status = "unauthorized"
 
-		c.JSON(401, &loginResponse)
+		c.JSON(403, &loginResponse)
 		return
 	}
 
@@ -56,7 +56,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 	if !match && err != nil {
 		utils.Logger.Trace().Msg("Invalid login attempt")
 		loginResponse.Status = "unauthorized"
-		c.JSON(401, &loginResponse)
+		c.JSON(403, &loginResponse)
 	} else {
 		// Retrieve role
 		var role string
@@ -64,7 +64,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 			utils.Logger.Error().Err(err).Msg("Error retrieving role")
 			loginResponse.Status = "unauthorized"
 
-			c.JSON(401, &loginResponse)
+			c.JSON(403, &loginResponse)
 			return
 		}
 		loginResponse.Status = "success"
