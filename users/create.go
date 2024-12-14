@@ -37,7 +37,7 @@ func CreateUsers(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	// Create file to store passwords
-	file, err := os.Create("new_users.csv")
+	file, err := os.OpenFile("new_users.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating file for password storage")
 	}
