@@ -82,6 +82,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 
 		// Generate JWT
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"username": username,
 			"role": role,
 			"iat":  time.Now().Unix(),
 		})
