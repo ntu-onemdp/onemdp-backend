@@ -17,6 +17,8 @@ COPY ./migrations ./migrations
 # Copy main
 COPY ./main.go ./main.go
 
+COPY ./ ./
+
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go build -o main .
 
 CMD ["/app/main"]
