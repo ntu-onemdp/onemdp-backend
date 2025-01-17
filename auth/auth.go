@@ -2,11 +2,8 @@ package auth
 
 import (
 	"context"
-	"os"
-	"time"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/golang-jwt/jwt/v5"
 	utils "github.com/ntu-onemdp/onemdp-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -81,22 +78,8 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		}
 
 		// Generate JWT
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"username": username,
-			"role": role,
-			"iat":  time.Now().Unix(),
-		})
-
-		secretKey := []byte(os.Getenv("JWT_KEY"))
-
-		// Check if secret key was read correctly
-		if len(secretKey) == 0 {
-			utils.Logger.Warn().Msg("JWT secret key is empty!")
-		}
-
-		tokenString, err := token.SignedString(secretKey)
+		tokenString, err := GenerateJwt(UserClaim{username, role})
 		if err != nil {
-			utils.Logger.Error().Err(err).Msg("Error signing JWT token")
 			c.JSON(500, "Internal server error")
 		}
 

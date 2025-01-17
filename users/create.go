@@ -22,7 +22,6 @@ type Users struct {
 type UserRow struct {
 	username string
 	password string
-	salt     string
 	role     string
 	date     time.Time
 	status   string

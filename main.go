@@ -65,6 +65,9 @@ func main() {
 
 	r.Use(cors.Default())
 
+	// Protect admin routes
+	protected := r.Group("/api/v1/admin", auth.AdminGuard())
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
@@ -76,7 +79,16 @@ func main() {
 		auth.HandleLogin(c, dbpool)
 	})
 
-	r.POST("/api/v1/users/create", func(c *gin.Context) {
+	// Admin functions
+	// Verify if user is admin. Used in frontend to grant access to protected routes.
+	protected.GET("/verify", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"role": "admin",
+		})
+	})
+
+	// Enrol new users
+	protected.POST("/users/create", func(c *gin.Context) {
 		users.CreateUsers(c, dbpool)
 	})
 	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080
