@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -42,9 +41,6 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(200, &response)
 		return
 	}
-
-	// REMOVE THIS LINE
-	utils.Logger.Debug().Msg(fmt.Sprintf("Username: %s, Password: %s", form.Username, form.Password))
 
 	// Query database
 	var username string
