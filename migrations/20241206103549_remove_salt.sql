@@ -6,5 +6,6 @@ DROP COLUMN salt
 
 -- +goose Down
 -- +goose StatementBegin
--- SELECT 'down SQL query';
+ALTER TABLE users
+salt character varying COLLATE pg_catalog."default" NOT NULL,
 -- +goose StatementEnd
