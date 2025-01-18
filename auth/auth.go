@@ -22,6 +22,7 @@ type LoginResponse struct {
 	Jwt      string `json:"jwt"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
+	Name     string `json:"name"`
 }
 
 // Handle log in requests from frontend.
@@ -67,10 +68,11 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		}
 		c.JSON(200, &response)
 	} else {
-		// Retrieve role
+		// Retrieve name and role
 		var role string
-		if err = pool.QueryRow(context.Background(), "SELECT role FROM users where username=$1 and status='active' and password=$2", username, password).Scan(&role); err != nil {
-			utils.Logger.Error().Err(err).Msg("Error retrieving role")
+		var name string
+		if err = pool.QueryRow(context.Background(), "SELECT role, name FROM users where username=$1 and status='active' and password=$2", username, password).Scan(&role, &name); err != nil {
+			utils.Logger.Error().Err(err).Msg("Error retrieving user details")
 			response := LoginResponse{
 				Success:  false,
 				ErrorMsg: "Unexpected authentication error.",
@@ -90,6 +92,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 			Jwt:      tokenString,
 			Username: username,
 			Role:     role,
+			Name:     name,
 		}
 		c.JSON(200, &response)
 		return
