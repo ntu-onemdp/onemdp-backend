@@ -20,6 +20,8 @@ type LoginResponse struct {
 	Success  bool   `json:"success"`
 	ErrorMsg string `json:"error_msg"`
 	Jwt      string `json:"jwt"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
 }
 
 // Handle log in requests from frontend.
@@ -39,7 +41,7 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	// Query database
+	// Query database. The query fails if the status is not 'active' (deleted or inactive user).
 	var username string
 	var password string // Stored hashed password
 	err := pool.QueryRow(context.Background(), "SELECT username, password from users where username=$1 and status='active'", form.Username).Scan(&username, &password)
@@ -84,8 +86,10 @@ func HandleLogin(c *gin.Context, pool *pgxpool.Pool) {
 		}
 
 		response := LoginResponse{
-			Success: true,
-			Jwt:     tokenString,
+			Success:  true,
+			Jwt:      tokenString,
+			Username: username,
+			Role:     role,
 		}
 		c.JSON(200, &response)
 		return
