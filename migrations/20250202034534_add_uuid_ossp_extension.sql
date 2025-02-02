@@ -1,11 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE users
-DROP COLUMN salt
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-ALTER TABLE users
-salt character varying COLLATE pg_catalog."default" NOT NULL,
+DROP EXTENSION IF EXISTS "uuid-ossp";
 -- +goose StatementEnd
