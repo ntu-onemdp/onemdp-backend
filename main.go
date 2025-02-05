@@ -35,11 +35,12 @@ func main() {
 	if !exists {
 		// Defaults to DEV_1
 		utils.Logger.Error().Msg("Error retrieving postgres database name, default name set.")
-		postgres_db = "dev_1"
+		postgres_db = "dev_2"
 	}
 
 	// Create connection pool to db
-	connection_string := fmt.Sprintf("postgres://postgres:%s@localhost:5432/%s?sslmode=disable", string(db_pw), postgres_db)
+	pg_username := "onemdp_db_admin_dev" // Username to connect to pg
+	connection_string := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
 	// Use below if using container
 	// connection_string := fmt.Sprintf("postgres://postgres:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
 	dbpool, err := pgxpool.New(context.Background(), connection_string)
@@ -54,6 +55,12 @@ func main() {
 	}
 
 	db := stdlib.OpenDBFromPool(dbpool)
+
+	// Check migration status
+	if err := goose.Status(db, "migrations"); err != nil {
+		utils.Logger.Panic().Err(err).Msg("Error checking migration status")
+	}
+
 	if err := goose.Up(db, "migrations"); err != nil {
 		utils.Logger.Panic().Err(err)
 	}

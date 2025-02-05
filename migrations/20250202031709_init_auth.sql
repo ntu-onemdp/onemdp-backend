@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.auth
     username text COLLATE pg_catalog."default" NOT NULL,
     password text COLLATE pg_catalog."default" NOT NULL,
     role text COLLATE pg_catalog."default" NOT NULL DEFAULT 'student'::text,
-    CONSTRAINT auth_pkey PRIMARY KEY (username)
+    CONSTRAINT auth_pkey PRIMARY KEY (username),
     CONSTRAINT fk_auth_role_permissions_role FOREIGN KEY (role)
         REFERENCES public.permissions (role) MATCH SIMPLE
         ON UPDATE CASCADE
