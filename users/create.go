@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	utils "github.com/ntu-onemdp/onemdp-backend/utils"
+	utils "github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type User struct {

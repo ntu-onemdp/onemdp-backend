@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	utils "github.com/ntu-onemdp/onemdp-backend/utils"
+	utils "github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 // Verification middleware for admin. Reject if not admin.
@@ -18,7 +18,7 @@ func AdminGuard() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		claim, err := ParseJwt(tokenString)
+		claim, err := utils.ParseJwt(tokenString)
 
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})

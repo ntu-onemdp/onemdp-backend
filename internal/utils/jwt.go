@@ -1,4 +1,4 @@
-package auth
+package utils
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	utils "github.com/ntu-onemdp/onemdp-backend/utils"
 )
 
 type JwtClaim struct {
@@ -34,7 +33,7 @@ func GenerateJwt(claim UserClaim) (string, error) {
 	// Sign key
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error signing JWT token")
+		Logger.Error().Err(err).Msg("Error signing JWT token")
 		return "", err
 	}
 
@@ -73,7 +72,7 @@ func getSecretKey() []byte {
 
 	// Check if secret key was read correctly
 	if len(secretKey) == 0 {
-		utils.Logger.Warn().Msg("JWT secret key is empty!")
+		Logger.Warn().Msg("JWT secret key is empty!")
 	}
 
 	return secretKey
