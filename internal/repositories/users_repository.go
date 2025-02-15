@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -43,6 +44,23 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 	}
 
 	return &user, nil
+}
+
+// Insert one empty user into the database. Returns nil on successful insert
+// Use this function for user creation
+func (r *UsersRepository) InsertOneUser(user *models.User) error {
+	query := `
+	INSERT INTO users (username, name, semester) 
+	VALUES ($1, $2, $3)`
+
+	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
+	if err != nil {
+		utils.Logger.Error().Err(err)
+		return err
+	}
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
+	return nil
 }
 
 // This method does not work for now. Explore in the future when there is time.
