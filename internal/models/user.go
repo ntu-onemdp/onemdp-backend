@@ -25,3 +25,10 @@ func CreateUser(username string, name string, semester int) *User {
 		Status:          "active",
 	}
 }
+
+// Public user profile details returned by HandleGetUserProfile
+type UserProfile struct {
+	Name         string  `json:"username"`
+	ProfilePhoto *string `json:"profile_photo" db:"profile_photo"`
+	Semester     int     `json:"semester"`
+}

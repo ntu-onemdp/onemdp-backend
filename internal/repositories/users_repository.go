@@ -25,7 +25,7 @@ func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
 	var status string
 	err := r.Db.QueryRow(context.Background(), query, username).Scan(&status)
 	if err != nil {
-		utils.Logger.Error().Err(err)
+		utils.Logger.Error().Err(err).Msg("")
 		return "", err
 	}
 
@@ -39,11 +39,10 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status='active';", USERS_TABLE)
 	row, _ := r.Db.Query(context.Background(), query, username)
 	user, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
-	utils.Logger.Debug().Msg(user.Username)
-	utils.Logger.Debug().Msg(user.Name)
+	// utils.Logger.Debug().Msg(user.Username)
 	if err != nil {
-		utils.Logger.Debug().Msg("RET NIL")
-		utils.Logger.Error().Err(err).Msg(err.Error())
+		utils.Logger.Debug().Msg("Returning nil")
+		utils.Logger.Error().Err(err).Msg("")
 		return nil, err
 	}
 	return user, nil
@@ -58,7 +57,7 @@ func (r *UsersRepository) InsertOneUser(user *models.User) error {
 
 	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
 	if err != nil {
-		utils.Logger.Error().Err(err)
+		utils.Logger.Error().Err(err).Msg("")
 		return err
 	}
 
@@ -68,7 +67,7 @@ func (r *UsersRepository) InsertOneUser(user *models.User) error {
 
 // Retrieve if user has changed password
 func (r *UsersRepository) GetUserPasswordChanged(username string) (bool, error) {
-	query := fmt.Sprintf("SELECT password_changed FROM %s WHERE username=$1 AND status='active", USERS_TABLE)
+	query := fmt.Sprintf(`SELECT password_changed FROM %s WHERE username=$1 AND status='active';`, USERS_TABLE)
 
 	var password_changed bool
 	err := r.Db.QueryRow(context.Background(), query, username).Scan(&password_changed)
@@ -78,6 +77,21 @@ func (r *UsersRepository) GetUserPasswordChanged(username string) (bool, error) 
 	}
 
 	return password_changed, nil
+}
+
+// Retrieve public profile information by username
+func (r *UsersRepository) GetUserProfile(username string) (*models.UserProfile, error) {
+	query := fmt.Sprintf(`SELECT name, profile_photo, semester FROM %s WHERE username=$1 AND status='active';`, USERS_TABLE)
+
+	row, _ := r.Db.Query(context.Background(), query, username)
+	profile, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.UserProfile])
+	if err != nil {
+		utils.Logger.Debug().Msg("Returning nil, possible that user is not found")
+		utils.Logger.Error().Err(err).Msg("")
+		return nil, err
+	}
+
+	return &profile, nil
 }
 
 // This method does not work for now. Explore in the future when there is time.

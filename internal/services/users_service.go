@@ -37,3 +37,8 @@ func (s *UserService) CreateNewUser(username string, name string, semester int) 
 func (s *UserService) HasPasswordChanged(username string) (bool, error) {
 	return s.UsersRepo.GetUserPasswordChanged(username)
 }
+
+// Get user profile
+func (s *UserService) GetUserProfile(username string) (*models.UserProfile, error) {
+	return s.UsersRepo.GetUserProfile(username)
+}
