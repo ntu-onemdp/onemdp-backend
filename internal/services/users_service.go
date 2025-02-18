@@ -31,3 +31,8 @@ func (s *UserService) CreateNewUser(username string, name string, semester int) 
 
 	return nil
 }
+
+// Check if user's password has been changed
+func (s *UserService) HasPasswordChanged(username string) (bool, error) {
+	return s.UsersRepo.GetUserPasswordChanged(username)
+}

@@ -40,6 +40,17 @@ func GenerateJwt(claim UserClaim) (string, error) {
 	return tokenString, nil
 }
 
+// Validate if username matches jwt token. Automatically returns false if error.
+func ValidateUsername(username string, tokenString string) bool {
+	claim, err := ParseJwt(tokenString)
+	if err != nil {
+		Logger.Error().Err(err)
+		return false
+	}
+
+	return claim.Username == username
+}
+
 // Parse signed jwt string
 func ParseJwt(tokenString string) (*JwtClaim, error) {
 	secretKey := getSecretKey()

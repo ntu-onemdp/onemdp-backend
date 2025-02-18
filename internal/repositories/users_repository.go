@@ -14,10 +14,13 @@ type UsersRepository struct {
 	Db *pgxpool.Pool
 }
 
+// Users table name in db
+const USERS_TABLE = "users"
+
 // Retrieve user's status based on the username.
 // Throws error if username cannot be found
 func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
-	query := "SELECT status FROM users WHERE username=$1;"
+	query := fmt.Sprintf(`SELECT status FROM %s WHERE username=$1;`, USERS_TABLE)
 
 	var status string
 	err := r.Db.QueryRow(context.Background(), query, username).Scan(&status)
@@ -33,7 +36,7 @@ func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
 // This function *checks* if user is active before returning. If the user's status is not 'active',
 // an error is return instead.
 func (r *UsersRepository) GetUserByUsername(username string) (*models.User, error) {
-	query := "SELECT * FROM users WHERE username=$1 AND status = 'active';"
+	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status = 'active';", USERS_TABLE)
 
 	row, _ := r.Db.Query(context.Background(), query, username)
 	user, err := pgx.RowToStructByName[models.User](row)
@@ -51,7 +54,7 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 func (r *UsersRepository) InsertOneUser(user *models.User) error {
 	query := `
 	INSERT INTO users (username, name, semester) 
-	VALUES ($1, $2, $3)`
+	VALUES ($1, $2, $3);`
 
 	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
 	if err != nil {
@@ -61,6 +64,20 @@ func (r *UsersRepository) InsertOneUser(user *models.User) error {
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
 	return nil
+}
+
+// Retrieve if user has changed password
+func (r *UsersRepository) GetUserPasswordChanged(username string) (bool, error) {
+	query := fmt.Sprintf("SELECT password_changed FROM %s WHERE username=$1 AND status='active", USERS_TABLE)
+
+	var password_changed bool
+	err := r.Db.QueryRow(context.Background(), query, username).Scan(&password_changed)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("user does not exist in table")
+		return false, err
+	}
+
+	return password_changed, nil
 }
 
 // This method does not work for now. Explore in the future when there is time.
