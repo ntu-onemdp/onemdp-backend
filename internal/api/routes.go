@@ -14,8 +14,8 @@ func RegisterLoginRoute(router *gin.Engine, handler *auth.LoginHandler) {
 }
 
 // Register create users handler
-func RegisterCreateUsersRoute(router *gin.Engine, handler *admin.CreateUserHandler) {
-	router.POST("/api/v1/admin/users/create", func(c *gin.Context) {
+func RegisterCreateUsersRoute(router *gin.RouterGroup, handler *admin.CreateUserHandler) {
+	router.POST("/users/create", func(c *gin.Context) {
 		handler.HandleCreateNewUser(c)
 	})
 }

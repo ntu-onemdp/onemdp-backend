@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
@@ -32,9 +33,12 @@ func main() {
 	authHandler := auth.LoginHandler{AuthService: &authService}
 	userHandler := admin.CreateUserHandler{UserService: &userService}
 
-	// Register routes
+	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
-	routes.RegisterCreateUsersRoute(r, &userHandler)
+
+	// Register admin routes
+	admin := r.Group("/api/v1/admin", middlewares.AdminGuard())
+	routes.RegisterCreateUsersRoute(admin, &userHandler)
 
 	// // Protect admin routes
 	// protected := r.Group("/api/v1/admin", auth.AdminGuard())
