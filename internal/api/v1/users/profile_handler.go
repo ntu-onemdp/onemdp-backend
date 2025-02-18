@@ -12,7 +12,7 @@ type ProfileHandler struct {
 
 type HasPasswordChangedResponse struct {
 	Username         string `json:"username"`
-	Password_changed bool   `json:"password_changed"`
+	Password_changed bool   `json:"password_changed"` // False if user has not changed his password yet
 }
 
 func (h *ProfileHandler) HandleHasPasswordChanged(c *gin.Context) {
@@ -43,4 +43,8 @@ func (h *ProfileHandler) HandleHasPasswordChanged(c *gin.Context) {
 		Username:         username,
 		Password_changed: password_changed,
 	})
+}
+
+func (h *ProfileHandler) HandleGetUserProfile(c *gin.Context) {
+	utils.Logger.Trace().Msg("Get user profile request received")
 }

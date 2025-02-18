@@ -13,8 +13,8 @@ type LoginHandler struct {
 
 // Login form sent from frontend.
 type loginForm struct {
-	username string `form:"username" binding:"required"`
-	password string `form:"password" binding:"required"` // Plaintext password
+	Username string `form:"username" binding:"required"`
+	Password string `form:"password" binding:"required"` // Plaintext password
 }
 
 type LoginResponse struct {
@@ -42,7 +42,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Authenticate user
-	isAuthenticated, user, role := h.AuthService.AuthenticateUser(form.username, form.password)
+	isAuthenticated, user, role := h.AuthService.AuthenticateUser(form.Username, form.Password)
 	if !isAuthenticated {
 		response := LoginResponse{
 			Success:  false,
@@ -54,7 +54,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Generate jwt
-	jwt, err := utils.GenerateJwt(utils.UserClaim{Username: form.username, Role: role})
+	jwt, err := utils.GenerateJwt(utils.UserClaim{Username: form.Username, Role: role})
 	if err != nil {
 		utils.Logger.Error().Err(err)
 		c.JSON(500, "Internal server error")

@@ -30,6 +30,10 @@ func RegisterLoginRoute(router *gin.Engine, handler *auth.LoginHandler) {
 */
 // Student routes that involve only user information
 func RegisterStudentUserRoutes(router *gin.RouterGroup, handler *users.ProfileHandler) {
+	router.GET("/", func(ctx *gin.Context) {
+		handler.HandleGetUserProfile(ctx)
+	})
+
 	router.GET("/password-changed", func(ctx *gin.Context) {
 		handler.HandleHasPasswordChanged(ctx)
 	})

@@ -36,17 +36,17 @@ func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
 // This function *checks* if user is active before returning. If the user's status is not 'active',
 // an error is return instead.
 func (r *UsersRepository) GetUserByUsername(username string) (*models.User, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status = 'active';", USERS_TABLE)
-
+	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status='active';", USERS_TABLE)
 	row, _ := r.Db.Query(context.Background(), query, username)
-	user, err := pgx.RowToStructByName[models.User](row)
-
+	user, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
+	utils.Logger.Debug().Msg(user.Username)
+	utils.Logger.Debug().Msg(user.Name)
 	if err != nil {
-		utils.Logger.Error().Err(err)
+		utils.Logger.Debug().Msg("RET NIL")
+		utils.Logger.Error().Err(err).Msg(err.Error())
 		return nil, err
 	}
-
-	return &user, nil
+	return user, nil
 }
 
 // Insert one empty user into the database. Returns nil on successful insert

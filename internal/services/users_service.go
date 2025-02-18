@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -15,12 +17,11 @@ func (s *UserService) CreateNewUser(username string, name string, semester int) 
 	user := models.User{
 		Username:        username,
 		Name:            name,
-		DateCreated:     "",
-		DateRemoved:     "",
+		DateCreated:     time.Now(),
 		Semester:        semester,
 		PasswordChanged: false,
-		ProfilePhoto:    "",
-		Status:          "",
+		ProfilePhoto:    nil,
+		Status:          "active",
 	}
 
 	err := s.UsersRepo.InsertOneUser(&user)

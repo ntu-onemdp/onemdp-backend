@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/alexedwards/argon2id"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
@@ -33,12 +35,18 @@ func (s *AuthService) AuthenticateUser(username string, password string) (bool, 
 		return false, nil, ""
 	}
 
+	utils.Logger.Debug().Msg(fmt.Sprintf("%t", match))
+
 	// Query for user's information if user is active
 	user, err := s.UsersRepo.GetUserByUsername(username)
 	if err != nil {
 		utils.Logger.Err(err)
+		// return false, nil, ""
+	}
+	if user == nil {
+		utils.Logger.Error().Msg("User is nil after GetUserByUsername")
 		return false, nil, ""
 	}
-
+	utils.Logger.Debug().Msg(fmt.Sprintf("%s, %s", user.Name, auth.Role))
 	return true, user, auth.Role
 }
