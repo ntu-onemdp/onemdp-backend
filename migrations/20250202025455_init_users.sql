@@ -20,11 +20,11 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.users
     OWNER to onemdp_db_admin_dev;
 
-REVOKE ALL ON TABLE public.permissions FROM onemdp_db_rw_dev;
+REVOKE ALL ON TABLE public.users FROM onemdp_db_rw_dev;
 
-GRANT ALL ON TABLE public.permissions TO onemdp_db_admin_dev;
+GRANT ALL ON TABLE public.users TO onemdp_db_admin_dev;
 
-GRANT DELETE, SELECT, INSERT ON TABLE public.permissions TO onemdp_db_rw_dev;
+GRANT DELETE, SELECT, INSERT ON TABLE public.users TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down
