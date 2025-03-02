@@ -37,8 +37,9 @@ func Init() {
 
 	// Create connection pool to db
 	pg_username := os.Getenv("PG_USERNAME")
-	connectionString := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
-	// Use below if using container
+	// connectionString := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
+	connectionString := fmt.Sprintf("postgres://%s:%s@host.docker.internal:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
+	// Use below if using docker compost
 	// connectionString := fmt.Sprintf("postgres://%s:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
 
 	Pool, err = pgxpool.New(context.Background(), connectionString)
