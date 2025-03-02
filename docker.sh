@@ -1,2 +1,2 @@
 # Simple shell script to create and run container
-docker build -f Dockerfile.dev  -t onemdp-dev-1 . && docker run -it -p 8080:8080 --name onemdp-dev-1 onemdp-dev-1
+docker rm -f onemdp-dev-1 || true && docker build -f Dockerfile.dev  -t onemdp-dev-1 . && docker run -it -p 8080:8080 --name onemdp-dev-1 onemdp-dev-1

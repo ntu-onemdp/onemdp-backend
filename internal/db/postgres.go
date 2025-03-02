@@ -18,7 +18,7 @@ func Init() {
 	// Retrieve DB password from secrets
 	db_pw, err := os.ReadFile("/run/secrets/db-password")
 	if err != nil {
-		utils.Logger.Error().Msg("Error reading secret, attempting to load from .env.dev")
+		utils.Logger.Warn().Msg("Error reading secret, attempting to load from .env.dev")
 
 		// Try reading from .env
 		if err := godotenv.Load("config/.env.dev"); err != nil {
@@ -31,15 +31,20 @@ func Init() {
 	postgres_db, exists := os.LookupEnv("POSTGRES_DB")
 	if !exists {
 		// Defaults to DEV_1
-		utils.Logger.Error().Msg("Error retrieving postgres database name, default name set.")
+		utils.Logger.Warn().Msg("Error retrieving postgres database name, default name set.")
 		postgres_db = "dev_1"
 	}
 
 	// Create connection pool to db
 	pg_username := os.Getenv("PG_USERNAME")
+
+	// IMPORTANT
+	// Uncomment the correct connection string based on the environment
+	// // Local
 	// connectionString := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
+	// Docker run
 	connectionString := fmt.Sprintf("postgres://%s:%s@host.docker.internal:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
-	// Use below if using docker compost
+	// // Docker compose
 	// connectionString := fmt.Sprintf("postgres://%s:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
 
 	Pool, err = pgxpool.New(context.Background(), connectionString)
