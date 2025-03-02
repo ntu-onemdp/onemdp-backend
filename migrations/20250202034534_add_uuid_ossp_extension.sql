@@ -1,10 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE users
-DROP COLUMN salt
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
--- SELECT 'down SQL query';
+DROP EXTENSION IF EXISTS "uuid-ossp";
 -- +goose StatementEnd

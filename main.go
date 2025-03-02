@@ -1,70 +1,54 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"os"
-
-	"github.com/ntu-onemdp/onemdp-backend/users"
-	utils "github.com/ntu-onemdp/onemdp-backend/utils"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
+	"github.com/ntu-onemdp/onemdp-backend/internal/db"
+	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
+	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
-	"github.com/ntu-onemdp/onemdp-backend/auth"
-	"github.com/pressly/goose/v3"
+	routes "github.com/ntu-onemdp/onemdp-backend/internal/api"
 	cors "github.com/rs/cors/wrapper/gin"
 )
 
 func main() {
-	// Retrieve DB password from secrets
-	db_pw, err := os.ReadFile("/run/secrets/db-password")
-	if err != nil {
-		utils.Logger.Error().Msg("Error reading secret")
-
-		// Try reading from .env
-		if err := godotenv.Load(".env.dev"); err != nil {
-			utils.Logger.Panic().Err(err).Msg("Error reading from .env")
-		}
-		db_pw = []byte(os.Getenv("POSTGRES_PW"))
-	}
-
-	// Retrieve env variables
-	postgres_db, exists := os.LookupEnv("POSTGRES_DB")
-	if !exists {
-		// Defaults to DEV_1
-		utils.Logger.Error().Msg("Error retrieving postgres database name, default name set.")
-		postgres_db = "dev_1"
-	}
-
-	// Create connection pool to db
-	connection_string := fmt.Sprintf("postgres://postgres:%s@localhost:5432/%s?sslmode=disable", string(db_pw), postgres_db)
-	// Use below if using container
-	// connection_string := fmt.Sprintf("postgres://postgres:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
-	dbpool, err := pgxpool.New(context.Background(), connection_string)
-	if err != nil {
-		utils.Logger.Panic().Err(err).Msg("Error creating connection pool")
-	}
-	defer dbpool.Close()
-
-	// Initialize Goose and perform migrations
-	if err := goose.SetDialect("postgres"); err != nil {
-		utils.Logger.Panic().Err(err)
-	}
-
-	db := stdlib.OpenDBFromPool(dbpool)
-	if err := goose.Up(db, "migrations"); err != nil {
-		utils.Logger.Panic().Err(err)
-	}
-	if err := db.Close(); err != nil {
-		utils.Logger.Panic().Err(err)
-	}
+	db.Init()
+	defer db.Close()
 
 	r := gin.Default()
 
 	r.Use(cors.Default())
 
+	// Initialize repositories
+	authRepo := repositories.AuthRepository{Db: db.Pool}
+	usersRepo := repositories.UsersRepository{Db: db.Pool}
+
+	// Initialize services
+	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
+	userService := services.UserService{UsersRepo: &usersRepo}
+
+	// Initialize handlers (might be shifted in the future)
+	authHandler := auth.LoginHandler{AuthService: &authService}
+	userHandler := admin.CreateUserHandler{UserService: &userService}
+	profileHandler := users.ProfileHandler{UserService: &userService}
+	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
+
+	// Register public routes
+	routes.RegisterLoginRoute(r, &authHandler)
+
+	// Register student routes
+	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
+	routes.RegisterStudentUserRoutes(studentRoutes, &profileHandler)
+
+	// Register admin routes
+	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
+	routes.RegisterCreateUsersRoute(adminRoutes, &userHandler)
+	routes.RegisterUpdateUserRoleRoute(adminRoutes, &updateUserRoleHandler)
+
+	// Ping route
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
@@ -72,12 +56,5 @@ func main() {
 		})
 	})
 
-	r.POST("/api/v1/auth/login", func(c *gin.Context) {
-		auth.HandleLogin(c, dbpool)
-	})
-
-	r.POST("/api/v1/users/create", func(c *gin.Context) {
-		users.CreateUsers(c, dbpool)
-	})
-	r.Run("localhost:8080") // listen and serve on 0.0.0.0:8080
+	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080
 }

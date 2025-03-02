@@ -4,6 +4,9 @@ WORKDIR /app
 
 ENV PORT=8080
 
+# Copy config files
+COPY ./config ./config
+
 # Check for any changes to dependencies.
 COPY ./go.mod ./go.mod
 COPY ./go.sum ./go.sum
@@ -16,6 +19,9 @@ COPY ./migrations ./migrations
 
 # Copy main
 COPY ./main.go ./main.go
+
+# Copy source code
+COPY ./internal ./internal
 
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go build -o main .
 
