@@ -34,17 +34,19 @@ func main() {
 	authHandler := auth.LoginHandler{AuthService: &authService}
 	userHandler := admin.CreateUserHandler{UserService: &userService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
+	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
 
 	// Register student routes
-	student := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
-	routes.RegisterStudentUserRoutes(student, &profileHandler)
+	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
+	routes.RegisterStudentUserRoutes(studentRoutes, &profileHandler)
 
 	// Register admin routes
-	admin := r.Group("/api/v1/admin", middlewares.AdminGuard())
-	routes.RegisterCreateUsersRoute(admin, &userHandler)
+	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
+	routes.RegisterCreateUsersRoute(adminRoutes, &userHandler)
+	routes.RegisterUpdateUserRoleRoute(adminRoutes, &updateUserRoleHandler)
 
 	// // Protect admin routes
 	// protected := r.Group("/api/v1/admin", auth.AdminGuard())
