@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
@@ -49,4 +50,32 @@ func (s *AuthService) AuthenticateUser(username string, password string) (bool, 
 	}
 	utils.Logger.Debug().Msg(fmt.Sprintf("%s, %s", user.Name, auth.Role))
 	return true, user, auth.Role
+}
+
+// Update user's role. Admin can promote another user to admin.
+// Service can be used for both promote and demote.
+// This service checks that the role given is valid.
+//
+// This service does not check if the new role is the same as the old role.
+func (s *AuthService) UpdateUserRole(username string, new_role string) error {
+	// Convert new role to lowercase
+	new_role = strings.ToLower(new_role)
+
+	// Check if new role is valid
+	if !isValidRole(new_role) {
+		return fmt.Errorf("invalid role: %s", new_role)
+	}
+
+	return s.AuthRepo.UpdateUserRole(username, new_role)
+}
+
+// Check if user role is valid
+func isValidRole(role string) bool {
+	validRoles := map[string]bool{
+		"student": true,
+		"staff":   true,
+		"admin":   true,
+	}
+
+	return validRoles[role]
 }

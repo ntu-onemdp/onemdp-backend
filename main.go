@@ -34,43 +34,27 @@ func main() {
 	authHandler := auth.LoginHandler{AuthService: &authService}
 	userHandler := admin.CreateUserHandler{UserService: &userService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
+	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
 
 	// Register student routes
-	student := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
-	routes.RegisterStudentUserRoutes(student, &profileHandler)
+	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
+	routes.RegisterStudentUserRoutes(studentRoutes, &profileHandler)
 
 	// Register admin routes
-	admin := r.Group("/api/v1/admin", middlewares.AdminGuard())
-	routes.RegisterCreateUsersRoute(admin, &userHandler)
+	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
+	routes.RegisterCreateUsersRoute(adminRoutes, &userHandler)
+	routes.RegisterUpdateUserRoleRoute(adminRoutes, &updateUserRoleHandler)
 
-	// // Protect admin routes
-	// protected := r.Group("/api/v1/admin", auth.AdminGuard())
+	// Ping route
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+			"content": "hello",
+		})
+	})
 
-	// r.GET("/ping", func(c *gin.Context) {
-	// 	c.JSON(200, gin.H{
-	// 		"message": "pong",
-	// 		"content": "hello",
-	// 	})
-	// })
-
-	// r.POST("/api/v1/auth/login", func(c *gin.Context) {
-	// 	auth.HandleLogin(c, db.Pool)
-	// })
-
-	// // Admin functions
-	// // Verify if user is admin. Used in frontend to grant access to protected routes.
-	// protected.GET("/verify", func(c *gin.Context) {
-	// 	c.JSON(200, gin.H{
-	// 		"role": "admin",
-	// 	})
-	// })
-
-	// // Enrol new users
-	// protected.POST("/users/create", func(c *gin.Context) {
-	// 	users.CreateUsers(c, db.Pool)
-	// })
 	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080
 }

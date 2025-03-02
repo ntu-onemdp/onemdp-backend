@@ -52,3 +52,10 @@ func RegisterCreateUsersRoute(router *gin.RouterGroup, handler *admin.CreateUser
 		handler.HandleCreateNewUser(c)
 	})
 }
+
+// Register update users role handler
+func RegisterUpdateUserRoleRoute(router *gin.RouterGroup, handler *admin.UpdateUsersRoleHandler) {
+	router.POST("/users/update-role", func(c *gin.Context) {
+		handler.HandleUpdateUsersRole(c)
+	})
+}
