@@ -15,6 +15,27 @@ type AuthService struct {
 	UsersRepo *repositories.UsersRepository
 }
 
+// Insert new user auth into database.
+// Password is the plaintext password.
+// This function hashes the password before inserting into the database.
+func (s *AuthService) InsertNewAuth(username string, password string) error {
+	// Hash password
+	stored_hashed_pw, err := argon2id.CreateHash(password, argon2id.DefaultParams) // NOTE: Set custom params for prod
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error hashing password")
+		return err
+	}
+
+	// Insert new user auth
+	auth := models.AuthModel{
+		Username: username,
+		Password: stored_hashed_pw,
+		Role:     models.STUDENT_ROLE, // Default role is student
+	}
+
+	return s.AuthRepo.InsertAuthDetails(&auth)
+}
+
 // Returns user information only if:
 // 1. Username exists in both auth and user tables
 // 2. Password is correct

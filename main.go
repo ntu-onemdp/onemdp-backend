@@ -32,7 +32,7 @@ func main() {
 
 	// Initialize handlers (might be shifted in the future)
 	authHandler := auth.LoginHandler{AuthService: &authService}
-	userHandler := admin.CreateUserHandler{UserService: &userService}
+	userHandler := admin.CreateUserHandler{UserService: &userService, AuthService: &authService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
 	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
 
