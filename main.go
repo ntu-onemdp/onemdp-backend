@@ -35,6 +35,7 @@ func main() {
 	userHandler := admin.CreateUserHandler{UserService: &userService, AuthService: &authService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
 	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
+	getUsersHandler := admin.GetUsersHandler{UserService: &userService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
@@ -47,6 +48,7 @@ func main() {
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
 	routes.RegisterCreateUsersRoute(adminRoutes, &userHandler)
 	routes.RegisterUpdateUserRoleRoute(adminRoutes, &updateUserRoleHandler)
+	routes.RegisterGetUsersRoutes(adminRoutes, &getUsersHandler)
 
 	// Ping route
 	r.GET("/ping", func(c *gin.Context) {

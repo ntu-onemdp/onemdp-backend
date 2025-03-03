@@ -42,3 +42,13 @@ func (s *UserService) HasPasswordChanged(username string) (bool, error) {
 func (s *UserService) GetUserProfile(username string) (*models.UserProfile, error) {
 	return s.UsersRepo.GetUserProfile(username)
 }
+
+// Admin: Get user information
+func (s *UserService) GetUserInformation(username string) (*models.User, error) {
+	return s.UsersRepo.GetUserByUsernameAdmin(username)
+}
+
+// Admin: Get all users information
+func (s *UserService) GetAllUsersInformation() ([]models.User, error) {
+	return s.UsersRepo.GetAllUsers()
+}
