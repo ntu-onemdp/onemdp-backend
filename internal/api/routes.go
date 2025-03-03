@@ -53,6 +53,17 @@ func RegisterCreateUsersRoute(router *gin.RouterGroup, handler *admin.CreateUser
 	})
 }
 
+// Register get users handler
+func RegisterGetUsersRoutes(router *gin.RouterGroup, handler *admin.GetUsersHandler) {
+	router.GET("/users", func(c *gin.Context) {
+		handler.HandleGetUsers(c)
+	})
+
+	router.GET("/users/:username", func(c *gin.Context) {
+		handler.HandleGetUser(c)
+	})
+}
+
 // Register update users role handler
 func RegisterUpdateUserRoleRoute(router *gin.RouterGroup, handler *admin.UpdateUsersRoleHandler) {
 	router.POST("/users/update-role", func(c *gin.Context) {

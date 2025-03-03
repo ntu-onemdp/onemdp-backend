@@ -62,8 +62,8 @@ func (s *AuthService) AuthenticateUser(username string, password string) (bool, 
 	// Query for user's information if user is active
 	user, err := s.UsersRepo.GetUserByUsername(username)
 	if err != nil {
-		utils.Logger.Err(err)
-		// return false, nil, ""
+		utils.Logger.Err(err).Msg("")
+		return false, nil, ""
 	}
 	if user == nil {
 		utils.Logger.Error().Msg("User is nil after GetUserByUsername")
