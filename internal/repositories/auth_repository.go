@@ -15,6 +15,20 @@ type AuthRepository struct {
 
 const AUTH_TABLE = "auth"
 
+// Insert new auth detail
+func (r *AuthRepository) InsertAuthDetails(auth *models.AuthModel) error {
+	query := fmt.Sprintf(`INSERT INTO %s (username, password, role) VALUES ($1, $2, $3);`, AUTH_TABLE)
+
+	_, err := r.Db.Exec(context.Background(), query, auth.Username, auth.Password, auth.Role)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Trace().Msg("Successfully inserted auth for " + auth.Username)
+	return nil
+}
+
 // Retrieve user auth details using usermame
 func (r *AuthRepository) GetAuthByUsername(username string) (*models.AuthModel, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1;", AUTH_TABLE)
