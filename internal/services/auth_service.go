@@ -20,7 +20,7 @@ type AuthService struct {
 // This function hashes the password before inserting into the database.
 func (s *AuthService) InsertNewAuth(username string, password string) error {
 	// Hash password
-	stored_hashed_pw, err := argon2id.CreateHash(password, argon2id.DefaultParams) // NOTE: Set custom params for prod
+	stored_hashed_pw, err := HashPassword(password)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error hashing password")
 		return err
@@ -99,4 +99,39 @@ func isValidRole(role string) bool {
 	}
 
 	return validRoles[role]
+}
+
+// Update user's password.
+// This service hashes the new password before updating the database.
+// This service also ensures that the new password is not the same as the old password.
+func (s *AuthService) UpdateUserPassword(username string, new_password string) error {
+	// Retrieve old password
+	auth, err := s.AuthRepo.GetAuthByUsername(username)
+	if err != nil || auth == nil {
+		utils.Logger.Error().Err(err).Msg("Error retrieving auth")
+		return err
+	}
+
+	// Password same as old password
+	match, err := argon2id.ComparePasswordAndHash(new_password, auth.Password)
+	if match || err != nil {
+		utils.Logger.Warn().Msg("New password is the same as old password")
+		return fmt.Errorf("new password is the same as old password")
+	}
+
+	// Hash new password
+	stored_hashed_pw, err := HashPassword(new_password)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error hashing password")
+		return err
+	}
+
+	// Update password
+	return s.AuthRepo.UpdateUserPassword(username, stored_hashed_pw)
+}
+
+// Utility services
+// Hash user password
+func HashPassword(password string) (string, error) {
+	return argon2id.CreateHash(password, argon2id.DefaultParams) // NOTE: Set custom params for prod
 }

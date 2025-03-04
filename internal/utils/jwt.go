@@ -42,6 +42,11 @@ func GenerateJwt(claim UserClaim) (string, error) {
 
 // Validate if username matches jwt token. Automatically returns false if error.
 func ValidateUsername(username string, tokenString string) bool {
+	// Remove "Bearer " prefix if included
+	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+		tokenString = tokenString[7:]
+	}
+
 	claim, err := ParseJwt(tokenString)
 	if err != nil {
 		Logger.Error().Err(err)
