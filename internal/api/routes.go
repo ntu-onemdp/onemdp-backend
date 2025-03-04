@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
@@ -46,27 +47,27 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup, handler *users.ProfileHa
 ||                            ||
 ################################
 */
-// Register create users handler
-func RegisterCreateUsersRoute(router *gin.RouterGroup, handler *admin.CreateUserHandler) {
+// Register admin routes for user management
+func RegisterAdminUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
+	userHandlers := admin.InitUserHandlers(db)
+
+	// Register create users handler
 	router.POST("/users/create", func(c *gin.Context) {
-		handler.HandleCreateNewUser(c)
+		userHandlers.CreateUserHandler.HandleCreateNewUser(c)
 	})
-}
 
-// Register get users handler
-func RegisterGetUsersRoutes(router *gin.RouterGroup, handler *admin.GetUsersHandler) {
+	// Register get users handler
 	router.GET("/users", func(c *gin.Context) {
-		handler.HandleGetUsers(c)
+		userHandlers.GetUsersHandler.HandleGetUsers(c)
 	})
 
+	// Register get individual user handler
 	router.GET("/users/:username", func(c *gin.Context) {
-		handler.HandleGetUser(c)
+		userHandlers.GetUsersHandler.HandleGetUser(c)
 	})
-}
 
-// Register update users role handler
-func RegisterUpdateUserRoleRoute(router *gin.RouterGroup, handler *admin.UpdateUsersRoleHandler) {
+	// Register update users role handler
 	router.POST("/users/update-role", func(c *gin.Context) {
-		handler.HandleUpdateUsersRole(c)
+		userHandlers.UpdateUsersRoleHandler.HandleUpdateUsersRole(c)
 	})
 }

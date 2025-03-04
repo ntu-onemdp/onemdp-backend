@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
-	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
@@ -32,10 +31,7 @@ func main() {
 
 	// Initialize handlers (might be shifted in the future)
 	authHandler := auth.LoginHandler{AuthService: &authService}
-	userHandler := admin.CreateUserHandler{UserService: &userService, AuthService: &authService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
-	updateUserRoleHandler := admin.UpdateUsersRoleHandler{AuthService: &authService}
-	getUsersHandler := admin.GetUsersHandler{UserService: &userService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
@@ -46,9 +42,7 @@ func main() {
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
-	routes.RegisterCreateUsersRoute(adminRoutes, &userHandler)
-	routes.RegisterUpdateUserRoleRoute(adminRoutes, &updateUserRoleHandler)
-	routes.RegisterGetUsersRoutes(adminRoutes, &getUsersHandler)
+	routes.RegisterAdminUserRoutes(adminRoutes, db.Pool)
 
 	// Ping route
 	r.GET("/ping", func(c *gin.Context) {
