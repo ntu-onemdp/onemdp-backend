@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
-	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
@@ -27,20 +26,16 @@ func main() {
 
 	// Initialize services
 	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
-	userService := services.UserService{UsersRepo: &usersRepo}
 
 	// Initialize handlers (might be shifted in the future)
 	authHandler := auth.LoginHandler{AuthService: &authService}
-	profileHandler := users.ProfileHandler{UserService: &userService}
-	changePasswordHandler := auth.ChangePasswordHandler{AuthService: &authService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
 
 	// Register student routes
 	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
-	routes.RegisterStudentUserRoutes(studentRoutes, &profileHandler)
-	routes.RegisterUserChangePasswordRoute(studentRoutes, &changePasswordHandler)
+	routes.RegisterStudentUserRoutes(studentRoutes, db.Pool)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
