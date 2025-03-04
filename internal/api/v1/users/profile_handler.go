@@ -24,11 +24,6 @@ func (h *ProfileHandler) HandleHasPasswordChanged(c *gin.Context) {
 
 	utils.Logger.Info().Msg(fmt.Sprintf("Password changed query received for %s", username))
 
-	// Remove "Bearer " prefix if included
-	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
-		tokenString = tokenString[7:]
-	}
-
 	// JWT does not match username
 	if !utils.ValidateUsername(username, tokenString) {
 		c.JSON(401, nil)

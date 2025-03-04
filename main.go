@@ -32,6 +32,7 @@ func main() {
 	// Initialize handlers (might be shifted in the future)
 	authHandler := auth.LoginHandler{AuthService: &authService}
 	profileHandler := users.ProfileHandler{UserService: &userService}
+	changePasswordHandler := auth.ChangePasswordHandler{AuthService: &authService}
 
 	// Register public routes
 	routes.RegisterLoginRoute(r, &authHandler)
@@ -39,6 +40,7 @@ func main() {
 	// Register student routes
 	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
 	routes.RegisterStudentUserRoutes(studentRoutes, &profileHandler)
+	routes.RegisterUserChangePasswordRoute(studentRoutes, &changePasswordHandler)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())

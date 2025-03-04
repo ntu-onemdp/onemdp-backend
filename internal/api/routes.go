@@ -28,6 +28,8 @@ func RegisterLoginRoute(router *gin.Engine, handler *auth.LoginHandler) {
 ||       STUDENT ROUTES       ||
 ||                            ||
 ################################
+
+Routes that are accessible to any authenticated user.
 */
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup, handler *users.ProfileHandler) {
@@ -37,6 +39,12 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup, handler *users.ProfileHa
 
 	router.GET("/password-changed", func(ctx *gin.Context) {
 		handler.HandleHasPasswordChanged(ctx)
+	})
+}
+
+func RegisterUserChangePasswordRoute(router *gin.RouterGroup, handler *auth.ChangePasswordHandler) {
+	router.POST("/change-password", func(c *gin.Context) {
+		handler.HandleChangeUserPassword(c)
 	})
 }
 

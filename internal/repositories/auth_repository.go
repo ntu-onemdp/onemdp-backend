@@ -57,3 +57,17 @@ func (r *AuthRepository) UpdateUserRole(username string, new_role string) error 
 	utils.Logger.Trace().Msg("Successfully updated role for " + username)
 	return nil
 }
+
+// Change existing password for user. Returns nil on success
+func (r *AuthRepository) UpdateUserPassword(username string, new_password string) error {
+	query := fmt.Sprintf(`UPDATE %s SET password=$1 WHERE username=$2;`, AUTH_TABLE)
+
+	_, err := r.Db.Exec(context.Background(), query, new_password, username)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error changing password for " + username)
+		return err
+	}
+
+	utils.Logger.Trace().Msg("Successfully updated password for " + username)
+	return nil
+}
