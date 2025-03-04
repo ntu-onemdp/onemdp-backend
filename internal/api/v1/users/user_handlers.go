@@ -1,4 +1,4 @@
-package admin
+package users
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -7,9 +7,8 @@ import (
 )
 
 type UserHandlers struct {
-	CreateUserHandler      *CreateUserHandler
-	GetUsersHandler        *GetUsersHandler
-	UpdateUsersRoleHandler *UpdateUsersRoleHandler
+	UserProfileHandler    *ProfileHandler
+	ChangePasswordHandler *ChangePasswordHandler
 }
 
 func InitUserHandlers(db *pgxpool.Pool) *UserHandlers {
@@ -22,13 +21,11 @@ func InitUserHandlers(db *pgxpool.Pool) *UserHandlers {
 	authService := services.AuthService{AuthRepo: &authRepository, UsersRepo: &usersRepository}
 
 	// Initialize handlers
-	createUserHandler := CreateUserHandler{UserService: &userService, AuthService: &authService}
-	getUsersHandler := GetUsersHandler{UserService: &userService}
-	updateUsersRoleHandler := UpdateUsersRoleHandler{AuthService: &authService}
+	profileHandler := ProfileHandler{UserService: &userService}
+	changePasswordHandler := ChangePasswordHandler{AuthService: &authService}
 
 	return &UserHandlers{
-		CreateUserHandler:      &createUserHandler,
-		GetUsersHandler:        &getUsersHandler,
-		UpdateUsersRoleHandler: &updateUsersRoleHandler,
+		UserProfileHandler:    &profileHandler,
+		ChangePasswordHandler: &changePasswordHandler,
 	}
 }
