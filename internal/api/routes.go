@@ -5,6 +5,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
 )
 
@@ -45,6 +46,15 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 
 	router.POST("/change-password", func(c *gin.Context) {
 		userHandlers.ChangePasswordHandler.HandleChangeUserPassword(c)
+	})
+}
+
+// Routes starting with /threads
+func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
+	threadHandlers := threads.InitThreadHandlers(db)
+
+	router.POST("/new", func(ctx *gin.Context) {
+		threadHandlers.NewThreadHandler.HandleNewThread(ctx)
 	})
 }
 
