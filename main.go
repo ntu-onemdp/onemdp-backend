@@ -37,6 +37,10 @@ func main() {
 	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
 	routes.RegisterStudentUserRoutes(studentRoutes, db.Pool)
 
+	// Register thread routes
+	threadRoutes := r.Group("/api/v1/threads", middlewares.AuthGuard())
+	routes.RegisterThreadRoutes(threadRoutes, db.Pool)
+
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
 	routes.RegisterAdminUserRoutes(adminRoutes, db.Pool)

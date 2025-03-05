@@ -60,6 +60,11 @@ func ValidateUsername(username string, tokenString string) bool {
 func ParseJwt(tokenString string) (*JwtClaim, error) {
 	secretKey := getSecretKey()
 
+	// Remove "Bearer " prefix if included
+	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+		tokenString = tokenString[7:]
+	}
+
 	// Parse and verify the token
 	token, err := jwt.ParseWithClaims(tokenString, &JwtClaim{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
