@@ -19,12 +19,12 @@ const POSTS_TABLE = "posts"
 // Insert new post into the database. Returns nil on successful insert
 func (r *PostsRepository) CreatePost(post *models.NewPost) error {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (author, thread_id, title, content) 
-	VALUES ($1, $2, $3, $4);`, POSTS_TABLE)
+	INSERT INTO %s (author, thread_id, title, content, reply_to) 
+	VALUES ($1, $2, $3, $4, $5);`, POSTS_TABLE)
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("Inserting post: %v", post))
 
-	_, err := r.Db.Exec(context.Background(), query, post.Author, post.ThreadId, post.Title, post.Content)
+	_, err := r.Db.Exec(context.Background(), query, post.Author, post.ThreadId, post.Title, post.Content, post.ReplyTo)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return err

@@ -26,4 +26,5 @@ type NewPost struct {
 	ThreadId uuid.UUID `json:"thread_id" db:"thread_id"`
 	Title    string    `json:"title" db:"title"`
 	Content  string    `json:"content" db:"content"`
+	ReplyTo  *string   `json:"reply_to" db:"reply_to"`
 }
