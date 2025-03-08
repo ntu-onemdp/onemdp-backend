@@ -11,7 +11,7 @@ type PostService struct {
 	PostRepo *repositories.PostsRepository
 }
 
-func (s *PostService) CreateNewPost(author string, replyTo *string, threadId uuid.UUID, title string, content string) error {
+func (s *PostService) CreateNewPost(author string, replyTo *string, threadId string, title string, content string) error {
 	post := &models.NewPost{
 		Author:   author,
 		ThreadId: threadId,
