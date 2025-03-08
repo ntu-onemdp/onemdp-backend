@@ -7,25 +7,20 @@ import (
 )
 
 type UserHandlers struct {
-	UserProfileHandler    *ProfileHandler
-	ChangePasswordHandler *ChangePasswordHandler
+	UserProfileHandler *ProfileHandler
 }
 
 func InitUserHandlers(db *pgxpool.Pool) *UserHandlers {
 	// Initialize repositories
 	usersRepository := repositories.UsersRepository{Db: db}
-	authRepository := repositories.AuthRepository{Db: db}
 
 	// Initialize services
 	userService := services.UserService{UsersRepo: &usersRepository}
-	authService := services.AuthService{AuthRepo: &authRepository, UsersRepo: &usersRepository}
 
 	// Initialize handlers
 	profileHandler := ProfileHandler{UserService: &userService}
-	changePasswordHandler := ChangePasswordHandler{AuthService: &authService}
 
 	return &UserHandlers{
-		UserProfileHandler:    &profileHandler,
-		ChangePasswordHandler: &changePasswordHandler,
+		UserProfileHandler: &profileHandler,
 	}
 }
