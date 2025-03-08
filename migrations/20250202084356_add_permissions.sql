@@ -3,15 +3,11 @@
 -- +goose StatementBegin
 INSERT INTO public.permissions(
 	role, manage_students, manage_staff, manage_roles, manage_posts)
-	VALUES ('student', false, false, false, false);
-
-INSERT INTO public.permissions(
-	role, manage_students, manage_staff, manage_roles, manage_posts)
-	VALUES ('staff', true, false, false, true);
-
-INSERT INTO public.permissions(
-	role, manage_students, manage_staff, manage_roles, manage_posts)
-	VALUES ('admin', true, true, true, true);
+	VALUES 
+	('student', false, false, false, false),
+	('staff', true, false, false, true),
+	('admin', true, true, true, true)
+ON CONFLICT (role) DO NOTHING;
 -- +goose StatementEnd
 
 -- +goose Down
