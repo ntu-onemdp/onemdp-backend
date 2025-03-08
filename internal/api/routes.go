@@ -39,12 +39,12 @@ Routes that are accessible to any authenticated user.
 func RegisterStudentUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	userHandlers := users.InitUserHandlers(db)
 
-	router.GET("/", func(ctx *gin.Context) {
-		userHandlers.UserProfileHandler.HandleGetUserProfile(ctx)
+	router.GET("/", func(c *gin.Context) {
+		userHandlers.UserProfileHandler.HandleGetUserProfile(c)
 	})
 
-	router.GET("/password-changed", func(ctx *gin.Context) {
-		userHandlers.UserProfileHandler.HandleHasPasswordChanged(ctx)
+	router.GET("/password-changed", func(c *gin.Context) {
+		userHandlers.UserProfileHandler.HandleHasPasswordChanged(c)
 	})
 
 }
@@ -65,8 +65,8 @@ func RegisterChangePasswordRoute(router *gin.Engine, db *pgxpool.Pool) {
 func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	threadHandlers := threads.InitThreadHandlers(db)
 
-	router.POST("/new", func(ctx *gin.Context) {
-		threadHandlers.NewThreadHandler.HandleNewThread(ctx)
+	router.POST("/new", func(c *gin.Context) {
+		threadHandlers.NewThreadHandler.HandleNewThread(c)
 	})
 }
 
@@ -74,8 +74,12 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	postHandlers := posts.InitPostHandlers(db)
 
-	router.POST("/new", func(ctx *gin.Context) {
-		postHandlers.NewPostHandler.HandleNewPost(ctx)
+	router.POST("/new", func(c *gin.Context) {
+		postHandlers.NewPostHandler.HandleNewPost(c)
+	})
+
+	router.DELETE("/:postId", func(c *gin.Context) {
+		postHandlers.DeletePostHandler.HandleDeletePost(c)
 	})
 }
 

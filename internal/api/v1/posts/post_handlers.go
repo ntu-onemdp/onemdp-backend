@@ -7,7 +7,8 @@ import (
 )
 
 type PostHandlers struct {
-	NewPostHandler *NewPostHandler
+	NewPostHandler    *NewPostHandler
+	DeletePostHandler *DeletePostHandler
 }
 
 func InitPostHandlers(db *pgxpool.Pool) *PostHandlers {
@@ -19,8 +20,10 @@ func InitPostHandlers(db *pgxpool.Pool) *PostHandlers {
 
 	// Initialize handlers
 	newPostHandler := NewPostHandler{PostService: &postService}
+	deletePostHandler := DeletePostHandler{PostService: &postService}
 
 	return &PostHandlers{
-		NewPostHandler: &newPostHandler,
+		NewPostHandler:    &newPostHandler,
+		DeletePostHandler: &deletePostHandler,
 	}
 }
