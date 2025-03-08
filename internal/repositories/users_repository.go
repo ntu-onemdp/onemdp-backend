@@ -74,7 +74,7 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status='active';", USERS_TABLE)
 	row, _ := r.Db.Query(context.Background(), query, username)
 	user, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
-	// utils.Logger.Debug().Msg(user.Username)
+	utils.Logger.Debug().Str("username", username).Msg("")
 	if err != nil {
 		utils.Logger.Debug().Msg("Returning nil")
 		utils.Logger.Error().Err(err).Msg("")

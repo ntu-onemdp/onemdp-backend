@@ -7,6 +7,8 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
+	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
+	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 )
 
 /*
@@ -44,8 +46,17 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		userHandlers.UserProfileHandler.HandleHasPasswordChanged(ctx)
 	})
 
-	router.POST("/change-password", func(c *gin.Context) {
-		userHandlers.ChangePasswordHandler.HandleChangeUserPassword(c)
+}
+
+// Register change password routes
+func RegisterChangePasswordRoute(router *gin.Engine, db *pgxpool.Pool) {
+	authRepo := repositories.AuthRepository{Db: db}
+	usersRepo := repositories.UsersRepository{Db: db}
+	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
+	changePasswordHandler := auth.ChangePasswordHandler{AuthService: &authService}
+
+	router.POST("/api/v1/auth/:username/change-password", func(c *gin.Context) {
+		changePasswordHandler.HandleChangeUserPassword(c)
 	})
 }
 
