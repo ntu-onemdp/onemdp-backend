@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -16,10 +15,10 @@ type NewPostHandler struct {
 // Frontend request to create a new post. Get author of post from JWT token.
 // This request uses JSON instead of form data.
 type NewPostRequest struct {
-	Title    string    `json:"title" binding:"required"`
-	Content  string    `json:"content" binding:"required"`
-	ReplyTo  string    `json:"reply_to" binding:"required"` // NA if not a reply
-	ThreadId uuid.UUID `json:"thread_id" binding:"required"`
+	Title    string `json:"title" binding:"required"`
+	Content  string `json:"content" binding:"required"`
+	ReplyTo  string `json:"reply_to" binding:"required"` // NA if not a reply
+	ThreadId string `json:"thread_id" binding:"required"`
 }
 
 func (h *NewPostHandler) HandleNewPost(c *gin.Context) {

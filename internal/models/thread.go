@@ -2,12 +2,10 @@ package models
 
 import (
 	"time"
-
-	"github.com/gofrs/uuid"
 )
 
 type Thread struct {
-	ThreadId     uuid.UUID `json:"thread_id" db:"thread_id"`
+	ThreadId     string    `json:"thread_id" db:"thread_id"`
 	Author       string    `json:"author" db:"author"`
 	Title        string    `json:"title" db:"title"`
 	NumLikes     int       `json:"num_likes" db:"num_likes"`

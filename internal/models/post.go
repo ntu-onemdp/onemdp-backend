@@ -9,7 +9,7 @@ import (
 type Post struct {
 	PostId      uuid.UUID `json:"post_id" db:"post_id"`
 	Author      string    `json:"author" db:"author"`
-	ThreadId    uuid.UUID `json:"thread_id" db:"thread_id"`
+	ThreadId    string    `json:"thread_id" db:"thread_id"`
 	ReplyTo     *string   `json:"reply_to" db:"reply_to"`
 	Title       string    `json:"title" db:"title"`
 	Content     string    `json:"content" db:"content"`
@@ -22,9 +22,9 @@ type Post struct {
 
 // NewPost has minimal fields. Database takes care of the default field values.
 type NewPost struct {
-	Author   string    `json:"author" db:"author"`
-	ThreadId uuid.UUID `json:"thread_id" db:"thread_id"`
-	Title    string    `json:"title" db:"title"`
-	Content  string    `json:"content" db:"content"`
-	ReplyTo  *string   `json:"reply_to" db:"reply_to"`
+	Author   string  `json:"author" db:"author"`
+	ThreadId string  `json:"thread_id" db:"thread_id"`
+	Title    string  `json:"title" db:"title"`
+	Content  string  `json:"content" db:"content"`
+	ReplyTo  *string `json:"reply_to" db:"reply_to"`
 }
