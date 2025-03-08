@@ -16,10 +16,10 @@ type NewPostHandler struct {
 // Frontend request to create a new post. Get author of post from JWT token.
 // This request uses JSON instead of form data.
 type NewPostRequest struct {
-	Title    string `json:"title" binding:"required"`
-	Content  string `json:"content" binding:"required"`
-	ReplyTo  string `json:"reply_to" binding:"required"` // NA if not a reply
-	ThreadId string `json:"thread_id" binding:"required"`
+	Title    string    `json:"title" binding:"required"`
+	Content  string    `json:"content" binding:"required"`
+	ReplyTo  string    `json:"reply_to" binding:"required"` // NA if not a reply
+	ThreadId uuid.UUID `json:"thread_id" binding:"required"`
 }
 
 func (h *NewPostHandler) HandleNewPost(c *gin.Context) {
@@ -49,17 +49,6 @@ func (h *NewPostHandler) HandleNewPost(c *gin.Context) {
 	author := claim.Username
 	utils.Logger.Info().Msg("New post request received from " + author)
 
-	// Convert threadId to UUID
-	threadId, err := uuid.FromString(newPostRequest.ThreadId)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error converting threadId to UUID")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"errorMsg": "Thread does not exist",
-		})
-		return
-	}
-
 	// Check if reply to is NA
 	var replyTo *string
 	if newPostRequest.ReplyTo == "NA" {
@@ -69,7 +58,7 @@ func (h *NewPostHandler) HandleNewPost(c *gin.Context) {
 	}
 
 	// Create new post
-	err = h.PostService.CreateNewPost(author, replyTo, threadId, newPostRequest.Title, newPostRequest.Content)
+	err = h.PostService.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating new post")
 		c.JSON(http.StatusInternalServerError, nil)
