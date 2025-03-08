@@ -5,6 +5,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
@@ -66,6 +67,15 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 
 	router.POST("/new", func(ctx *gin.Context) {
 		threadHandlers.NewThreadHandler.HandleNewThread(ctx)
+	})
+}
+
+// Routes starting with /posts
+func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
+	postHandlers := posts.InitPostHandlers(db)
+
+	router.POST("/new", func(ctx *gin.Context) {
+		postHandlers.NewPostHandler.HandleNewPost(ctx)
 	})
 }
 

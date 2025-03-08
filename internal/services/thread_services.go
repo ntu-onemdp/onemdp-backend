@@ -27,6 +27,7 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 		ThreadId: threadId,
 		Title:    title,
 		Content:  content,
+		ReplyTo:  nil,
 	}
 
 	return s.PostRepo.CreatePost(post)
