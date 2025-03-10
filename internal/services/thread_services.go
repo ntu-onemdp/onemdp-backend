@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type ThreadService struct {
@@ -31,6 +32,31 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	}
 
 	return s.PostRepo.CreatePost(post)
+}
+
+// Delete thread and all associated posts
+func (s *ThreadService) DeleteThread(threadId string, claim *utils.JwtClaim) error {
+	// Check if role is admin or staff
+	if claim.Role != "admin" && claim.Role != "staff" {
+		author, err := s.ThreadRepo.GetThreadAuthor(threadId)
+		if author == "" || err != nil {
+			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
+			return err
+		}
+
+		// Check if author of thread matches the author in JWT claim
+		if author != claim.Username {
+			return utils.NewErrUnauthorized()
+		}
+	}
+
+	err := s.ThreadRepo.DeleteThread(threadId)
+	if err != nil {
+		utils.Logger.Trace().Msg("Error deleting thread")
+		return err
+	}
+
+	return s.PostRepo.DeletePostsByThread(threadId)
 }
 
 // Utility function to get preview from content

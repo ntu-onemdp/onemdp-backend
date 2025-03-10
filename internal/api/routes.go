@@ -68,6 +68,10 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	router.POST("/new", func(c *gin.Context) {
 		threadHandlers.NewThreadHandler.HandleNewThread(c)
 	})
+
+	router.DELETE("/:thread_id", func(c *gin.Context) {
+		threadHandlers.DeleteThreadHandler.HandleDeleteThread(c)
+	})
 }
 
 // Routes starting with /posts
