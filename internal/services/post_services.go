@@ -36,8 +36,6 @@ func (s *PostService) DeletePost(postId uuid.UUID, claim *utils.JwtClaim) error 
 		if author != claim.Username {
 			return utils.ErrUnauthorized{}
 		}
-
-		return s.PostRepo.DeletePost(postId)
 	}
 	return s.PostRepo.DeletePost(postId)
 }

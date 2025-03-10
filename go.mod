@@ -12,7 +12,7 @@ require (
 
 require github.com/gofrs/uuid v4.4.0+incompatible
 
-require github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
+require github.com/matoous/go-nanoid/v2 v2.1.0
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1

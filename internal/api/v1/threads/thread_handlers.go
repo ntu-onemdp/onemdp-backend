@@ -7,7 +7,8 @@ import (
 )
 
 type ThreadHandlers struct {
-	NewThreadHandler *NewThreadHandler
+	NewThreadHandler    *NewThreadHandler
+	DeleteThreadHandler *DeleteThreadHandler
 }
 
 func InitThreadHandlers(db *pgxpool.Pool) *ThreadHandlers {
@@ -20,8 +21,10 @@ func InitThreadHandlers(db *pgxpool.Pool) *ThreadHandlers {
 
 	// Initialize handlers
 	newThreadHandler := NewThreadHandler{ThreadService: &threadService}
+	deleteThreadHandler := DeleteThreadHandler{ThreadService: &threadService}
 
 	return &ThreadHandlers{
-		NewThreadHandler: &newThreadHandler,
+		NewThreadHandler:    &newThreadHandler,
+		DeleteThreadHandler: &deleteThreadHandler,
 	}
 }

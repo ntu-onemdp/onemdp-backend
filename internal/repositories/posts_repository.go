@@ -31,24 +31,7 @@ func (r *PostsRepository) CreatePost(post *models.NewPost) error {
 		return err
 	}
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
-	return nil
-}
-
-// Delete post from the database. Returns nil on successful delete
-// Current implementation: Hard delete. Change to soft delete in the future.
-func (r *PostsRepository) DeletePost(postId uuid.UUID) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE post_id = $1;`, POSTS_TABLE)
-
-	utils.Logger.Debug().Msg(fmt.Sprintf("Deleting post with id: %v", postId))
-
-	_, err := r.Db.Exec(context.Background(), query, postId)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
-		return err
-	}
-
-	utils.Logger.Trace().Msg(fmt.Sprintf("Post with id %v successfully deleted from database", postId))
+	utils.Logger.Info().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
 	return nil
 }
 
@@ -65,6 +48,99 @@ func (r *PostsRepository) GetPostAuthor(postId uuid.UUID) (string, error) {
 		return "", err
 	}
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("Author of post with id %v is %v", postId, author))
+	utils.Logger.Info().Msg(fmt.Sprintf("Author of post with id %v is %v", postId, author))
 	return author, nil
+}
+
+// Delete post from database using post_id. Returns nil if successful.
+// Soft delete is performed.
+func (r *PostsRepository) DeletePost(postId uuid.UUID) error {
+	query := fmt.Sprintf(`
+	WITH deleted_rows AS (
+		UPDATE %s SET is_available = false WHERE post_id = $1 RETURNING thread_id
+	)
+	SELECT COUNT(*) FROM deleted_rows;`, POSTS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Deleting post with id: %v", postId))
+
+	var num_deleted int
+	err := r.Db.QueryRow(context.Background(), query, postId).Scan(&num_deleted)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	if num_deleted == 0 {
+		utils.Logger.Warn().Msg("No rows deleted")
+	}
+
+	utils.Logger.Info().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Post with id %v successfully deleted from database", postId))
+	return nil
+}
+
+// Delete all posts from database matching thread_id. Returns nil if successful.
+func (r *PostsRepository) DeletePostsByThread(threadId string) error {
+	query := fmt.Sprintf(`
+	WITH deleted_rows AS (
+		UPDATE %s SET is_available = false WHERE thread_id = $1 RETURNING thread_id
+	)
+	SELECT COUNT(*) FROM deleted_rows;`, POSTS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Deleting posts with thread_id: %s", threadId))
+
+	var num_deleted int
+	err := r.Db.QueryRow(context.Background(), query, threadId).Scan(&num_deleted)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	if num_deleted == 0 {
+		utils.Logger.Warn().Msg("No rows deleted")
+	}
+
+	utils.Logger.Info().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Posts with thread_id %s successfully deleted from database", threadId))
+	return nil
+}
+
+// Restore deleted post by post_id. Returns nil if successful.
+func (r *PostsRepository) RestorePost(postId uuid.UUID) error {
+	query := fmt.Sprintf(`
+	WITH restored_rows AS (
+		UPDATE %s SET is_available = true WHERE post_id = $1 RETURNING thread_id
+	)
+	SELECT COUNT(*) FROM restored_rows;`, POSTS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Restoring post with id: %v", postId))
+
+	var num_restored int
+	err := r.Db.QueryRow(context.Background(), query, postId).Scan(&num_restored)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error restoring post")
+		return err
+	}
+
+	utils.Logger.Info().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Post with id %v successfully restored", postId))
+	return nil
+}
+
+// Restore all deleted posts by thread_id. Returns nil if successful.
+func (r *PostsRepository) RestorePostsByThread(threadId string) error {
+	query := fmt.Sprintf(`
+	WITH restored_rows AS (
+		UPDATE %s SET is_available = true WHERE thread_id = $1 RETURNING thread_id
+	)
+	SELECT COUNT(*) FROM restored_rows;`, POSTS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Restoring posts with thread_id: %s", threadId))
+
+	var num_restored int
+	err := r.Db.QueryRow(context.Background(), query, threadId).Scan(&num_restored)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error restoring posts")
+		return err
+	}
+
+	utils.Logger.Info().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Posts with thread_id %s successfully restored", threadId))
+	return nil
 }
