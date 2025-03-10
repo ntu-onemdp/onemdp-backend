@@ -34,10 +34,25 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	return s.PostRepo.CreatePost(post)
 }
 
+// Retrieve thread and all associated posts
+func (s *ThreadService) GetThread(threadId string) (*models.Thread, []models.Post, error) {
+	thread, err := s.ThreadRepo.GetThreadById(threadId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	posts, err := s.PostRepo.GetPostByThreadId(threadId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return thread, posts, nil
+}
+
 // Delete thread and all associated posts
 func (s *ThreadService) DeleteThread(threadId string, claim *utils.JwtClaim) error {
 	// Check if role is admin or staff
-	if claim.Role != "admin" && claim.Role != "staff" {
+	if !HasStaffPermission(claim) {
 		author, err := s.ThreadRepo.GetThreadAuthor(threadId)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of thread")

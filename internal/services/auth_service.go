@@ -135,3 +135,13 @@ func (s *AuthService) UpdateUserPassword(username string, new_password string) e
 func HashPassword(password string) (string, error) {
 	return argon2id.CreateHash(password, argon2id.DefaultParams) // NOTE: Set custom params for prod
 }
+
+// Returns true if user is staff level and above
+func HasStaffPermission(claim *utils.JwtClaim) bool {
+	return claim.Role == models.STAFF_ROLE || claim.Role == models.ADMIN_ROLE
+}
+
+// Returns true if user is admin level
+func HasAdminPermission(claim *utils.JwtClaim) bool {
+	return claim.Role == models.ADMIN_ROLE
+}
