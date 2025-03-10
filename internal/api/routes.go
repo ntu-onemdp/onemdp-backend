@@ -43,6 +43,7 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		userHandlers.UserProfileHandler.HandleGetUserProfile(c)
 	})
 
+	// [AE-7] GET /api/v1/users/:username/password-changed
 	router.GET("/password-changed", func(c *gin.Context) {
 		userHandlers.UserProfileHandler.HandleHasPasswordChanged(c)
 	})
@@ -56,6 +57,7 @@ func RegisterChangePasswordRoute(router *gin.Engine, db *pgxpool.Pool) {
 	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
 	changePasswordHandler := auth.ChangePasswordHandler{AuthService: &authService}
 
+	// [AE-4] POST /api/v1/auth/:username/change-password
 	router.POST("/api/v1/auth/:username/change-password", func(c *gin.Context) {
 		changePasswordHandler.HandleChangeUserPassword(c)
 	})
@@ -65,6 +67,7 @@ func RegisterChangePasswordRoute(router *gin.Engine, db *pgxpool.Pool) {
 func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	threadHandlers := threads.InitThreadHandlers(db)
 
+	// [AE-16] POST /api/v1/threads/new
 	router.POST("/new", func(c *gin.Context) {
 		threadHandlers.NewThreadHandler.HandleNewThread(c)
 	})
@@ -74,6 +77,7 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		threadHandlers.GetThreadHandler.HandleGetThread(c)
 	})
 
+	// [AE-17] DELETE /api/v1/threads/:thread_id
 	router.DELETE("/:thread_id", func(c *gin.Context) {
 		threadHandlers.DeleteThreadHandler.HandleDeleteThread(c)
 	})
@@ -83,10 +87,12 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	postHandlers := posts.InitPostHandlers(db)
 
+	// [AE-21] POST /api/v1/posts/new
 	router.POST("/new", func(c *gin.Context) {
 		postHandlers.NewPostHandler.HandleNewPost(c)
 	})
 
+	// [AE-24] DELETE /api/v1/posts/:postId
 	router.DELETE("/:postId", func(c *gin.Context) {
 		postHandlers.DeletePostHandler.HandleDeletePost(c)
 	})
@@ -108,17 +114,17 @@ func RegisterAdminUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		userHandlers.CreateUserHandler.HandleCreateNewUser(c)
 	})
 
-	// Register get users handler
+	// [AE-9] GET /api/v1/admin/users
 	router.GET("/users", func(c *gin.Context) {
 		userHandlers.GetUsersHandler.HandleGetUsers(c)
 	})
 
-	// Register get individual user handler
+	// [AE-8] GET /api/v1/admin/users/:username
 	router.GET("/users/:username", func(c *gin.Context) {
 		userHandlers.GetUsersHandler.HandleGetUser(c)
 	})
 
-	// Register update users role handler
+	// [AE-12] /api/v1/admin/users/update-role
 	router.POST("/users/update-role", func(c *gin.Context) {
 		userHandlers.UpdateUsersRoleHandler.HandleUpdateUsersRole(c)
 	})
