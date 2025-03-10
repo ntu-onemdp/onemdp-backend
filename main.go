@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
@@ -58,6 +61,22 @@ func main() {
 			"message": "pong",
 			"content": "hello",
 		})
+	})
+
+	// For debugging purposes only
+	r.POST("/ping", func(c *gin.Context) {
+		var requestBody map[string]interface{} // Use a generic map to handle any JSON structure
+
+		// Bind the JSON body to the requestBody variable
+		if err := c.ShouldBindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+			return
+		}
+
+		fmt.Println("Request Body:", requestBody)
+
+		// Echo back the received JSON
+		c.JSON(http.StatusOK, requestBody)
 	})
 
 	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080
