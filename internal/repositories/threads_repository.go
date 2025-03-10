@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
@@ -39,6 +40,23 @@ func (r *ThreadRepository) CreateThread(thread *models.NewThread) (string, error
 
 	utils.Logger.Info().Msg(fmt.Sprintf("%s successfully inserted into database", thread.Title))
 	return thread_id, nil
+}
+
+// Get thread by thread_id. Returns thread object if found, nil otherwise.
+func (r *ThreadRepository) GetThreadById(thread_id string) (*models.Thread, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
+
+	row, _ := r.Db.Query(context.Background(), query, thread_id)
+	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error serializing row to thread struct")
+		return nil, err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Thread with id %v found", thread_id))
+	return &thread, nil
 }
 
 // Get thread author

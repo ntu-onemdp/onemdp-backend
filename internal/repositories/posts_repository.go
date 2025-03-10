@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -33,6 +34,23 @@ func (r *PostsRepository) CreatePost(post *models.NewPost) error {
 
 	utils.Logger.Info().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
 	return nil
+}
+
+// Get posts by thread_id. Returns slice of post objects if found, nil otherwise.
+func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1;`, POSTS_TABLE)
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadId))
+
+	rows, _ := r.Db.Query(context.Background(), query, threadId)
+	posts, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Post])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error serializing rows to post structs")
+		return nil, err
+	}
+
+	utils.Logger.Info().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadId))
+	return posts, nil
 }
 
 // Get post author

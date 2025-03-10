@@ -25,7 +25,7 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 
 // Delete post only if author matches the author of the post or if user is admin or staff
 func (s *PostService) DeletePost(postId uuid.UUID, claim *utils.JwtClaim) error {
-	if claim.Role != "admin" && claim.Role != "staff" {
+	if !HasStaffPermission(claim) {
 		author, err := s.PostRepo.GetPostAuthor(postId)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of post")
