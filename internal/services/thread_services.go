@@ -18,20 +18,20 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 		Title:   title,
 		Preview: getPreview(content),
 	}
-	threadId, err := s.ThreadRepo.CreateThread(thread)
+	thread_id, err := s.ThreadRepo.CreateThread(thread)
 	if err != nil {
 		return err
 	}
 
 	post := &models.NewPost{
 		Author:   author,
-		ThreadId: threadId,
+		ThreadId: thread_id,
 		Title:    title,
 		Content:  content,
 		ReplyTo:  nil,
 	}
 
-	return s.PostRepo.CreatePost(post)
+	return s.PostRepo.CreateHeaderPost(post)
 }
 
 // Retrieve thread and all associated posts

@@ -18,7 +18,7 @@ type ThreadRepository struct {
 // Threads table name in db
 const THREADS_TABLE = "threads"
 
-// Insert new thread into the database. Returns UUID of new thread on successful insert
+// Insert new thread into the database. Returns thread ID and UUID of header post on successful insert
 func (r *ThreadRepository) CreateThread(thread *models.NewThread) (string, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (thread_id, author, title, preview) 
@@ -51,7 +51,6 @@ func (r *ThreadRepository) GetThreadById(thread_id string) (*models.Thread, erro
 	row, _ := r.Db.Query(context.Background(), query, thread_id)
 	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error serializing row to thread struct")
 		return nil, err
 	}
 
