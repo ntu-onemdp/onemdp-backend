@@ -44,7 +44,7 @@ func (r *ThreadRepository) CreateThread(thread *models.NewThread) (string, error
 
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
 func (r *ThreadRepository) GetThreadById(thread_id string) (*models.Thread, error) {
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true;`, THREADS_TABLE)
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
@@ -60,7 +60,7 @@ func (r *ThreadRepository) GetThreadById(thread_id string) (*models.Thread, erro
 
 // Get thread author
 func (r *ThreadRepository) GetThreadAuthor(thread_id string) (string, error) {
-	query := fmt.Sprintf(`SELECT author FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
+	query := fmt.Sprintf(`SELECT author FROM %s WHERE thread_id = $1 AND is_available = true;`, THREADS_TABLE)
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting author of thread with id: %v", thread_id))
 
