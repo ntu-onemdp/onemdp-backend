@@ -14,7 +14,7 @@ type DeletePostHandler struct {
 }
 
 func (h *DeletePostHandler) HandleDeletePost(c *gin.Context) {
-	postIdStr := c.Param("postId")
+	postIdStr := c.Param("post_id")
 	postId, err := uuid.FromString(postIdStr)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error parsing post id")

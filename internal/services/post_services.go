@@ -23,6 +23,33 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 	return s.PostRepo.CreatePost(post)
 }
 
+// Update post. Only the content and the title can be updated.
+// Post can only be updated by the author of the post or by admin or staff
+func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim) error {
+	if !HasStaffPermission(claim) {
+		author, err := s.PostRepo.GetPostAuthor(updated_post.PostId)
+		if author == "" || err != nil {
+			utils.Logger.Error().Err(err).Msg("Error getting author of post")
+			return err
+		}
+
+		// Check if author of post matches the author in JWT claim
+		if author != claim.Username {
+			return utils.ErrUnauthorized{}
+		}
+	}
+
+	restructured_post := &models.NewPost{
+		Author:   updated_post.Author,
+		ThreadId: updated_post.ThreadId,
+		Title:    updated_post.Title,
+		Content:  updated_post.Content,
+		ReplyTo:  updated_post.ReplyTo,
+	}
+
+	return s.PostRepo.UpdatePostContent(updated_post.PostId, *restructured_post)
+}
+
 // Delete post only if author matches the author of the post or if user is admin or staff
 func (s *PostService) DeletePost(postId uuid.UUID, claim *utils.JwtClaim) error {
 	if !HasStaffPermission(claim) {

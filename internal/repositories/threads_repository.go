@@ -75,12 +75,47 @@ func (r *ThreadRepository) GetThreadAuthor(thread_id string) (string, error) {
 	return author, nil
 }
 
+// Update thread's last activity timestamp to current time. Returns nil if successful.
+func (r *ThreadRepository) UpdateThreadLastActivity(thread_id string) error {
+	query := fmt.Sprintf(`
+	UPDATE %s
+	SET last_activity = NOW()
+	WHERE thread_id = $1;`, THREADS_TABLE)
+
+	_, err := r.Db.Exec(context.Background(), query, thread_id)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error updating last activity")
+		return err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Thread %s last activity updated", thread_id))
+	return nil
+}
+
+// Update thread's title and preview. Returns nil if successful.
+// Thread's title and preview is updated only when the header post is updated.
+func (r *ThreadRepository) UpdateThread(thread_id string, title string, preview string) error {
+	query := fmt.Sprintf(`
+	UPDATE %s
+	SET title = $1, preview = $2, last_activity = NOW()
+	WHERE thread_id = $3;`, THREADS_TABLE)
+
+	_, err := r.Db.Exec(context.Background(), query, title, preview, thread_id)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error updating preview")
+		return err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Thread %s preview updated", thread_id))
+	return nil
+}
+
 // Perform soft delete of the thread in the database. Returns nil if successful.
 func (r *ThreadRepository) DeleteThread(thread_id string) error {
 	query := fmt.Sprintf(`
 	WITH deleted_rows AS (
 		UPDATE %s
-		SET is_available = false
+		SET is_available = false, last_activity = NOW()
 		WHERE thread_id = $1
 		RETURNING thread_id
 	)

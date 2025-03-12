@@ -88,6 +88,23 @@ func (r *PostsRepository) GetPostAuthor(postId uuid.UUID) (string, error) {
 	return author, nil
 }
 
+// Update content of post
+func (r *PostsRepository) UpdatePostContent(postId uuid.UUID, updated_post models.NewPost) error {
+	query := fmt.Sprintf(`
+	UPDATE %s SET title = $1, content = $2, reply_to = $3, last_edited = NOW() WHERE post_id = $4;`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Updating content of post with id: %v", postId))
+
+	_, err := r.Db.Exec(context.Background(), query, updated_post.Title, updated_post.Content, updated_post.ReplyTo, postId)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Content of post with id %v successfully updated", postId))
+	return nil
+}
+
 // Delete post from database using post_id. Returns nil if successful.
 // Soft delete is performed.
 func (r *PostsRepository) DeletePost(postId uuid.UUID) error {
