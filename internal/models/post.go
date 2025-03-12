@@ -8,16 +8,17 @@ import (
 
 type Post struct {
 	PostId      uuid.UUID `json:"post_id" db:"post_id"`
-	Author      string    `json:"author" db:"author"`
-	ThreadId    string    `json:"thread_id" db:"thread_id"`
+	Author      string    `json:"author" db:"author" binding:"required"`
+	ThreadId    string    `json:"thread_id" db:"thread_id" binding:"required"`
 	ReplyTo     *string   `json:"reply_to" db:"reply_to"`
-	Title       string    `json:"title" db:"title"`
-	Content     string    `json:"content" db:"content"`
+	Title       string    `json:"title" db:"title" binding:"required"`
+	Content     string    `json:"content" db:"content" binding:"required"`
 	NumLikes    int       `json:"num_likes" db:"num_likes"`
 	TimeCreated time.Time `json:"time_created" db:"time_created"`
 	LastEdited  time.Time `json:"last_edited" db:"last_edited"`
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
+	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
 }
 
 // NewPost has minimal fields. Database takes care of the default field values.

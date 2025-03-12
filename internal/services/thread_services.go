@@ -18,20 +18,20 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 		Title:   title,
 		Preview: getPreview(content),
 	}
-	threadId, err := s.ThreadRepo.CreateThread(thread)
+	thread_id, err := s.ThreadRepo.CreateThread(thread)
 	if err != nil {
 		return err
 	}
 
 	post := &models.NewPost{
 		Author:   author,
-		ThreadId: threadId,
+		ThreadId: thread_id,
 		Title:    title,
 		Content:  content,
 		ReplyTo:  nil,
 	}
 
-	return s.PostRepo.CreatePost(post)
+	return s.PostRepo.CreateHeaderPost(post)
 }
 
 // Retrieve thread and all associated posts
@@ -47,6 +47,30 @@ func (s *ThreadService) GetThread(threadId string) (*models.Thread, []models.Pos
 	}
 
 	return thread, posts, nil
+}
+
+// Update thread's last activity
+func (s *ThreadService) UpdateThreadLastActivity(threadId string) error {
+	return s.ThreadRepo.UpdateThreadLastActivity(threadId)
+}
+
+// Update thread's title and preview
+func (s *ThreadService) UpdateThread(threadId string, title string, content string, claim *utils.JwtClaim) error {
+	// Check if role is admin or staff
+	if !HasStaffPermission(claim) {
+		author, err := s.ThreadRepo.GetThreadAuthor(threadId)
+		if author == "" || err != nil {
+			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
+			return err
+		}
+
+		// Check if author of thread matches the author in JWT claim
+		if author != claim.Username {
+			return utils.NewErrUnauthorized()
+		}
+	}
+
+	return s.ThreadRepo.UpdateThread(threadId, title, getPreview(content))
 }
 
 // Delete thread and all associated posts

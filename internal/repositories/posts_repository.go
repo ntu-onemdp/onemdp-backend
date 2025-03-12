@@ -24,7 +24,7 @@ func (r *PostsRepository) CreatePost(post *models.NewPost) error {
 	INSERT INTO %s (author, thread_id, title, content, reply_to) 
 	VALUES ($1, $2, $3, $4, $5);`, POSTS_TABLE)
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Inserting post: %v", post))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Inserting post: %v", post))
 
 	_, err := r.Db.Exec(context.Background(), query, post.Author, post.ThreadId, post.Title, post.Content, post.ReplyTo)
 	if err != nil {
@@ -36,11 +36,29 @@ func (r *PostsRepository) CreatePost(post *models.NewPost) error {
 	return nil
 }
 
+// Insert header post into the database. Returns nil on successful insert
+func (r *PostsRepository) CreateHeaderPost(post *models.NewPost) error {
+	query := fmt.Sprintf(`
+	INSERT INTO %s (author, thread_id, title, content, is_header)
+	VALUES ($1, $2, $3, $4, true);`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Inserting header post: %v", post))
+
+	_, err := r.Db.Exec(context.Background(), query, post.Author, post.ThreadId, post.Title, post.Content)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Header post %s successfully inserted into database", post.Title))
+	return nil
+}
+
 // Get posts by thread_id. Returns slice of post objects if found, nil otherwise.
 func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, error) {
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1;`, POSTS_TABLE)
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadId))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadId))
 
 	rows, _ := r.Db.Query(context.Background(), query, threadId)
 	posts, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Post])
@@ -57,7 +75,7 @@ func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, err
 func (r *PostsRepository) GetPostAuthor(postId uuid.UUID) (string, error) {
 	query := fmt.Sprintf(`SELECT author FROM %s WHERE post_id = $1;`, POSTS_TABLE)
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Getting author of post with id: %v", postId))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting author of post with id: %v", postId))
 
 	var author string
 	err := r.Db.QueryRow(context.Background(), query, postId).Scan(&author)
@@ -68,6 +86,23 @@ func (r *PostsRepository) GetPostAuthor(postId uuid.UUID) (string, error) {
 
 	utils.Logger.Info().Msg(fmt.Sprintf("Author of post with id %v is %v", postId, author))
 	return author, nil
+}
+
+// Update content of post
+func (r *PostsRepository) UpdatePostContent(postId uuid.UUID, updated_post models.NewPost) error {
+	query := fmt.Sprintf(`
+	UPDATE %s SET title = $1, content = $2, reply_to = $3, last_edited = NOW() WHERE post_id = $4;`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Updating content of post with id: %v", postId))
+
+	_, err := r.Db.Exec(context.Background(), query, updated_post.Title, updated_post.Content, updated_post.ReplyTo, postId)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Info().Msg(fmt.Sprintf("Content of post with id %v successfully updated", postId))
+	return nil
 }
 
 // Delete post from database using post_id. Returns nil if successful.
