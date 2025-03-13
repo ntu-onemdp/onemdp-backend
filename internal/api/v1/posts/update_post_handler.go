@@ -30,7 +30,7 @@ func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
 	utils.Logger.Debug().Interface("updatedPost", updatedPost).Msg("Update post request")
 
 	// Safeguard against post id manipulation
-	if updatedPost.PostId.String() != c.Param("post_id") {
+	if updatedPost.PostID != c.Param("post_id") {
 		utils.Logger.Error().Msg("Post ID mismatch")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -65,7 +65,7 @@ func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
 	// Update thread last activity
 	if updatedPost.IsHeader {
 		// Header post: update title, preview, and last activity
-		err = h.ThreadService.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.Content, claim)
+		err = h.ThreadService.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.PostContent, claim)
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating thread")
 			c.JSON(http.StatusInternalServerError, gin.H{

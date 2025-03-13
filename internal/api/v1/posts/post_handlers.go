@@ -18,13 +18,13 @@ func InitPostHandlers(db *pgxpool.Pool) *PostHandlers {
 	threadRepository := repositories.ThreadRepository{Db: db}
 
 	// Initialize services
-	postService := services.PostService{PostRepo: &postRepository}
-	threadService := services.ThreadService{ThreadRepo: &threadRepository, PostRepo: &postRepository}
+	postService := services.NewPostService(&postRepository)
+	threadService := services.NewThreadService(&threadRepository, &postRepository)
 
 	// Initialize handlers
-	newPostHandler := NewPostHandler{PostService: &postService}
-	updatePostHandler := UpdatePostHandler{PostService: &postService, ThreadService: &threadService}
-	deletePostHandler := DeletePostHandler{PostService: &postService}
+	newPostHandler := NewPostHandler{PostService: postService}
+	updatePostHandler := UpdatePostHandler{PostService: postService, ThreadService: threadService}
+	deletePostHandler := DeletePostHandler{PostService: postService}
 
 	return &PostHandlers{
 		NewPostHandler:    &newPostHandler,
