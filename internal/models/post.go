@@ -13,7 +13,6 @@ type Post struct {
 	ReplyTo     *string   `json:"reply_to" db:"reply_to"`
 	Title       string    `json:"title" db:"title" binding:"required"`
 	Content     string    `json:"content" db:"content" binding:"required"`
-	NumLikes    int       `json:"num_likes" db:"num_likes"`
 	TimeCreated time.Time `json:"time_created" db:"time_created"`
 	LastEdited  time.Time `json:"last_edited" db:"last_edited"`
 	Flagged     bool      `json:"flagged" db:"flagged"`
