@@ -7,41 +7,46 @@ import (
 )
 
 type ThreadService struct {
-	ThreadRepo *repositories.ThreadRepository
-	PostRepo   *repositories.PostsRepository
+	threadRepo *repositories.ThreadRepository
+	postRepo   *repositories.PostsRepository
+
+	threadFactory *models.ThreadFactory
+	postFactory   *models.PostFactory
+}
+
+func NewThreadService(threadRepo *repositories.ThreadRepository, postRepo *repositories.PostsRepository) *ThreadService {
+	return &ThreadService{
+		threadRepo:    threadRepo,
+		postRepo:      postRepo,
+		threadFactory: models.NewThreadFactory(),
+		postFactory:   models.NewPostFactory(),
+	}
 }
 
 // Create new thread and insert into the repository
 func (s *ThreadService) CreateNewThread(author string, title string, content string) error {
-	thread := &models.NewThread{
-		Author:  author,
-		Title:   title,
-		Preview: getPreview(content),
-	}
-	thread_id, err := s.ThreadRepo.CreateThread(thread)
+	thread := s.threadFactory.New(author, title, content)
+
+	err := s.threadRepo.Create(thread)
 	if err != nil {
 		return err
 	}
 
-	post := &models.NewPost{
-		Author:   author,
-		ThreadId: thread_id,
-		Title:    title,
-		Content:  content,
-		ReplyTo:  nil,
-	}
+	postFactory := models.PostFactory{}
+	post := postFactory.New(thread.Author, thread.ThreadID, thread.Title, thread.Preview, nil, true)
 
-	return s.PostRepo.CreateHeaderPost(post)
+	err = s.postRepo.Create(post)
+	return err
 }
 
 // Retrieve thread and all associated posts
-func (s *ThreadService) GetThread(threadId string) (*models.Thread, []models.Post, error) {
-	thread, err := s.ThreadRepo.GetThreadById(threadId)
+func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Post, error) {
+	thread, err := s.threadRepo.GetByID(threadID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	posts, err := s.PostRepo.GetPostByThreadId(threadId)
+	posts, err := s.postRepo.GetPostByThreadId(threadID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,15 +55,15 @@ func (s *ThreadService) GetThread(threadId string) (*models.Thread, []models.Pos
 }
 
 // Update thread's last activity
-func (s *ThreadService) UpdateThreadLastActivity(threadId string) error {
-	return s.ThreadRepo.UpdateThreadLastActivity(threadId)
+func (s *ThreadService) UpdateThreadLastActivity(threadID string) error {
+	return s.threadRepo.UpdateActivity(threadID)
 }
 
 // Update thread's title and preview
-func (s *ThreadService) UpdateThread(threadId string, title string, content string, claim *utils.JwtClaim) error {
+func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *utils.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
-		author, err := s.ThreadRepo.GetThreadAuthor(threadId)
+		author, err := s.threadRepo.GetAuthor(threadID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
 			return err
@@ -70,14 +75,14 @@ func (s *ThreadService) UpdateThread(threadId string, title string, content stri
 		}
 	}
 
-	return s.ThreadRepo.UpdateThread(threadId, title, getPreview(content))
+	return s.threadRepo.Update(threadID, title, getPreview(content))
 }
 
 // Delete thread and all associated posts
-func (s *ThreadService) DeleteThread(threadId string, claim *utils.JwtClaim) error {
+func (s *ThreadService) DeleteThread(threadID string, claim *utils.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
-		author, err := s.ThreadRepo.GetThreadAuthor(threadId)
+		author, err := s.threadRepo.GetAuthor(threadID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
 			return err
@@ -89,13 +94,13 @@ func (s *ThreadService) DeleteThread(threadId string, claim *utils.JwtClaim) err
 		}
 	}
 
-	err := s.ThreadRepo.DeleteThread(threadId)
+	err := s.threadRepo.Delete(threadID)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error deleting thread")
 		return err
 	}
 
-	return s.PostRepo.DeletePostsByThread(threadId)
+	return s.postRepo.DeletePostsByThread(threadID)
 }
 
 // Utility function to get preview from content

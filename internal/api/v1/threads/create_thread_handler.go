@@ -8,21 +8,21 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type NewThreadHandler struct {
+type CreateThreadHandler struct {
 	ThreadService *services.ThreadService
 }
 
 // Frontend request to create a new thread. Get author from JWT token
-type NewThreadRequest struct {
+type CreateThreadRequest struct {
 	Title   string `form:"title" binding:"required"`
 	Content string `form:"content" binding:"required"`
 }
 
-func (h *NewThreadHandler) HandleNewThread(c *gin.Context) {
-	var newThreadRequest NewThreadRequest
+func (h *CreateThreadHandler) HandleNewThread(c *gin.Context) {
+	var createThreadRequest CreateThreadRequest
 
 	// Bind with form
-	if err := c.ShouldBind(&newThreadRequest); err != nil {
+	if err := c.ShouldBind(&createThreadRequest); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error processing new thread request")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success":  false,
@@ -42,8 +42,7 @@ func (h *NewThreadHandler) HandleNewThread(c *gin.Context) {
 	author := claim.Username
 	utils.Logger.Info().Msg("New thread request received from " + author)
 
-	// Create new thread
-	err = h.ThreadService.CreateNewThread(author, newThreadRequest.Title, newThreadRequest.Content)
+	err = h.ThreadService.CreateNewThread(author, createThreadRequest.Title, createThreadRequest.Content)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating new thread")
 		c.JSON(http.StatusInternalServerError, nil)

@@ -1,33 +1,35 @@
 package services
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type PostService struct {
-	PostRepo *repositories.PostsRepository
+	postRepo    *repositories.PostsRepository
+	postFactory *models.PostFactory
+}
+
+func NewPostService(postRepo *repositories.PostsRepository) *PostService {
+	return &PostService{
+		postRepo:    postRepo,
+		postFactory: models.NewPostFactory(),
+	}
 }
 
 func (s *PostService) CreateNewPost(author string, replyTo *string, threadId string, title string, content string) error {
-	post := &models.NewPost{
-		Author:   author,
-		ThreadId: threadId,
-		Title:    title,
-		Content:  content,
-		ReplyTo:  replyTo,
-	}
+	post := s.postFactory.New(author, threadId, title, content, replyTo, false)
 
-	return s.PostRepo.CreatePost(post)
+	err := s.postRepo.Create(post)
+	return err
 }
 
 // Update post. Only the content and the title can be updated.
 // Post can only be updated by the author of the post or by admin or staff
 func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim) error {
 	if !HasStaffPermission(claim) {
-		author, err := s.PostRepo.GetPostAuthor(updated_post.PostId)
+		author, err := s.postRepo.GetAuthor(updated_post.PostID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of post")
 			return err
@@ -39,21 +41,13 @@ func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim
 		}
 	}
 
-	restructured_post := &models.NewPost{
-		Author:   updated_post.Author,
-		ThreadId: updated_post.ThreadId,
-		Title:    updated_post.Title,
-		Content:  updated_post.Content,
-		ReplyTo:  updated_post.ReplyTo,
-	}
-
-	return s.PostRepo.UpdatePostContent(updated_post.PostId, *restructured_post)
+	return s.postRepo.Update(updated_post.PostID, updated_post)
 }
 
 // Delete post only if author matches the author of the post or if user is admin or staff
-func (s *PostService) DeletePost(postId uuid.UUID, claim *utils.JwtClaim) error {
+func (s *PostService) DeletePost(postID string, claim *utils.JwtClaim) error {
 	if !HasStaffPermission(claim) {
-		author, err := s.PostRepo.GetPostAuthor(postId)
+		author, err := s.postRepo.GetAuthor(postID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of post")
 			return err
@@ -64,5 +58,5 @@ func (s *PostService) DeletePost(postId uuid.UUID, claim *utils.JwtClaim) error 
 			return utils.ErrUnauthorized{}
 		}
 	}
-	return s.PostRepo.DeletePost(postId)
+	return s.postRepo.Delete(postID)
 }

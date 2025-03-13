@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -14,19 +13,10 @@ type DeletePostHandler struct {
 }
 
 func (h *DeletePostHandler) HandleDeletePost(c *gin.Context) {
-	postIdStr := c.Param("post_id")
-	postId, err := uuid.FromString(postIdStr)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing post id")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"errorMsg": "Malformed request, invalid post id",
-		})
-		return
-	}
+	postID := c.Param("post_id")
 
 	// For debugging purposes
-	utils.Logger.Info().Str("postId", postIdStr).Msg("Delete post request received")
+	utils.Logger.Info().Str("postID", postID).Msg("Delete post request received")
 
 	// Get author from JWT token
 	jwt := c.Request.Header.Get("Authorization")
@@ -39,7 +29,7 @@ func (h *DeletePostHandler) HandleDeletePost(c *gin.Context) {
 	utils.Logger.Info().Msg("Delete post request received from " + claim.Username)
 
 	// Delete post
-	err = h.PostService.DeletePost(postId, claim)
+	err = h.PostService.DeletePost(postID, claim)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting post")
 
