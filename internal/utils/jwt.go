@@ -2,9 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -39,6 +41,24 @@ func GenerateJwt(claim UserClaim) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// Get username from JWT token in request
+func GetUsernameFromJwt(c *gin.Context) string {
+	// Get username from JWT token
+	jwt := c.Request.Header.Get("Authorization")
+	claim, err := ParseJwt(jwt)
+	if err != nil {
+		Logger.Error().Err(err).Msg("Error parsing JWT token")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Error parsing JWT token",
+			"error":   err.Error(),
+		})
+		return ""
+	}
+
+	return claim.Username
 }
 
 // Validate if username matches jwt token. Automatically returns false if error.
