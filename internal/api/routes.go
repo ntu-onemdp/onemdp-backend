@@ -88,9 +88,9 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	})
 
 	// [AE-86] DELETE /api/v1/threads/:thread_id/like
-	// router.DELETE("/:thread_id/like", func(c *gin.Context) {
-	// 	threadHandlers.LikeThreadHandlers.HandleUnlikeThread(c)
-	// })
+	router.DELETE("/:thread_id/like", func(c *gin.Context) {
+		threadHandlers.LikeThreadHandlers.HandleUnlikeThread(c)
+	})
 }
 
 // Routes starting with /posts
