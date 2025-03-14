@@ -59,13 +59,14 @@ func Init() {
 
 	db := stdlib.OpenDBFromPool(Pool)
 
+	// Perform migrations
+	if err := goose.Up(db, "migrations"); err != nil {
+		utils.Logger.Panic().Err(err)
+	}
+
 	// Check migration status
 	if err := goose.Status(db, "migrations"); err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error checking migration status")
-	}
-
-	if err := goose.Up(db, "migrations"); err != nil {
-		utils.Logger.Panic().Err(err)
 	}
 	if err := db.Close(); err != nil {
 		utils.Logger.Panic().Err(err)
