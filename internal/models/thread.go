@@ -16,7 +16,6 @@ func NewThreadFactory() *ThreadFactory {
 }
 
 type Thread struct {
-	Content
 	ThreadID     string    `json:"thread_id" db:"thread_id"`
 	Author       string    `json:"author" db:"author"`
 	Title        string    `json:"title" db:"title"`
@@ -26,6 +25,9 @@ type Thread struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
+
+	// Following fields are not stored in the database
+	NumLikes int `json:"num_likes" db:"-"`
 }
 
 // Create a new thread with a unique thread ID

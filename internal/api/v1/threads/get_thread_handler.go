@@ -10,13 +10,21 @@ import (
 )
 
 type GetThreadHandler struct {
-	ThreadService *services.ThreadService
+	threadService *services.ThreadService
+	likeService   *services.LikeService
+}
+
+func NewGetThreadHandler(threadService *services.ThreadService, likeService *services.LikeService) *GetThreadHandler {
+	return &GetThreadHandler{
+		threadService: threadService,
+		likeService:   likeService,
+	}
 }
 
 func (h *GetThreadHandler) HandleGetThread(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
-	thread, posts, err := h.ThreadService.GetThread(threadId)
+	thread, posts, err := h.threadService.GetThread(threadId)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread")
 
@@ -36,8 +44,9 @@ func (h *GetThreadHandler) HandleGetThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"thread":  thread,
-		"posts":   posts,
+		"success":     true,
+		"thread":      thread,
+		"posts":       posts,
+		"num_replies": len(posts) - 1,
 	})
 }
