@@ -92,6 +92,11 @@ func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		postHandlers.NewPostHandler.HandleNewPost(c)
 	})
 
+	// [AE-26] POST /api/v1/posts/:post_id/like
+	router.POST("/:post_id/like", func(c *gin.Context) {
+		postHandlers.LikePostHandlers.HandleLikePost(c)
+	})
+
 	// [AE-23] POST /api/v1/posts/:post_id/edit
 	router.POST("/:post_id/edit", func(c *gin.Context) {
 		postHandlers.UpdatePostHandler.HandleUpdatePost(c)
@@ -100,6 +105,11 @@ func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	// [AE-24] DELETE /api/v1/posts/:post_id
 	router.DELETE("/:post_id", func(c *gin.Context) {
 		postHandlers.DeletePostHandler.HandleDeletePost(c)
+	})
+
+	// [AE-85] DELETE /api/v1/posts/:post_id/like
+	router.DELETE("/:post_id/like", func(c *gin.Context) {
+		postHandlers.LikePostHandlers.HandleUnlikePost(c)
 	})
 }
 
