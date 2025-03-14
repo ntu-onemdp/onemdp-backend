@@ -20,7 +20,9 @@ const LIKES_TABLE = "likes"
 func (r *LikesRepository) CreateLike(like *models.Like) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (username, content_id) 
-	VALUES ($1, $2);`, LIKES_TABLE)
+	VALUES ($1, $2)
+	WEHRE NOT EXISTS
+	(SELECT 1 FROM %s WHERE username=$1 AND content_id=$2);`, LIKES_TABLE, LIKES_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, like.Username, like.ContentId)
 	if err != nil {
