@@ -28,7 +28,7 @@ func InitPostHandlers(db *pgxpool.Pool) *PostHandlers {
 	newPostHandler := NewPostHandler{PostService: postService}
 	updatePostHandler := UpdatePostHandler{PostService: postService, ThreadService: threadService}
 	deletePostHandler := DeletePostHandler{PostService: postService}
-	likePostHandlers := LikePostHandlers{likeService: likeService}
+	likePostHandlers := LikePostHandlers{likeService: likeService, postService: postService}
 
 	return &PostHandlers{
 		NewPostHandler:    &newPostHandler,

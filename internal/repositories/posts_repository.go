@@ -70,6 +70,23 @@ func (r *PostsRepository) GetAuthor(postID string) (string, error) {
 	return author, nil
 }
 
+// Check if post exists
+func (r *PostsRepository) IsAvailable(postID string) bool {
+	query := fmt.Sprintf(`SELECT is_available FROM %s WHERE post_id = $1;`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Checking if post with id: %v exists", postID))
+
+	var isAvailable bool
+	err := r.Db.QueryRow(context.Background(), query, postID).Scan(&isAvailable)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return false
+	}
+
+	utils.Logger.Trace().Bool("Is available", isAvailable).Msg(fmt.Sprintf("Post with id %v exists", postID))
+	return isAvailable
+}
+
 // Edit content of post
 func (r *PostsRepository) Update(postID string, updated_post models.Post) error {
 	query := fmt.Sprintf(`
