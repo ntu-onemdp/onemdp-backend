@@ -69,6 +69,7 @@ func (r *ThreadRepository) GetAuthor(thread_id string) (string, error) {
 	return author, nil
 }
 
+// Returns true if the thread exists
 func (r *ThreadRepository) IsAvailable(thread_id string) bool {
 	query := fmt.Sprintf(`SELECT is_available FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
 
