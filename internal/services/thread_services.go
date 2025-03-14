@@ -54,6 +54,11 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 	return thread, posts, nil
 }
 
+// Check if thread exists
+func (s *ThreadService) ThreadExists(threadID string) bool {
+	return s.threadRepo.IsAvailable(threadID)
+}
+
 // Update thread's last activity
 func (s *ThreadService) UpdateThreadLastActivity(threadID string) error {
 	return s.threadRepo.UpdateActivity(threadID)

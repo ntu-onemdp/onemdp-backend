@@ -13,10 +13,6 @@ type LikePostHandlers struct {
 	likeService *services.LikeService
 }
 
-// Like post request from frontend
-type LikePostRequest struct {
-}
-
 // Handle like post request
 func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 	// Get username from JWT token

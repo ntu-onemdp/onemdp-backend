@@ -20,7 +20,8 @@ const LIKES_TABLE = "likes"
 func (r *LikesRepository) CreateLike(like *models.Like) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (username, content_id) 
-	VALUES ($1, $2);`, LIKES_TABLE)
+	VALUES ($1, $2)
+	ON CONFLICT (username, content_id) DO NOTHING;`, LIKES_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, like.Username, like.ContentId)
 	if err != nil {
