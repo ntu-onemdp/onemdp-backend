@@ -11,6 +11,7 @@ import (
 // Handle like and unlike post requests.
 type LikePostHandlers struct {
 	likeService *services.LikeService
+	postService *services.PostService
 }
 
 // Handle like post request
@@ -34,6 +35,17 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 	// Get post id from URL
 	postID := c.Param("post_id")
 	utils.Logger.Trace().Str("post_id", postID).Msg("")
+
+	// Check if post exists
+	if !h.postService.PostExists(postID) {
+		utils.Logger.Error().Msg("Post does not exist")
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "Post does not exist",
+			"error":   nil,
+		})
+		return
+	}
 
 	// Check if user has liked the post
 	hasLiked := h.likeService.HasLiked(username, postID)

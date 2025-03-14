@@ -25,6 +25,11 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 	return err
 }
 
+// Check if post is available (exists and not deleted)
+func (s *PostService) PostExists(postID string) bool {
+	return s.postRepo.IsAvailable(postID)
+}
+
 // Update post. Only the content and the title can be updated.
 // Post can only be updated by the author of the post or by admin or staff
 func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim) error {
