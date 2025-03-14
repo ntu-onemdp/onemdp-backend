@@ -72,6 +72,11 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		threadHandlers.NewThreadHandler.HandleNewThread(c)
 	})
 
+	// [AE-25] POST /api/v1/threads/:thread_id/like
+	router.POST("/:thread_id/like", func(c *gin.Context) {
+		threadHandlers.LikeThreadHandlers.HandleLikeThread(c)
+	})
+
 	// [AE-20] GET /api/v1/threads/:thread_id
 	router.GET("/:thread_id", func(c *gin.Context) {
 		threadHandlers.GetThreadHandler.HandleGetThread(c)
@@ -81,6 +86,11 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 	router.DELETE("/:thread_id", func(c *gin.Context) {
 		threadHandlers.DeleteThreadHandler.HandleDeleteThread(c)
 	})
+
+	// [AE-86] DELETE /api/v1/threads/:thread_id/like
+	// router.DELETE("/:thread_id/like", func(c *gin.Context) {
+	// 	threadHandlers.LikeThreadHandlers.HandleUnlikeThread(c)
+	// })
 }
 
 // Routes starting with /posts
