@@ -20,13 +20,13 @@ func InitThreadHandlers(db *pgxpool.Pool) *ThreadHandlers {
 	likesRepository := repositories.LikesRepository{Db: db}
 
 	// Initialize services
-	threadService := services.NewThreadService(&threadRepository, &postsRepository)
+	threadService := services.NewThreadService(&threadRepository, &postsRepository, &likesRepository)
 	likeService := services.NewLikeService(&likesRepository)
 
 	// Initialize handlers
 	newThreadHandler := CreateThreadHandler{ThreadService: threadService}
 	deleteThreadHandler := DeleteThreadHandler{ThreadService: threadService}
-	getThreadHandler := GetThreadHandler{ThreadService: threadService}
+	getThreadHandler := GetThreadHandler{threadService: threadService}
 	likeThreadHandlers := LikeThreadHandlers{likeService: likeService, threadService: threadService}
 
 	return &ThreadHandlers{

@@ -21,7 +21,7 @@ func InitPostHandlers(db *pgxpool.Pool) *PostHandlers {
 
 	// Initialize services
 	postService := services.NewPostService(&postRepository)
-	threadService := services.NewThreadService(&threadRepository, &postRepository)
+	threadService := services.NewThreadService(&threadRepository, &postRepository, &likeRepository)
 	likeService := services.NewLikeService(&likeRepository)
 
 	// Initialize handlers

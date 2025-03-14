@@ -9,15 +9,17 @@ import (
 type ThreadService struct {
 	threadRepo *repositories.ThreadRepository
 	postRepo   *repositories.PostsRepository
+	likesRepo  *repositories.LikesRepository
 
 	threadFactory *models.ThreadFactory
 	postFactory   *models.PostFactory
 }
 
-func NewThreadService(threadRepo *repositories.ThreadRepository, postRepo *repositories.PostsRepository) *ThreadService {
+func NewThreadService(threadRepo *repositories.ThreadRepository, postRepo *repositories.PostsRepository, likesRepo *repositories.LikesRepository) *ThreadService {
 	return &ThreadService{
 		threadRepo:    threadRepo,
 		postRepo:      postRepo,
+		likesRepo:     likesRepo,
 		threadFactory: models.NewThreadFactory(),
 		postFactory:   models.NewPostFactory(),
 	}
@@ -41,14 +43,34 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 
 // Retrieve thread and all associated posts
 func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Post, error) {
+	// Retrieve thread from db
 	thread, err := s.threadRepo.GetByID(threadID)
 	if err != nil {
+		utils.Logger.Trace().Msg("Error getting thread")
 		return nil, nil, err
 	}
 
+	// Get number of likes for thread
+	thread.NumLikes, err = s.likesRepo.GetNumLikes(threadID)
+	if err != nil {
+		utils.Logger.Trace().Msg("Error getting number of likes")
+		return nil, nil, err
+	}
+
+	// Retrieve posts from db
 	posts, err := s.postRepo.GetPostByThreadId(threadID)
 	if err != nil {
+		utils.Logger.Trace().Msg("Error getting posts from db")
 		return nil, nil, err
+	}
+
+	// Get number of likes for each post
+	for i := range posts {
+		posts[i].NumLikes, err = s.likesRepo.GetNumLikes(posts[i].PostID)
+		if err != nil {
+			utils.Logger.Trace().Msg("Error getting number of likes")
+			return nil, nil, err
+		}
 	}
 
 	return thread, posts, nil

@@ -38,7 +38,15 @@ func (r *ThreadRepository) Create(thread *models.Thread) error {
 
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
 func (r *ThreadRepository) GetByID(thread_id string) (*models.Thread, error) {
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true;`, THREADS_TABLE)
+	// This function is called only when a thread is requested by its ID, so views are incremented here
+	query := fmt.Sprintf(`
+	WITH thread AS (
+		UPDATE %s
+		SET views = views + 1
+		WHERE thread_id = $1 AND is_available = true
+		RETURNING *
+	)
+	SELECT * FROM thread;`, THREADS_TABLE)
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 

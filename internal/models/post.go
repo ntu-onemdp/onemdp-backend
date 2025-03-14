@@ -28,6 +28,9 @@ type Post struct {
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
 	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
+
+	// These columns are not in the database
+	NumLikes int `json:"num_likes" db:"-"`
 }
 
 func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *Post {

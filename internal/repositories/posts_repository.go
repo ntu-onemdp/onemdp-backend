@@ -49,7 +49,7 @@ func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, err
 		return nil, err
 	}
 
-	utils.Logger.Info().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadId))
+	utils.Logger.Trace().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadId))
 	return posts, nil
 }
 
