@@ -77,7 +77,7 @@ func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 		threadHandlers.LikeThreadHandlers.HandleLikeThread(c)
 	})
 
-	// [AE-20] GET /api/v1/threads?size=25&sort=time_created&desc=true&timestamp=0
+	// [AE-14] GET /api/v1/threads?size=25&sort=time_created&desc=true&timestamp=0
 	router.GET("/", func(c *gin.Context) {
 		threadHandlers.GetThreadHandler.HandleGetThreads(c)
 	})
