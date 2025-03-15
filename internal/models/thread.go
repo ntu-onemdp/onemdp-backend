@@ -45,6 +45,26 @@ func (f *ThreadFactory) New(author string, title string, content string) *Thread
 	}
 }
 
+// Column definitions available for sorting
+type ThreadColumn string
+
+const (
+	TIME_CREATED_COL  ThreadColumn = "time_created"
+	LAST_ACTIVITY_COL ThreadColumn = "last_activity"
+)
+
+// Convert string to ThreadColumn
+func StrToThreadColumn(s string) ThreadColumn {
+	switch s {
+	case "time_created":
+		return TIME_CREATED_COL
+	case "last_activity":
+		return LAST_ACTIVITY_COL
+	default:
+		return TIME_CREATED_COL
+	}
+}
+
 func (t *Thread) GetID() string {
 	return t.ThreadID
 }
