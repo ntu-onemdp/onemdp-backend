@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
@@ -75,8 +76,12 @@ func main() {
 
 		fmt.Println("Request Body:", requestBody)
 
+		timestamp := time.Now().Unix()
 		// Echo back the received JSON
-		c.JSON(http.StatusOK, requestBody)
+		c.JSON(http.StatusOK, gin.H{
+			"body":      requestBody,
+			"timestamp": timestamp,
+		})
 	})
 
 	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080

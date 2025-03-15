@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -39,6 +41,21 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 
 	err = s.postRepo.Create(post)
 	return err
+}
+
+// Retrieve all threads after cursor
+func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time) ([]models.Thread, error) {
+	// Convert sort string to ThreadColumn
+	column := models.StrToThreadColumn(sort)
+
+	// Retrieve threads from db
+	threads, err := s.threadRepo.GetThreads(column, cursor, size, descending)
+	if err != nil {
+		utils.Logger.Trace().Msg("Error getting threads from db")
+		return nil, err
+	}
+
+	return threads, nil
 }
 
 // Retrieve thread and all associated posts

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,6 +35,35 @@ func (r *ThreadRepository) Create(thread *models.Thread) error {
 
 	utils.Logger.Info().Msg(fmt.Sprintf("%s successfully inserted into database", thread.Title))
 	return nil
+}
+
+// Get all threads from a certain timestamp. Cursor given is the timestamp of the last thread in the previous page.
+// Number of threads returned is not hardcoded, can be chosen in frontend.
+// Params
+// column: column to sort by
+// cursor: timestamp of the last thread in the previous page
+// size: page size; number of threads to return
+// descending: true if sorting is descending, false if ascending
+func (r *ThreadRepository) GetThreads(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+	desc := "DESC"
+	if !descending {
+		desc = "ASC"
+	}
+
+	// Example SQL statement after formatting:
+	// SELECT * FROM threads WHERE time_created < cursor AND is_available = true ORDER BY time_created DESC LIMIT size;
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s < $1 AND is_available = true ORDER BY %s %s LIMIT $2;`, THREADS_TABLE, column, column, desc)
+
+	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
+	rows, _ := r.Db.Query(context.Background(), query, cursor, size)
+	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error collecting rows")
+		return nil, err
+	}
+
+	utils.Logger.Info().Msg("Threads retrieved from database")
+	return threads, nil
 }
 
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
