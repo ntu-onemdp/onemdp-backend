@@ -14,11 +14,11 @@ COPY ./go.sum ./go.sum
 # Download dependencies
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
-# Copy migrations
-COPY ./migrations ./migrations
-
 # Copy main
 COPY ./main.go ./main.go
+
+# Copy migrations
+COPY ./migrations ./migrations
 
 # Copy source code
 COPY ./internal ./internal

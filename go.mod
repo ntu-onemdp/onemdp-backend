@@ -10,6 +10,10 @@ require (
 	github.com/sethvargo/go-diceware v0.5.0
 )
 
+require github.com/gofrs/uuid v4.4.0+incompatible
+
+require github.com/matoous/go-nanoid/v2 v2.1.0
+
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/mfridman/interpolate v0.0.2 // indirect

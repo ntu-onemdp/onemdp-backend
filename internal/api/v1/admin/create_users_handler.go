@@ -1,6 +1,9 @@
 package admin
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -8,6 +11,7 @@ import (
 
 type CreateUserHandler struct {
 	UserService *services.UserService
+	AuthService *services.AuthService
 }
 
 // Raw request from frontend
@@ -48,6 +52,13 @@ func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
 		c.JSON(400, nil)
 	}
 
+	// Create file to store default passwords
+	file, err := os.OpenFile("new_users.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error creating file for password storage")
+	}
+	defer file.Close()
+
 	for _, newUser := range createNewUsersRequest.Users {
 		singleUserResult := SingleUserResponse{
 			Username: newUser.Username,
@@ -60,6 +71,15 @@ func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
 			singleUserResult.Result = "failed"
 		} else {
 			singleUserResult.Result = "success"
+
+			// Success: Continue to insert to auth table
+			default_password := utils.GeneratePassword()                                 // Generate default password
+			file.WriteString(fmt.Sprintf("%s,%s\n", newUser.Username, default_password)) // Write username and password to file
+			if err := h.AuthService.InsertNewAuth(newUser.Username, default_password); err != nil {
+				utils.Logger.Error().Err(err).Msg("Error encountered when inserting new auth")
+				singleUserResult.Result = "failed"
+			}
+
 		}
 
 		// Append the result to overall response

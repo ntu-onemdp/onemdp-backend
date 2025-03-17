@@ -17,6 +17,41 @@ type UsersRepository struct {
 // Users table name in db
 const USERS_TABLE = "users"
 
+// Insert one empty user into the database. Returns nil on successful insert
+// Use this function for user creation
+func (r *UsersRepository) InsertOneUser(user *models.User) error {
+	query := `
+	INSERT INTO users (username, name, semester) 
+	VALUES ($1, $2, $3);`
+
+	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
+	return nil
+}
+
+// Admin: Retrieve all users from the database, regardless of status
+func (r *UsersRepository) GetAllUsers() ([]models.User, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s;`, USERS_TABLE)
+	rows, err := r.Db.Query(context.Background(), query)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return nil, err
+	}
+
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.User])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error serializing rows to user structs")
+		return nil, err
+	}
+
+	return users, nil
+}
+
 // Retrieve user's status based on the username.
 // Throws error if username cannot be found
 func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
@@ -39,7 +74,7 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1 AND status='active';", USERS_TABLE)
 	row, _ := r.Db.Query(context.Background(), query, username)
 	user, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
-	// utils.Logger.Debug().Msg(user.Username)
+	utils.Logger.Debug().Str("username", username).Msg("")
 	if err != nil {
 		utils.Logger.Debug().Msg("Returning nil")
 		utils.Logger.Error().Err(err).Msg("")
@@ -48,21 +83,19 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.User, erro
 	return user, nil
 }
 
-// Insert one empty user into the database. Returns nil on successful insert
-// Use this function for user creation
-func (r *UsersRepository) InsertOneUser(user *models.User) error {
-	query := `
-	INSERT INTO users (username, name, semester) 
-	VALUES ($1, $2, $3);`
-
-	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
+// Admin: Retrieve user's information from username
+// This function is able to retrieve deleted users as well
+func (r *UsersRepository) GetUserByUsernameAdmin(username string) (*models.User, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE username=$1;`, USERS_TABLE)
+	row, _ := r.Db.Query(context.Background(), query, username)
+	user, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
 	if err != nil {
+		utils.Logger.Debug().Msg("Returning nil")
 		utils.Logger.Error().Err(err).Msg("")
-		return err
+		return nil, err
 	}
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
-	return nil
+	return user, nil
 }
 
 // Retrieve if user has changed password

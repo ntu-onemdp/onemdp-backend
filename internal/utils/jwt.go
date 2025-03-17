@@ -2,9 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -14,6 +16,7 @@ type JwtClaim struct {
 	jwt.RegisteredClaims
 }
 
+// Represent user claim before signing the JWT token.
 type UserClaim struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
@@ -40,8 +43,31 @@ func GenerateJwt(claim UserClaim) (string, error) {
 	return tokenString, nil
 }
 
+// Get username from JWT token in request
+func GetUsernameFromJwt(c *gin.Context) string {
+	// Get username from JWT token
+	jwt := c.Request.Header.Get("Authorization")
+	claim, err := ParseJwt(jwt)
+	if err != nil {
+		Logger.Error().Err(err).Msg("Error parsing JWT token")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Error parsing JWT token",
+			"error":   err.Error(),
+		})
+		return ""
+	}
+
+	return claim.Username
+}
+
 // Validate if username matches jwt token. Automatically returns false if error.
 func ValidateUsername(username string, tokenString string) bool {
+	// Remove "Bearer " prefix if included
+	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+		tokenString = tokenString[7:]
+	}
+
 	claim, err := ParseJwt(tokenString)
 	if err != nil {
 		Logger.Error().Err(err)
@@ -54,6 +80,11 @@ func ValidateUsername(username string, tokenString string) bool {
 // Parse signed jwt string
 func ParseJwt(tokenString string) (*JwtClaim, error) {
 	secretKey := getSecretKey()
+
+	// Remove "Bearer " prefix if included
+	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+		tokenString = tokenString[7:]
+	}
 
 	// Parse and verify the token
 	token, err := jwt.ParseWithClaims(tokenString, &JwtClaim{}, func(token *jwt.Token) (interface{}, error) {
