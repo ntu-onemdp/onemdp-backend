@@ -58,6 +58,11 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	return threads, nil
 }
 
+// Retrieve threads metadata
+func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
+	return s.threadRepo.GetThreadsMetadata()
+}
+
 // Retrieve thread and all associated posts
 func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Post, error) {
 	// Retrieve thread from db

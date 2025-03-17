@@ -54,9 +54,22 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 		return
 	}
 
+	metadata, err := h.threadService.GetThreadsMetadata()
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "error getting threads metadata",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"threads": threads,
+		"success":     true,
+		"threads":     threads,
+		"num_threads": metadata.NumThreads,
+		"num_pages":   (metadata.NumThreads + size - 1) / size,
 	})
 }
 

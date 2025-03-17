@@ -53,6 +53,11 @@ const (
 	LAST_ACTIVITY_COL ThreadColumn = "last_activity"
 )
 
+// Threads metadata
+type ThreadsMetadata struct {
+	NumThreads int `json:"num_threads"`
+}
+
 // Convert string to ThreadColumn
 func StrToThreadColumn(s string) ThreadColumn {
 	switch s {
