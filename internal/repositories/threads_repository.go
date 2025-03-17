@@ -66,6 +66,21 @@ func (r *ThreadRepository) GetThreads(column models.ThreadColumn, cursor time.Ti
 	return threads, nil
 }
 
+// Get threads metadata
+func (r *ThreadRepository) GetThreadsMetadata() (models.ThreadsMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE is_available = true;`, THREADS_TABLE)
+
+	var num_threads int
+	err := r.Db.QueryRow(context.Background(), query).Scan(&num_threads)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
+		return models.ThreadsMetadata{}, err
+	}
+
+	utils.Logger.Info().Int("num_threads", num_threads).Msg("Threads metadata retrieved")
+	return models.ThreadsMetadata{NumThreads: num_threads}, nil
+}
+
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
 func (r *ThreadRepository) GetByID(thread_id string) (*models.Thread, error) {
 	// This function is called only when a thread is requested by its ID, so views are incremented here
