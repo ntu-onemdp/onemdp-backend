@@ -110,12 +110,21 @@ func ParseJwt(tokenString string) (*JwtClaim, error) {
 // Helper function to retrieve secret key
 func getSecretKey() []byte {
 	// Load secret key
-	secretKey := []byte(os.Getenv("JWT_KEY"))
+	key, err := os.ReadFile("/run/secrets/jwt-key")
+	if err != nil {
+		// Read from local file
+		Logger.Warn().Msg("Error reading secret, attempting to load from /config/jwt-key.txt")
+
+		key, err = os.ReadFile("config/jwt-key.txt")
+		if err != nil {
+			Logger.Panic().Err(err).Msg("Error reading JWT secret key")
+		}
+	}
 
 	// Check if secret key was read correctly
-	if len(secretKey) == 0 {
+	if len(key) == 0 {
 		Logger.Warn().Msg("JWT secret key is empty!")
 	}
 
-	return secretKey
+	return key
 }
