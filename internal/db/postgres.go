@@ -35,17 +35,19 @@ func Init() {
 		postgres_db = "dev_1"
 	}
 
+	netloc, exists := os.LookupEnv("POSTGRES_NETLOC")
+	if !exists {
+		// Defaults to host.docker.internal
+		utils.Logger.Warn().Msg("Error retrieving postgres netloc, default netloc set.")
+		netloc = "host.docker.internal"
+	}
+
 	// Create connection pool to db
 	pg_username := os.Getenv("PG_USERNAME")
 
 	// IMPORTANT
-	// Uncomment the correct connection string based on the environment
-	// // Local
-	// connectionString := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
-	// Docker run
-	connectionString := fmt.Sprintf("postgres://%s:%s@host.docker.internal:5432/%s?sslmode=disable", pg_username, string(db_pw), postgres_db)
-	// // Docker compose
-	// connectionString := fmt.Sprintf("postgres://%s:%s@db:5432/%s?sslmode=disable", string(db_pw), postgres_db)
+	// Set the correct host for the database depending on where the application is running. Set it in .env.dev
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", pg_username, string(db_pw), netloc, postgres_db)
 
 	Pool, err = pgxpool.New(context.Background(), connectionString)
 	if err != nil {
