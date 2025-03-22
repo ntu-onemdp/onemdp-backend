@@ -4,7 +4,9 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type ThreadFactory struct {
@@ -98,6 +100,10 @@ func (t *Thread) GetFlagged() bool {
 func getPreview(content string) string {
 	const MAX_PREVIEW_LENGTH = 100
 
+	p := bluemonday.StrictPolicy()
+	content = p.Sanitize(content)
+
+	utils.Logger.Debug().Str("content", content).Msg("Sanitized content")
 	if len(content) <= MAX_PREVIEW_LENGTH {
 		return content
 	}
