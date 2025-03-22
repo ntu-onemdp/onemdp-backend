@@ -15,6 +15,12 @@ require github.com/gofrs/uuid v4.4.0+incompatible
 require github.com/matoous/go-nanoid/v2 v2.1.0
 
 require (
+	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
+)
+
+require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/rs/cors v1.11.1 // indirect
