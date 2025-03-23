@@ -54,7 +54,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Generate jwt
-	jwt, err := utils.GenerateJwt(utils.UserClaim{Username: form.Username, Role: role})
+	jwt, err := utils.JwtHandler.GenerateJwt(utils.UserClaim{Username: form.Username, Role: role})
 	if err != nil {
 		utils.Logger.Error().Err(err)
 		c.JSON(500, "Internal server error")
