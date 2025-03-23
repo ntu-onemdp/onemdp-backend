@@ -38,7 +38,7 @@ func (r *PostsRepository) Create(post *models.Post) error {
 
 // Get posts by thread_id. Returns slice of post objects if found, nil otherwise.
 func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, error) {
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true;`, POSTS_TABLE)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true ORDER BY time_created ASC;`, POSTS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadId))
 

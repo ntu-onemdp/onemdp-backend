@@ -17,7 +17,7 @@ type NewPostHandler struct {
 type NewPostRequest struct {
 	Title    string `json:"title" binding:"required"`
 	Content  string `json:"content" binding:"required"`
-	ReplyTo  string `json:"reply_to" binding:"required"` // NA if not a reply
+	ReplyTo  string `json:"reply_to"`
 	ThreadId string `json:"thread_id" binding:"required"`
 }
 
@@ -48,9 +48,9 @@ func (h *NewPostHandler) HandleNewPost(c *gin.Context) {
 	author := claim.Username
 	utils.Logger.Info().Msg("New post request received from " + author)
 
-	// Check if reply to is NA
+	// Check if reply to is blank
 	var replyTo *string
-	if newPostRequest.ReplyTo == "NA" {
+	if newPostRequest.ReplyTo == "" {
 		replyTo = nil
 	} else {
 		replyTo = &newPostRequest.ReplyTo

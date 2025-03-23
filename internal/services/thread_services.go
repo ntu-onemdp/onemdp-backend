@@ -37,7 +37,7 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	}
 
 	postFactory := models.PostFactory{}
-	post := postFactory.New(thread.Author, thread.ThreadID, thread.Title, thread.Preview, nil, true)
+	post := postFactory.New(thread.Author, thread.ThreadID, thread.Title, content, nil, true)
 
 	err = s.postRepo.Create(post)
 	return err

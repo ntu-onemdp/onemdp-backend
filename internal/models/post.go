@@ -4,6 +4,7 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
 )
 
@@ -16,7 +17,7 @@ func NewPostFactory() *PostFactory {
 }
 
 type Post struct {
-	Content
+	Content     `json:"-" db:"-"`
 	PostID      string    `json:"post_id" db:"post_id"`
 	Author      string    `json:"author" db:"author" binding:"required"`
 	ThreadId    string    `json:"thread_id" db:"thread_id" binding:"required"`
@@ -34,6 +35,10 @@ type Post struct {
 }
 
 func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *Post {
+	// Sanitize content to prevent XSS attacks
+	policy := bluemonday.UGCPolicy()
+	content = policy.Sanitize(content)
+
 	return &Post{
 		PostID:      gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		Author:      author,
