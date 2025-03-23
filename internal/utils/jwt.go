@@ -10,6 +10,37 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// JWT object storing secret key
+type Jwt struct {
+	secretKey []byte
+}
+
+// Store global JWT handler instance
+var JwtHandler *Jwt
+
+// Load secret key from file. Panics if secret key cannot be found.
+func InitJwt() {
+	key, err := os.ReadFile("/run/secrets/jwt-key")
+	if err != nil {
+		// Read from local file
+		Logger.Warn().Msg("Error reading secret from /run/secrets/jwt-key, attempting to load from /config/jwt-key.txt")
+
+		key, err = os.ReadFile("config/jwt-key.txt")
+		if err != nil {
+			Logger.Panic().Err(err).Msg("Error reading JWT secret key")
+		}
+	}
+
+	// Check if secret key was read correctly
+	if len(key) == 0 {
+		Logger.Warn().Msg("JWT secret key is empty!")
+	}
+
+	JwtHandler = &Jwt{
+		secretKey: key,
+	}
+}
+
 type JwtClaim struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
@@ -23,8 +54,8 @@ type UserClaim struct {
 }
 
 // Generate and sign jwt, returning a token as a string
-func GenerateJwt(claim UserClaim) (string, error) {
-	secretKey := getSecretKey()
+func (j *Jwt) GenerateJwt(claim UserClaim) (string, error) {
+	secretKey := j.secretKey
 
 	// Generate JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -44,10 +75,10 @@ func GenerateJwt(claim UserClaim) (string, error) {
 }
 
 // Get username from JWT token in request
-func GetUsernameFromJwt(c *gin.Context) string {
+func (j *Jwt) GetUsernameFromJwt(c *gin.Context) string {
 	// Get username from JWT token
 	jwt := c.Request.Header.Get("Authorization")
-	claim, err := ParseJwt(jwt)
+	claim, err := j.ParseJwt(jwt)
 	if err != nil {
 		Logger.Error().Err(err).Msg("Error parsing JWT token")
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -62,13 +93,13 @@ func GetUsernameFromJwt(c *gin.Context) string {
 }
 
 // Validate if username matches jwt token. Automatically returns false if error.
-func ValidateUsername(username string, tokenString string) bool {
+func (j *Jwt) ValidateUsername(username string, tokenString string) bool {
 	// Remove "Bearer " prefix if included
 	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
 		tokenString = tokenString[7:]
 	}
 
-	claim, err := ParseJwt(tokenString)
+	claim, err := j.ParseJwt(tokenString)
 	if err != nil {
 		Logger.Error().Err(err)
 		return false
@@ -78,8 +109,8 @@ func ValidateUsername(username string, tokenString string) bool {
 }
 
 // Parse signed jwt string
-func ParseJwt(tokenString string) (*JwtClaim, error) {
-	secretKey := getSecretKey()
+func (j *Jwt) ParseJwt(tokenString string) (*JwtClaim, error) {
+	secretKey := j.secretKey
 
 	// Remove "Bearer " prefix if included
 	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
@@ -107,24 +138,24 @@ func ParseJwt(tokenString string) (*JwtClaim, error) {
 	return nil, fmt.Errorf("error extracting claim from jwt")
 }
 
-// Helper function to retrieve secret key
-func getSecretKey() []byte {
-	// Load secret key
-	key, err := os.ReadFile("/run/secrets/jwt-key")
-	if err != nil {
-		// Read from local file
-		Logger.Warn().Msg("Error reading secret, attempting to load from /config/jwt-key.txt")
+// // Helper function to retrieve secret key
+// func getSecretKey() []byte {
+// 	// Load secret key
+// 	key, err := os.ReadFile("/run/secrets/jwt-key")
+// 	if err != nil {
+// 		// Read from local file
+// 		Logger.Warn().Msg("Error reading secret, attempting to load from /config/jwt-key.txt")
 
-		key, err = os.ReadFile("config/jwt-key.txt")
-		if err != nil {
-			Logger.Panic().Err(err).Msg("Error reading JWT secret key")
-		}
-	}
+// 		key, err = os.ReadFile("config/jwt-key.txt")
+// 		if err != nil {
+// 			Logger.Panic().Err(err).Msg("Error reading JWT secret key")
+// 		}
+// 	}
 
-	// Check if secret key was read correctly
-	if len(key) == 0 {
-		Logger.Warn().Msg("JWT secret key is empty!")
-	}
+// 	// Check if secret key was read correctly
+// 	if len(key) == 0 {
+// 		Logger.Warn().Msg("JWT secret key is empty!")
+// 	}
 
-	return key
-}
+// 	return key
+// }

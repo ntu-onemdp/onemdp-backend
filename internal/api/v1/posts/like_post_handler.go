@@ -18,7 +18,7 @@ type LikePostHandlers struct {
 func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 	// Get username from JWT token
 	jwt := c.Request.Header.Get("Authorization")
-	claim, err := utils.ParseJwt(jwt)
+	claim, err := utils.JwtHandler.ParseJwt(jwt)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -83,7 +83,7 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 func (h *LikePostHandlers) HandleUnlikePost(c *gin.Context) {
 	// Get username from JWT token
 	jwt := c.Request.Header.Get("Authorization")
-	claim, err := utils.ParseJwt(jwt)
+	claim, err := utils.JwtHandler.ParseJwt(jwt)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
 		c.JSON(http.StatusUnauthorized, gin.H{

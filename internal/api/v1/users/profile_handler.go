@@ -25,7 +25,7 @@ func (h *ProfileHandler) HandleHasPasswordChanged(c *gin.Context) {
 	utils.Logger.Info().Msg(fmt.Sprintf("Password changed query received for %s", username))
 
 	// JWT does not match username
-	if !utils.ValidateUsername(username, tokenString) {
+	if !utils.JwtHandler.ValidateUsername(username, tokenString) {
 		c.JSON(401, nil)
 		return
 	}

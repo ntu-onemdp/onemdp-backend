@@ -20,7 +20,7 @@ func AuthGuard() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		claim, err := utils.ParseJwt(tokenString)
+		claim, err := utils.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})
@@ -46,7 +46,7 @@ func AdminGuard() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		claim, err := utils.ParseJwt(tokenString)
+		claim, err := utils.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})

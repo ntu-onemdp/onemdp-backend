@@ -10,6 +10,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	routes "github.com/ntu-onemdp/onemdp-backend/internal/api"
@@ -19,6 +20,9 @@ import (
 func main() {
 	db.Init()
 	defer db.Close()
+
+	// Initialize JWT handler
+	utils.InitJwt()
 
 	r := gin.Default()
 

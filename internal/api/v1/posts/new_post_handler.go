@@ -39,7 +39,7 @@ func (h *NewPostHandler) HandleNewPost(c *gin.Context) {
 
 	// Get author from JWT token
 	jwt := c.Request.Header.Get("Authorization")
-	claim, err := utils.ParseJwt(jwt)
+	claim, err := utils.JwtHandler.ParseJwt(jwt)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
 		c.JSON(http.StatusUnauthorized, nil)

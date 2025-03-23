@@ -40,7 +40,7 @@ func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
 	}
 
 	// Validate JWT
-	if !utils.ValidateUsername(username, tokenString) {
+	if !utils.JwtHandler.ValidateUsername(username, tokenString) {
 		response := ChangePasswordResponse{
 			Success: false,
 			Message: "Error: Invalid JWT",
