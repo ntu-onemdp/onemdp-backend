@@ -55,6 +55,11 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 		return nil, err
 	}
 
+	// Retrieve number of likes for each thread
+	for i := range threads {
+		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
+	}
+
 	return threads, nil
 }
 
@@ -73,11 +78,7 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 	}
 
 	// Get number of likes for thread
-	thread.NumLikes, err = s.likesRepo.GetNumLikes(threadID)
-	if err != nil {
-		utils.Logger.Trace().Msg("Error getting number of likes")
-		return nil, nil, err
-	}
+	thread.NumLikes = s.likesRepo.GetNumLikes(threadID)
 
 	// Retrieve posts from db
 	posts, err := s.postRepo.GetPostByThreadId(threadID)
@@ -88,11 +89,7 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 
 	// Get number of likes for each post
 	for i := range posts {
-		posts[i].NumLikes, err = s.likesRepo.GetNumLikes(posts[i].PostID)
-		if err != nil {
-			utils.Logger.Trace().Msg("Error getting number of likes")
-			return nil, nil, err
-		}
+		posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
 	}
 
 	return thread, posts, nil

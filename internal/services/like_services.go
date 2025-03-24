@@ -28,7 +28,7 @@ func (s *LikeService) HasLiked(username string, contentID string) bool {
 }
 
 // Get number of likes for a content
-func (s *LikeService) GetNumLikes(contentID string) (int, error) {
+func (s *LikeService) GetNumLikes(contentID string) int {
 	return s.likesRepository.GetNumLikes(contentID)
 }
 

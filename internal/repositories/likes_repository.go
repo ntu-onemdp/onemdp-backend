@@ -49,19 +49,19 @@ func (r *LikesRepository) GetLikeByUsernameAndContentId(username string, content
 }
 
 // Get number of likes
-func (r *LikesRepository) GetNumLikes(content_id string) (int, error) {
+func (r *LikesRepository) GetNumLikes(content_id string) int {
 	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE content_id = $1;`, LIKES_TABLE)
 
 	row := r.Db.QueryRow(context.Background(), query, content_id)
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error getting number of likes")
-		return 0, err
+		utils.Logger.Trace().Err(err).Msg("No likes found")
+		return 0
 	}
 
 	utils.Logger.Trace().Int("count", count).Msg("Number of likes retrieved")
-	return count, nil
+	return count
 }
 
 // Remove like. We perform hard deletes for likes.
