@@ -137,11 +137,11 @@ func HashPassword(password string) (string, error) {
 }
 
 // Returns true if user is staff level and above
-func HasStaffPermission(claim *utils.JwtClaim) bool {
+func HasStaffPermission(claim *models.JwtClaim) bool {
 	return claim.Role == models.STAFF_ROLE || claim.Role == models.ADMIN_ROLE
 }
 
 // Returns true if user is admin level
-func HasAdminPermission(claim *utils.JwtClaim) bool {
+func HasAdminPermission(claim *models.JwtClaim) bool {
 	return claim.Role == models.ADMIN_ROLE
 }

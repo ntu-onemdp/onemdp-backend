@@ -18,11 +18,12 @@ type loginForm struct {
 }
 
 type LoginResponse struct {
-	Success  bool        `json:"success"`
-	ErrorMsg string      `json:"error_msg"`
-	Jwt      string      `json:"jwt"`
-	User     models.User `json:"user"`
-	Role     string      `json:"role"`
+	Success  bool   `json:"success"`
+	ErrorMsg string `json:"error_msg"`
+	Jwt      string `json:"jwt"`
+	Role     string `json:"role"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
 }
 
 func (h *LoginHandler) HandleLogin(c *gin.Context) {
@@ -54,17 +55,19 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Generate jwt
-	jwt, err := utils.JwtHandler.GenerateJwt(utils.UserClaim{Username: form.Username, Role: role})
+	claim := models.NewClaim(user, role)
+	jwt, err := services.JwtHandler.GenerateJwt(claim)
 	if err != nil {
 		utils.Logger.Error().Err(err)
 		c.JSON(500, "Internal server error")
 	}
 
 	response := LoginResponse{
-		Success: true,
-		Jwt:     jwt,
-		User:    *user,
-		Role:    role,
+		Success:  true,
+		Jwt:      jwt,
+		Role:     role,
+		Name:     user.Name,
+		Username: user.Username,
 	}
 	c.JSON(200, &response)
 }

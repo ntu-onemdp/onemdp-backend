@@ -71,7 +71,7 @@ func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
 }
 
 // Retrieve thread and all associated posts
-func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Post, error) {
+func (s *ThreadService) GetThread(threadID string, username string) (*models.Thread, []models.Post, error) {
 	// Retrieve thread from db
 	thread, err := s.threadRepo.GetByID(threadID)
 	if err != nil {
@@ -91,7 +91,13 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 
 	// Get number of likes for each post
 	for i := range posts {
-		posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
+		if posts[i].IsHeader {
+			posts[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, threadID)
+			posts[i].NumLikes = s.likesRepo.GetNumLikes(threadID)
+		} else {
+			posts[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, posts[i].PostID)
+			posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
+		}
 	}
 
 	return thread, posts, nil
@@ -108,7 +114,7 @@ func (s *ThreadService) UpdateThreadLastActivity(threadID string) error {
 }
 
 // Update thread's title and preview
-func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *utils.JwtClaim) error {
+func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *models.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
 		author, err := s.threadRepo.GetAuthor(threadID)
@@ -127,7 +133,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 }
 
 // Delete thread and all associated posts
-func (s *ThreadService) DeleteThread(threadID string, claim *utils.JwtClaim) error {
+func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
 		author, err := s.threadRepo.GetAuthor(threadID)
