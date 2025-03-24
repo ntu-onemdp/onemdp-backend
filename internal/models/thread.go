@@ -29,8 +29,9 @@ type Thread struct {
 	Preview      string    `json:"preview" db:"preview"`
 
 	// Following fields are not stored in the database
-	NumLikes   int `json:"num_likes" db:"-"`
-	NumReplies int `json:"num_replies" db:"-"`
+	NumLikes   int  `json:"num_likes" db:"-"`
+	NumReplies int  `json:"num_replies" db:"-"`
+	IsLiked    bool `json:"is_liked" db:"-"` // Whether the thread is liked by the user
 }
 
 // Create a new thread with a unique thread ID

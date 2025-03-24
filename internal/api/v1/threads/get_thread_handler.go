@@ -30,6 +30,9 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 	const DEFAULT_SORT_COLUMN = models.TIME_CREATED_COL
 	const DEFAULT_SORT_DESCENDING = true
 
+	// Get username from jwt
+	username := utils.JwtHandler.GetUsernameFromJwt(c)
+
 	size := c.GetInt("size")
 	if size == 0 {
 		size = DEFAULT_PAGE_SIZE
@@ -43,7 +46,7 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 
 	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
 
-	threads, err := h.threadService.GetThreads(sort, size, desc, timestamp)
+	threads, err := h.threadService.GetThreads(sort, size, desc, timestamp, username)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -44,7 +44,7 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 }
 
 // Retrieve all threads after cursor
-func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time) ([]models.Thread, error) {
+func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time, username string) ([]models.Thread, error) {
 	// Convert sort string to ThreadColumn
 	column := models.StrToThreadColumn(sort)
 
@@ -59,6 +59,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	for i := range threads {
 		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
 		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
+		threads[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, threads[i].ThreadID)
 	}
 
 	return threads, nil
