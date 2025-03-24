@@ -53,6 +53,24 @@ func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, err
 	return posts, nil
 }
 
+// Get number of replies by in a thread. Returns number of replies if found, 0 otherwise.
+// Note that the header post is not counted.
+func (r *PostsRepository) GetNumReplies(threadId string) int {
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE thread_id = $1 AND is_header = false AND is_available = true;`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting number of replies with thread_id: %s", threadId))
+
+	var numReplies int
+	err := r.Db.QueryRow(context.Background(), query, threadId).Scan(&numReplies)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return 0
+	}
+
+	utils.Logger.Info().Int("Number of replies", numReplies).Msg(fmt.Sprintf("Number of replies with thread_id %s found", threadId))
+	return numReplies
+}
+
 // Get post author
 func (r *PostsRepository) GetAuthor(postID string) (string, error) {
 	query := fmt.Sprintf(`SELECT author FROM %s WHERE post_id = $1;`, POSTS_TABLE)

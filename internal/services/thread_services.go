@@ -55,9 +55,10 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 		return nil, err
 	}
 
-	// Retrieve number of likes for each thread
+	// Retrieve number of likes and replies for each thread
 	for i := range threads {
 		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
+		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
 	}
 
 	return threads, nil
@@ -121,7 +122,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 		}
 	}
 
-	return s.threadRepo.Update(threadID, title, getPreview(content))
+	return s.threadRepo.Update(threadID, title, models.GetPreview(content))
 }
 
 // Delete thread and all associated posts
@@ -147,14 +148,4 @@ func (s *ThreadService) DeleteThread(threadID string, claim *utils.JwtClaim) err
 	}
 
 	return s.postRepo.DeletePostsByThread(threadID)
-}
-
-// Utility function to get preview from content
-func getPreview(content string) string {
-	const MAX_PREVIEW_LENGTH = 100
-
-	if len(content) <= MAX_PREVIEW_LENGTH {
-		return content
-	}
-	return content[:MAX_PREVIEW_LENGTH]
 }
