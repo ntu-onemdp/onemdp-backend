@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	utils "github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
@@ -20,7 +21,7 @@ func AuthGuard() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		claim, err := utils.JwtHandler.ParseJwt(tokenString)
+		claim, err := services.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})
@@ -46,7 +47,7 @@ func AdminGuard() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		claim, err := utils.JwtHandler.ParseJwt(tokenString)
+		claim, err := services.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})

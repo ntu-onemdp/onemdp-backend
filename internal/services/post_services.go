@@ -32,7 +32,7 @@ func (s *PostService) PostExists(postID string) bool {
 
 // Update post. Only the content and the title can be updated.
 // Post can only be updated by the author of the post or by admin or staff
-func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim) error {
+func (s *PostService) UpdatePost(updated_post models.Post, claim *models.JwtClaim) error {
 	if !HasStaffPermission(claim) {
 		author, err := s.postRepo.GetAuthor(updated_post.PostID)
 		if author == "" || err != nil {
@@ -50,7 +50,7 @@ func (s *PostService) UpdatePost(updated_post models.Post, claim *utils.JwtClaim
 }
 
 // Delete post only if author matches the author of the post or if user is admin or staff
-func (s *PostService) DeletePost(postID string, claim *utils.JwtClaim) error {
+func (s *PostService) DeletePost(postID string, claim *models.JwtClaim) error {
 	if !HasStaffPermission(claim) {
 		author, err := s.postRepo.GetAuthor(postID)
 		if author == "" || err != nil {

@@ -17,7 +17,7 @@ type LikeThreadHandlers struct {
 // Handle like thread request
 func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 	// Get username form JWT token
-	username := utils.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUsernameFromJwt(c)
 	if username == "" {
 		return
 	}
@@ -66,7 +66,7 @@ func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 
 // Handle unlike thread request
 func (h *LikeThreadHandlers) HandleUnlikeThread(c *gin.Context) {
-	username := utils.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUsernameFromJwt(c)
 	if username == "" {
 		return
 	}

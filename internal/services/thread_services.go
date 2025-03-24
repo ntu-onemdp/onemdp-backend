@@ -114,7 +114,7 @@ func (s *ThreadService) UpdateThreadLastActivity(threadID string) error {
 }
 
 // Update thread's title and preview
-func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *utils.JwtClaim) error {
+func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *models.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
 		author, err := s.threadRepo.GetAuthor(threadID)
@@ -133,7 +133,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 }
 
 // Delete thread and all associated posts
-func (s *ThreadService) DeleteThread(threadID string, claim *utils.JwtClaim) error {
+func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) error {
 	// Check if role is admin or staff
 	if !HasStaffPermission(claim) {
 		author, err := s.threadRepo.GetAuthor(threadID)

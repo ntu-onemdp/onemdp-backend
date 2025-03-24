@@ -10,8 +10,6 @@ require (
 	github.com/sethvargo/go-diceware v0.5.0
 )
 
-require github.com/gofrs/uuid v4.4.0+incompatible
-
 require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/microcosm-cc/bluemonday v1.0.27

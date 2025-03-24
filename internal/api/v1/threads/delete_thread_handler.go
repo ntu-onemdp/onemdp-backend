@@ -17,7 +17,7 @@ func (h *DeleteThreadHandler) HandleDeleteThread(c *gin.Context) {
 
 	// Get author from JWT token
 	jwt := c.Request.Header.Get("Authorization")
-	claim, err := utils.JwtHandler.ParseJwt(jwt)
+	claim, err := services.JwtHandler.ParseJwt(jwt)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
 		c.JSON(http.StatusUnauthorized, nil)
