@@ -31,7 +31,8 @@ type Post struct {
 	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
 
 	// These columns are not in the database
-	NumLikes int `json:"num_likes" db:"-"`
+	NumLikes int  `json:"num_likes" db:"-"`
+	IsLiked  bool `json:"is_liked" db:"-"`
 }
 
 func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *Post {
