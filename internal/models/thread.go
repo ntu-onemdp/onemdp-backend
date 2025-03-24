@@ -29,7 +29,9 @@ type Thread struct {
 	Preview      string    `json:"preview" db:"preview"`
 
 	// Following fields are not stored in the database
-	NumLikes int `json:"num_likes" db:"-"`
+	NumLikes   int  `json:"num_likes" db:"-"`
+	NumReplies int  `json:"num_replies" db:"-"`
+	IsLiked    bool `json:"is_liked" db:"-"` // Whether the thread is liked by the user
 }
 
 // Create a new thread with a unique thread ID
@@ -43,7 +45,7 @@ func (f *ThreadFactory) New(author string, title string, content string) *Thread
 		Views:        0,
 		Flagged:      false,
 		IsAvailable:  true,
-		Preview:      getPreview(content),
+		Preview:      GetPreview(content),
 	}
 }
 
@@ -97,7 +99,7 @@ func (t *Thread) GetFlagged() bool {
 }
 
 // Utility function to get preview from content
-func getPreview(content string) string {
+func GetPreview(content string) string {
 	const MAX_PREVIEW_LENGTH = 100
 
 	p := bluemonday.StrictPolicy()

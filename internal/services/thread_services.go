@@ -44,7 +44,7 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 }
 
 // Retrieve all threads after cursor
-func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time) ([]models.Thread, error) {
+func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time, username string) ([]models.Thread, error) {
 	// Convert sort string to ThreadColumn
 	column := models.StrToThreadColumn(sort)
 
@@ -53,6 +53,13 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting threads from db")
 		return nil, err
+	}
+
+	// Retrieve number of likes and replies for each thread
+	for i := range threads {
+		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
+		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
+		threads[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, threads[i].ThreadID)
 	}
 
 	return threads, nil
@@ -73,11 +80,7 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 	}
 
 	// Get number of likes for thread
-	thread.NumLikes, err = s.likesRepo.GetNumLikes(threadID)
-	if err != nil {
-		utils.Logger.Trace().Msg("Error getting number of likes")
-		return nil, nil, err
-	}
+	thread.NumLikes = s.likesRepo.GetNumLikes(threadID)
 
 	// Retrieve posts from db
 	posts, err := s.postRepo.GetPostByThreadId(threadID)
@@ -88,11 +91,7 @@ func (s *ThreadService) GetThread(threadID string) (*models.Thread, []models.Pos
 
 	// Get number of likes for each post
 	for i := range posts {
-		posts[i].NumLikes, err = s.likesRepo.GetNumLikes(posts[i].PostID)
-		if err != nil {
-			utils.Logger.Trace().Msg("Error getting number of likes")
-			return nil, nil, err
-		}
+		posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
 	}
 
 	return thread, posts, nil
@@ -124,7 +123,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 		}
 	}
 
-	return s.threadRepo.Update(threadID, title, getPreview(content))
+	return s.threadRepo.Update(threadID, title, models.GetPreview(content))
 }
 
 // Delete thread and all associated posts
@@ -150,14 +149,4 @@ func (s *ThreadService) DeleteThread(threadID string, claim *utils.JwtClaim) err
 	}
 
 	return s.postRepo.DeletePostsByThread(threadID)
-}
-
-// Utility function to get preview from content
-func getPreview(content string) string {
-	const MAX_PREVIEW_LENGTH = 100
-
-	if len(content) <= MAX_PREVIEW_LENGTH {
-		return content
-	}
-	return content[:MAX_PREVIEW_LENGTH]
 }
