@@ -27,7 +27,7 @@ func (h *UpdateUsersRoleHandler) HandleUpdateUsersRole(c *gin.Context) {
 		return
 	}
 
-	err := h.AuthService.UpdateUserRole(updateUserRoleRequest.Username, updateUserRoleRequest.Role)
+	err := h.AuthService.UpdateRole(updateUserRoleRequest.Username, updateUserRoleRequest.Role)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when updating user role")
 		c.JSON(500, nil)

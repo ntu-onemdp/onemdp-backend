@@ -17,7 +17,7 @@ type LikesRepository struct {
 const LIKES_TABLE = "likes"
 
 // Insert new like into database. Retuns nil on successful insert
-func (r *LikesRepository) CreateLike(like *models.Like) error {
+func (r *LikesRepository) Insert(like *models.Like) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (username, content_id) 
 	VALUES ($1, $2)

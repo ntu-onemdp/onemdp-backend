@@ -43,7 +43,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Authenticate user
-	isAuthenticated, user, role := h.AuthService.AuthenticateUser(form.Username, form.Password)
+	isAuthenticated, user, role := h.AuthService.Authenticate(form.Username, form.Password)
 	if !isAuthenticated {
 		response := LoginResponse{
 			Success:  false,

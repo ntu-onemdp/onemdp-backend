@@ -19,7 +19,7 @@ func NewLikeService(likeRepository *repositories.LikesRepository) *LikeService {
 func (s *LikeService) CreateLike(username string, contentID string) error {
 	like := models.NewLike(username, contentID)
 
-	return s.likesRepository.CreateLike(like)
+	return s.likesRepository.Insert(like)
 }
 
 // Check if username has liked a content

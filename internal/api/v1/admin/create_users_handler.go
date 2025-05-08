@@ -75,7 +75,7 @@ func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
 			// Success: Continue to insert to auth table
 			default_password := utils.GeneratePassword()                                 // Generate default password
 			file.WriteString(fmt.Sprintf("%s,%s\n", newUser.Username, default_password)) // Write username and password to file
-			if err := h.AuthService.InsertNewAuth(newUser.Username, default_password); err != nil {
+			if err := h.AuthService.Create(newUser.Username, default_password); err != nil {
 				utils.Logger.Error().Err(err).Msg("Error encountered when inserting new auth")
 				singleUserResult.Result = "failed"
 			}

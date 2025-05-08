@@ -51,7 +51,7 @@ func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
 	}
 
 	// Check if old password matches old password in database
-	isAuthenticated, _, _ := h.AuthService.AuthenticateUser(username, form.OldPassword)
+	isAuthenticated, _, _ := h.AuthService.Authenticate(username, form.OldPassword)
 	if !isAuthenticated {
 		response := ChangePasswordResponse{
 			Success: false,
@@ -63,7 +63,7 @@ func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
 	}
 
 	// Change password
-	err := h.AuthService.UpdateUserPassword(username, form.NewPassword)
+	err := h.AuthService.UpdatePassword(username, form.NewPassword)
 	if err != nil {
 		response := ChangePasswordResponse{
 			Success: false,
