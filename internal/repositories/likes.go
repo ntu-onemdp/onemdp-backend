@@ -9,12 +9,14 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
+// Likes table name in db
+const LIKES_TABLE = "likes"
+
 type LikesRepository struct {
 	Db *pgxpool.Pool
 }
 
-// Likes table name in db
-const LIKES_TABLE = "likes"
+var Likes *LikesRepository
 
 // Insert new like into database. Retuns nil on successful insert
 func (r *LikesRepository) Insert(like *models.Like) error {
@@ -34,7 +36,7 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 }
 
 // Get like by username and content_id. Returns true if like exists, false otherwise.
-func (r *LikesRepository) GetLikeByUsernameAndContentId(username string, content_id string) bool {
+func (r *LikesRepository) GetByUsernameAndContentId(username string, content_id string) bool {
 	query := fmt.Sprintf(`SELECT 1 FROM %s WHERE username = $1 AND content_id = $2;`, LIKES_TABLE)
 
 	var num_likes int
@@ -65,7 +67,7 @@ func (r *LikesRepository) GetNumLikes(content_id string) int {
 }
 
 // Remove like. We perform hard deletes for likes.
-func (r *LikesRepository) RemoveLike(username string, content_id string) error {
+func (r *LikesRepository) Delete(username string, content_id string) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE username = $1 AND content_id = $2;`, LIKES_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, username, content_id)

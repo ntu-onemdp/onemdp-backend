@@ -12,20 +12,8 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type GetThreadHandler struct {
-	threadService *services.ThreadService
-	likeService   *services.LikeService
-}
-
-func NewGetThreadHandler(threadService *services.ThreadService, likeService *services.LikeService) *GetThreadHandler {
-	return &GetThreadHandler{
-		threadService: threadService,
-		likeService:   likeService,
-	}
-}
-
 // Retrieve all threads in page
-func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
+func GetAllThreadsHandler(c *gin.Context) {
 	const DEFAULT_PAGE_SIZE = 25
 	const DEFAULT_SORT_COLUMN = models.TIME_CREATED_COL
 	const DEFAULT_SORT_DESCENDING = true
@@ -46,7 +34,7 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 
 	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
 
-	threads, err := h.threadService.GetThreads(sort, size, desc, timestamp, username)
+	threads, err := services.Threads.GetThreads(sort, size, desc, timestamp, username)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -57,7 +45,7 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 		return
 	}
 
-	metadata, err := h.threadService.GetThreadsMetadata()
+	metadata, err := services.Threads.GetThreadsMetadata()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -77,13 +65,13 @@ func (h *GetThreadHandler) HandleGetThreads(c *gin.Context) {
 }
 
 // Retrieve individual thread
-func (h *GetThreadHandler) HandleGetThread(c *gin.Context) {
+func GetOneThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
 	// Get username from jwt
 	username := services.JwtHandler.GetUsernameFromJwt(c)
 
-	thread, posts, err := h.threadService.GetThread(threadId, username)
+	thread, posts, err := services.Threads.GetThread(threadId, username)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread")
 

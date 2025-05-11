@@ -15,12 +15,7 @@ type AuthService struct {
 	UsersRepo *repositories.UsersRepository
 }
 
-func Init(authRepo *repositories.AuthRepository, usersRepo *repositories.UsersRepository) *AuthService {
-	return &AuthService{
-		AuthRepo:  authRepo,
-		UsersRepo: usersRepo,
-	}
-}
+var Auth *AuthService
 
 // Insert new user auth into database.
 // Password is the plaintext password.

@@ -9,11 +9,6 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type CreateUserHandler struct {
-	UserService *services.UserService
-	AuthService *services.AuthService
-}
-
 // Raw request from frontend
 type CreateNewUsersRequest struct {
 	Semester int       `json:"semester" binding:"required"`
@@ -38,7 +33,7 @@ type SingleUserResponse struct {
 	Result   string `json:"result"`
 }
 
-func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
+func CreateUsersHandler(c *gin.Context) {
 	utils.Logger.Info().Msg("Create new user request received")
 	var createNewUsersRequest CreateNewUsersRequest
 	createUserResponse := CreateUserResponse{
@@ -66,7 +61,7 @@ func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
 		}
 
 		// Call service to create new user
-		if err := h.UserService.CreateNewUser(newUser.Username, newUser.Name, createNewUsersRequest.Semester); err != nil {
+		if err := services.Users.CreateNewUser(newUser.Username, newUser.Name, createNewUsersRequest.Semester); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error encountered when inserting new user")
 			singleUserResult.Result = "failed"
 		} else {
@@ -75,7 +70,7 @@ func (h *CreateUserHandler) HandleCreateNewUser(c *gin.Context) {
 			// Success: Continue to insert to auth table
 			default_password := utils.GeneratePassword()                                 // Generate default password
 			file.WriteString(fmt.Sprintf("%s,%s\n", newUser.Username, default_password)) // Write username and password to file
-			if err := h.AuthService.Create(newUser.Username, default_password); err != nil {
+			if err := services.Auth.Create(newUser.Username, default_password); err != nil {
 				utils.Logger.Error().Err(err).Msg("Error encountered when inserting new auth")
 				singleUserResult.Result = "failed"
 			}

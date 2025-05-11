@@ -8,8 +8,6 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
-	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
-	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 )
 
 /*
@@ -20,9 +18,9 @@ import (
 ################################
 */
 // Register unprotected login route
-func RegisterLoginRoute(router *gin.Engine, handler *auth.LoginHandler) {
+func RegisterLoginRoute(router *gin.Engine) {
 	router.POST("/api/v1/auth/login", func(c *gin.Context) {
-		handler.HandleLogin(c)
+		auth.LoginHandler(c)
 	})
 }
 
@@ -35,96 +33,92 @@ func RegisterLoginRoute(router *gin.Engine, handler *auth.LoginHandler) {
 
 Routes that are accessible to any authenticated user.
 */
+// TODO: Upload images
+func RegisterUploadImageRoute(router *gin.Engine) {
+	router.POST("/api/v1/upload", func(c *gin.Context) {
+	})
+}
+
 // Student routes. Current implementation: jwt verification performed inside handler.
-func RegisterStudentUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
-	userHandlers := users.InitUserHandlers(db)
+func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 
 	router.GET("/", func(c *gin.Context) {
-		userHandlers.UserProfileHandler.HandleGetUserProfile(c)
+		users.GetProfileHandler(c)
 	})
 
 	// [AE-7] GET /api/v1/users/:username/password-changed
 	router.GET("/password-changed", func(c *gin.Context) {
-		userHandlers.UserProfileHandler.HandleHasPasswordChanged(c)
+		users.HasPasswordChangedHandler(c)
 	})
 
 }
 
 // Register change password routes
-func RegisterChangePasswordRoute(router *gin.Engine, db *pgxpool.Pool) {
-	authRepo := repositories.AuthRepository{Db: db}
-	usersRepo := repositories.UsersRepository{Db: db}
-	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
-	changePasswordHandler := auth.ChangePasswordHandler{AuthService: &authService}
-
+func RegisterChangePasswordRoute(router *gin.Engine) {
 	// [AE-4] POST /api/v1/auth/:username/change-password
 	router.POST("/api/v1/auth/:username/change-password", func(c *gin.Context) {
-		changePasswordHandler.HandleChangeUserPassword(c)
+		auth.ChangePasswordHandler(c)
 	})
 }
 
 // Routes starting with /threads
-func RegisterThreadRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
-	threadHandlers := threads.InitThreadHandlers(db)
-
+func RegisterThreadRoutes(router *gin.RouterGroup) {
 	// [AE-16] POST /api/v1/threads/new
 	router.POST("/new", func(c *gin.Context) {
-		threadHandlers.NewThreadHandler.HandleNewThread(c)
+		threads.CreateThreadHandler(c)
 	})
 
 	// [AE-25] POST /api/v1/threads/:thread_id/like
 	router.POST("/:thread_id/like", func(c *gin.Context) {
-		threadHandlers.LikeThreadHandlers.HandleLikeThread(c)
+		threads.LikeThreadHandler(c)
 	})
 
 	// [AE-14] GET /api/v1/threads?size=25&sort=time_created&desc=true&timestamp=0
 	router.GET("/", func(c *gin.Context) {
-		threadHandlers.GetThreadHandler.HandleGetThreads(c)
+		threads.GetAllThreadsHandler(c)
 	})
 
 	// [AE-20] GET /api/v1/threads/:thread_id
 	router.GET("/:thread_id", func(c *gin.Context) {
-		threadHandlers.GetThreadHandler.HandleGetThread(c)
+		threads.GetOneThreadHandler(c)
 	})
 
 	// [AE-17] DELETE /api/v1/threads/:thread_id
 	router.DELETE("/:thread_id", func(c *gin.Context) {
-		threadHandlers.DeleteThreadHandler.HandleDeleteThread(c)
+		threads.DeleteThreadHandler(c)
 	})
 
 	// [AE-86] DELETE /api/v1/threads/:thread_id/like
 	router.DELETE("/:thread_id/like", func(c *gin.Context) {
-		threadHandlers.LikeThreadHandlers.HandleUnlikeThread(c)
+		threads.UnlikeThreadHandler(c)
 	})
 }
 
 // Routes starting with /posts
 func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
-	postHandlers := posts.InitPostHandlers(db)
-
 	// [AE-21] POST /api/v1/posts/new
 	router.POST("/new", func(c *gin.Context) {
-		postHandlers.NewPostHandler.HandleNewPost(c)
+		posts.NewPostHandler(c)
 	})
 
 	// [AE-26] POST /api/v1/posts/:post_id/like
 	router.POST("/:post_id/like", func(c *gin.Context) {
-		postHandlers.LikePostHandlers.HandleLikePost(c)
+		posts.LikePostHandler(c)
 	})
 
 	// [AE-23] POST /api/v1/posts/:post_id/edit
 	router.POST("/:post_id/edit", func(c *gin.Context) {
-		postHandlers.UpdatePostHandler.HandleUpdatePost(c)
+		posts.UpdatePostHandler(c)
 	})
 
 	// [AE-24] DELETE /api/v1/posts/:post_id
 	router.DELETE("/:post_id", func(c *gin.Context) {
-		postHandlers.DeletePostHandler.HandleDeletePost(c)
+		posts.DeletePostsHandler(c)
 	})
 
 	// [AE-85] DELETE /api/v1/posts/:post_id/like
 	router.DELETE("/:post_id/like", func(c *gin.Context) {
-		postHandlers.LikePostHandlers.HandleUnlikePost(c)
+		posts.UnlikePostHandler(c)
 	})
 }
 
@@ -136,26 +130,24 @@ func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
 ################################
 */
 // Register admin routes for user management
-func RegisterAdminUserRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
-	userHandlers := admin.InitUserHandlers(db)
-
+func RegisterAdminUserRoutes(router *gin.RouterGroup) {
 	// Register create users handler
 	router.POST("/users/create", func(c *gin.Context) {
-		userHandlers.CreateUserHandler.HandleCreateNewUser(c)
+		admin.CreateUsersHandler(c)
 	})
 
 	// [AE-9] GET /api/v1/admin/users
 	router.GET("/users", func(c *gin.Context) {
-		userHandlers.GetUsersHandler.HandleGetUsers(c)
+		admin.GetAllUsersHandler(c)
 	})
 
 	// [AE-8] GET /api/v1/admin/users/:username
 	router.GET("/users/:username", func(c *gin.Context) {
-		userHandlers.GetUsersHandler.HandleGetUser(c)
+		admin.GetOneUserHandler(c)
 	})
 
 	// [AE-12] /api/v1/admin/users/update-role
 	router.POST("/users/update-role", func(c *gin.Context) {
-		userHandlers.UpdateUsersRoleHandler.HandleUpdateUsersRole(c)
+		admin.UpdateRoleHandler(c)
 	})
 }

@@ -9,11 +9,7 @@ type LikeService struct {
 	likesRepository *repositories.LikesRepository
 }
 
-func NewLikeService(likeRepository *repositories.LikesRepository) *LikeService {
-	return &LikeService{
-		likesRepository: likeRepository,
-	}
-}
+var Likes *LikeService
 
 // Create a new like for username and contentID
 func (s *LikeService) CreateLike(username string, contentID string) error {
@@ -24,7 +20,7 @@ func (s *LikeService) CreateLike(username string, contentID string) error {
 
 // Check if username has liked a content
 func (s *LikeService) HasLiked(username string, contentID string) bool {
-	return s.likesRepository.GetLikeByUsernameAndContentId(username, contentID)
+	return s.likesRepository.GetByUsernameAndContentId(username, contentID)
 }
 
 // Get number of likes for a content
@@ -34,5 +30,5 @@ func (s *LikeService) GetNumLikes(contentID string) int {
 
 // Remove like for username and contentID
 func (s *LikeService) RemoveLike(username string, contentID string) error {
-	return s.likesRepository.RemoveLike(username, contentID)
+	return s.likesRepository.Delete(username, contentID)
 }

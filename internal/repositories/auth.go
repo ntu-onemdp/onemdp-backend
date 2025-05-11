@@ -9,11 +9,13 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
+const AUTH_TABLE = "auth"
+
 type AuthRepository struct {
 	Db *pgxpool.Pool
 }
 
-const AUTH_TABLE = "auth"
+var Auth *AuthRepository
 
 // Insert new auth detail into the database. Returns nil on success.
 func (r *AuthRepository) Insert(auth *models.AuthModel) error {
@@ -40,7 +42,6 @@ func (r *AuthRepository) Get(username string) (*models.AuthModel, error) {
 		return nil, err
 	}
 
-	utils.Logger.Debug().Msg("Successfully retrieved auth for " + username)
 	return &auth, nil
 }
 

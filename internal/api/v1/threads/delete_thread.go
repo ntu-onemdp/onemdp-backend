@@ -8,11 +8,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type DeleteThreadHandler struct {
-	ThreadService *services.ThreadService
-}
-
-func (h *DeleteThreadHandler) HandleDeleteThread(c *gin.Context) {
+func DeleteThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
 	// Get author from JWT token
@@ -26,7 +22,7 @@ func (h *DeleteThreadHandler) HandleDeleteThread(c *gin.Context) {
 
 	utils.Logger.Info().Msg("Delete thread request received from " + claim.Username)
 
-	err = h.ThreadService.DeleteThread(threadId, claim)
+	err = services.Threads.DeleteThread(threadId, claim)
 	if err == utils.NewErrUnauthorized() {
 		utils.Logger.Error().Err(err).Msg("User is student and not author. Unauthorized to delete thread")
 		c.JSON(http.StatusUnauthorized, gin.H{

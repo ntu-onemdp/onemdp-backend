@@ -10,12 +10,14 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
+// Users table name in db
+const USERS_TABLE = "users"
+
 type UsersRepository struct {
 	Db *pgxpool.Pool
 }
 
-// Users table name in db
-const USERS_TABLE = "users"
+var Users *UsersRepository
 
 // Insert one empty user into the database. Returns nil on successful insert
 // Use this function for user creation

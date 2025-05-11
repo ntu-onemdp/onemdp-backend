@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
-	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
@@ -28,28 +27,24 @@ func main() {
 	r.Use(cors.Default())
 
 	// Initialize repositories
-	authRepo := repositories.AuthRepository{Db: db.Pool}
-	usersRepo := repositories.UsersRepository{Db: db.Pool}
+	repositories.Init(db.Pool)
 
 	// Initialize services
-	authService := services.AuthService{AuthRepo: &authRepo, UsersRepo: &usersRepo}
-
-	// Initialize handlers (might be shifted in the future)
-	authHandler := auth.LoginHandler{AuthService: &authService}
+	services.Init()
 
 	// Register public routes
-	routes.RegisterLoginRoute(r, &authHandler)
+	routes.RegisterLoginRoute(r)
 
 	// Register change password route
-	routes.RegisterChangePasswordRoute(r, db.Pool)
+	routes.RegisterChangePasswordRoute(r)
 
 	// Register student routes
 	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
-	routes.RegisterStudentUserRoutes(studentRoutes, db.Pool)
+	routes.RegisterStudentUserRoutes(studentRoutes)
 
 	// Register thread routes
 	threadRoutes := r.Group("/api/v1/threads", middlewares.AuthGuard())
-	routes.RegisterThreadRoutes(threadRoutes, db.Pool)
+	routes.RegisterThreadRoutes(threadRoutes)
 
 	// Register post routes
 	postRoutes := r.Group("/api/v1/posts", middlewares.AuthGuard())
@@ -57,7 +52,7 @@ func main() {
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
-	routes.RegisterAdminUserRoutes(adminRoutes, db.Pool)
+	routes.RegisterAdminUserRoutes(adminRoutes)
 
 	// Ping route
 	r.GET("/ping", func(c *gin.Context) {

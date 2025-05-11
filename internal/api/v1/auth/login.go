@@ -7,10 +7,6 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type LoginHandler struct {
-	AuthService *services.AuthService
-}
-
 // Login form sent from frontend.
 type loginForm struct {
 	Username string `form:"username" binding:"required"`
@@ -26,8 +22,8 @@ type LoginResponse struct {
 	Username string `json:"username"`
 }
 
-func (h *LoginHandler) HandleLogin(c *gin.Context) {
-	utils.Logger.Trace().Msg("Login request received")
+func LoginHandler(c *gin.Context) {
+	utils.Logger.Trace().Str("username", c.PostForm("username")).Msg("Login request received")
 	var form loginForm
 
 	// Bind with form
@@ -43,7 +39,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 	}
 
 	// Authenticate user
-	isAuthenticated, user, role := h.AuthService.Authenticate(form.Username, form.Password)
+	isAuthenticated, user, role := services.Auth.Authenticate(form.Username, form.Password)
 	if !isAuthenticated {
 		response := LoginResponse{
 			Success:  false,

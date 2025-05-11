@@ -12,6 +12,8 @@ type UserService struct {
 	UsersRepo *repositories.UsersRepository
 }
 
+var Users *UserService
+
 // Create new user and insert into the repository
 func (s *UserService) CreateNewUser(username string, name string, semester int) error {
 	user := models.User{
@@ -39,7 +41,7 @@ func (s *UserService) HasPasswordChanged(username string) (bool, error) {
 }
 
 // Get user profile
-func (s *UserService) GetUserProfile(username string) (*models.UserProfile, error) {
+func (s *UserService) GetProfile(username string) (*models.UserProfile, error) {
 	return s.UsersRepo.GetUserProfile(username)
 }
 
