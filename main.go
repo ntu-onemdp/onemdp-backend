@@ -48,7 +48,11 @@ func main() {
 
 	// Register post routes
 	postRoutes := r.Group("/api/v1/posts", middlewares.AuthGuard())
-	routes.RegisterPostRoutes(postRoutes, db.Pool)
+	routes.RegisterPostRoutes(postRoutes)
+
+	// Register image routes
+	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard())
+	routes.RegisterImageRoutes(imageRoutes)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
