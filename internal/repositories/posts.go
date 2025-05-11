@@ -10,13 +10,15 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
+// Posts table name in db
+const POSTS_TABLE = "posts"
+
 type PostsRepository struct {
-	ContentRepository
+	_  ContentRepository
 	Db *pgxpool.Pool
 }
 
-// Posts table name in db
-const POSTS_TABLE = "posts"
+var Posts *PostsRepository
 
 // Insert new post into the database. Returns post ID and nil on successful insert
 func (r *PostsRepository) Create(post *models.Post) error {

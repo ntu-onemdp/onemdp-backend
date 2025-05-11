@@ -9,7 +9,7 @@ import (
 )
 
 type ThreadService struct {
-	threadRepo *repositories.ThreadRepository
+	threadRepo *repositories.ThreadsRepository
 	postRepo   *repositories.PostsRepository
 	likesRepo  *repositories.LikesRepository
 
@@ -17,7 +17,9 @@ type ThreadService struct {
 	postFactory   *models.PostFactory
 }
 
-func NewThreadService(threadRepo *repositories.ThreadRepository, postRepo *repositories.PostsRepository, likesRepo *repositories.LikesRepository) *ThreadService {
+var Threads *ThreadService
+
+func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repositories.PostsRepository, likesRepo *repositories.LikesRepository) *ThreadService {
 	return &ThreadService{
 		threadRepo:    threadRepo,
 		postRepo:      postRepo,
@@ -49,7 +51,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	column := models.StrToThreadColumn(sort)
 
 	// Retrieve threads from db
-	threads, err := s.threadRepo.GetThreads(column, cursor, size, descending)
+	threads, err := s.threadRepo.GetAll(column, cursor, size, descending)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting threads from db")
 		return nil, err
@@ -59,7 +61,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	for i := range threads {
 		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
 		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
-		threads[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, threads[i].ThreadID)
+		threads[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, threads[i].ThreadID)
 	}
 
 	return threads, nil
@@ -67,7 +69,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 
 // Retrieve threads metadata
 func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
-	return s.threadRepo.GetThreadsMetadata()
+	return s.threadRepo.GetMetadata()
 }
 
 // Retrieve thread and all associated posts
@@ -92,10 +94,10 @@ func (s *ThreadService) GetThread(threadID string, username string) (*models.Thr
 	// Get number of likes for each post
 	for i := range posts {
 		if posts[i].IsHeader {
-			posts[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, threadID)
+			posts[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, threadID)
 			posts[i].NumLikes = s.likesRepo.GetNumLikes(threadID)
 		} else {
-			posts[i].IsLiked = s.likesRepo.GetLikeByUsernameAndContentId(username, posts[i].PostID)
+			posts[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, posts[i].PostID)
 			posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
 		}
 	}

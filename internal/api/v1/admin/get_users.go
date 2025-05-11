@@ -6,15 +6,11 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type GetUsersHandler struct {
-	UserService *services.UserService
-}
-
 // Get all users
-func (h *GetUsersHandler) HandleGetUsers(c *gin.Context) {
+func GetAllUsersHandler(c *gin.Context) {
 	utils.Logger.Info().Msg("Get users request received")
 
-	users, err := h.UserService.GetAllUsersInformation()
+	users, err := services.Users.GetAllUsersInformation()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when getting all users")
 		c.JSON(500, nil)
@@ -26,11 +22,11 @@ func (h *GetUsersHandler) HandleGetUsers(c *gin.Context) {
 }
 
 // Get individual user
-func (h *GetUsersHandler) HandleGetUser(c *gin.Context) {
+func GetOneUserHandler(c *gin.Context) {
 	username := c.Param("username")
 	utils.Logger.Info().Msg("Get user request received for " + username)
 
-	user, err := h.UserService.GetUserInformation(username)
+	user, err := services.Users.GetUserInformation(username)
 	if user == nil {
 		utils.Logger.Error().Msg("User not found")
 		c.JSON(404, nil)

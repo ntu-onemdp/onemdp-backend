@@ -8,14 +8,8 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-// Handle like and unlike post requests.
-type LikePostHandlers struct {
-	likeService *services.LikeService
-	postService *services.PostService
-}
-
 // Handle like post request
-func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
+func LikePostHandler(c *gin.Context) {
 	// Get username from JWT token
 	jwt := c.Request.Header.Get("Authorization")
 	claim, err := services.JwtHandler.ParseJwt(jwt)
@@ -37,7 +31,7 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 	utils.Logger.Trace().Str("post_id", postID).Msg("")
 
 	// Check if post exists
-	if !h.postService.PostExists(postID) {
+	if !services.Posts.PostExists(postID) {
 		utils.Logger.Error().Msg("Post does not exist")
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
@@ -48,7 +42,7 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 	}
 
 	// Check if user has liked the post
-	hasLiked := h.likeService.HasLiked(username, postID)
+	hasLiked := services.Likes.HasLiked(username, postID)
 
 	// User has already liked the post, do nothing
 	if hasLiked {
@@ -61,7 +55,7 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 		return
 	}
 
-	err = h.likeService.CreateLike(username, postID)
+	err = services.Likes.CreateLike(username, postID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error creating like")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -80,7 +74,7 @@ func (h *LikePostHandlers) HandleLikePost(c *gin.Context) {
 }
 
 // Handle unlike post request
-func (h *LikePostHandlers) HandleUnlikePost(c *gin.Context) {
+func UnlikePostHandler(c *gin.Context) {
 	// Get username from JWT token
 	jwt := c.Request.Header.Get("Authorization")
 	claim, err := services.JwtHandler.ParseJwt(jwt)
@@ -102,7 +96,7 @@ func (h *LikePostHandlers) HandleUnlikePost(c *gin.Context) {
 	utils.Logger.Trace().Str("post_id", postID).Msg("")
 
 	// If user has not liked the post, do nothing
-	hasLiked := h.likeService.HasLiked(username, postID)
+	hasLiked := services.Likes.HasLiked(username, postID)
 	if !hasLiked {
 		utils.Logger.Trace().Msg("User has not liked post")
 		c.JSON(http.StatusOK, gin.H{
@@ -113,7 +107,7 @@ func (h *LikePostHandlers) HandleUnlikePost(c *gin.Context) {
 		return
 	}
 
-	err = h.likeService.RemoveLike(username, postID)
+	err = services.Likes.RemoveLike(username, postID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error removing like")
 		c.JSON(http.StatusInternalServerError, gin.H{

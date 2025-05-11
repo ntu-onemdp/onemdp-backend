@@ -8,14 +8,8 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-// Handle like and unlike thread requests
-type LikeThreadHandlers struct {
-	threadService *services.ThreadService
-	likeService   *services.LikeService
-}
-
 // Handle like thread request
-func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
+func LikeThreadHandler(c *gin.Context) {
 	// Get username form JWT token
 	username := services.JwtHandler.GetUsernameFromJwt(c)
 	if username == "" {
@@ -25,7 +19,7 @@ func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 	// Check thread exists
 	threadID := c.Param("thread_id")
 	utils.Logger.Trace().Str("thread_id", threadID).Msg("")
-	if !h.threadService.ThreadExists(threadID) {
+	if !services.Threads.ThreadExists(threadID) {
 		utils.Logger.Error().Msg("Thread does not exist")
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
@@ -35,7 +29,7 @@ func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 	}
 
 	// Check if user has liked the thread
-	hasLiked := h.likeService.HasLiked(username, threadID)
+	hasLiked := services.Likes.HasLiked(username, threadID)
 	if hasLiked {
 		utils.Logger.Trace().Msg("User has already liked thread")
 		c.JSON(http.StatusOK, gin.H{
@@ -46,7 +40,7 @@ func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 		return
 	}
 
-	err := h.likeService.CreateLike(username, threadID)
+	err := services.Likes.CreateLike(username, threadID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error creating like")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -65,7 +59,7 @@ func (h *LikeThreadHandlers) HandleLikeThread(c *gin.Context) {
 }
 
 // Handle unlike thread request
-func (h *LikeThreadHandlers) HandleUnlikeThread(c *gin.Context) {
+func UnlikeThreadHandler(c *gin.Context) {
 	username := services.JwtHandler.GetUsernameFromJwt(c)
 	if username == "" {
 		return
@@ -74,7 +68,7 @@ func (h *LikeThreadHandlers) HandleUnlikeThread(c *gin.Context) {
 	threadID := c.Param("thread_id")
 	utils.Logger.Trace().Str("thread_id", threadID).Msg("")
 
-	if !h.threadService.ThreadExists(threadID) {
+	if !services.Threads.ThreadExists(threadID) {
 		utils.Logger.Error().Msg("Thread does not exist")
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
@@ -83,7 +77,7 @@ func (h *LikeThreadHandlers) HandleUnlikeThread(c *gin.Context) {
 		})
 	}
 
-	hasLiked := h.likeService.HasLiked(username, threadID)
+	hasLiked := services.Likes.HasLiked(username, threadID)
 	if !hasLiked {
 		utils.Logger.Trace().Msg("User has not liked thread")
 		c.JSON(http.StatusOK, gin.H{
@@ -94,7 +88,7 @@ func (h *LikeThreadHandlers) HandleUnlikeThread(c *gin.Context) {
 		return
 	}
 
-	err := h.likeService.RemoveLike(username, threadID)
+	err := services.Likes.RemoveLike(username, threadID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error removing like")
 		c.JSON(http.StatusInternalServerError, gin.H{

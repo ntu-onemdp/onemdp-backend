@@ -9,28 +9,30 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
+const AUTH_TABLE = "auth"
+
 type AuthRepository struct {
 	Db *pgxpool.Pool
 }
 
-const AUTH_TABLE = "auth"
+var Auth *AuthRepository
 
-// Insert new auth detail
-func (r *AuthRepository) InsertAuthDetails(auth *models.AuthModel) error {
+// Insert new auth detail into the database. Returns nil on success.
+func (r *AuthRepository) Insert(auth *models.AuthModel) error {
 	query := fmt.Sprintf(`INSERT INTO %s (username, password, role) VALUES ($1, $2, $3);`, AUTH_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, auth.Username, auth.Password, auth.Role)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
+		utils.Logger.Error().Err(err).Msg("Error inserting auth for " + auth.Username)
 		return err
 	}
 
-	utils.Logger.Trace().Msg("Successfully inserted auth for " + auth.Username)
+	utils.Logger.Debug().Msg("Successfully inserted auth for " + auth.Username)
 	return nil
 }
 
-// Retrieve user auth details using usermame
-func (r *AuthRepository) GetAuthByUsername(username string) (*models.AuthModel, error) {
+// Get user auth details using usermame
+func (r *AuthRepository) Get(username string) (*models.AuthModel, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE username=$1;", AUTH_TABLE)
 
 	var auth models.AuthModel
@@ -40,12 +42,11 @@ func (r *AuthRepository) GetAuthByUsername(username string) (*models.AuthModel, 
 		return nil, err
 	}
 
-	utils.Logger.Trace().Msg("Successfully retrieved auth for " + username)
 	return &auth, nil
 }
 
 // Update individual user role. Returns nil on success
-func (r *AuthRepository) UpdateUserRole(username string, new_role string) error {
+func (r *AuthRepository) UpdateRole(username string, new_role string) error {
 	query := fmt.Sprintf(`UPDATE %s SET role=$1 WHERE username=$2;`, AUTH_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, new_role, username)
@@ -54,12 +55,12 @@ func (r *AuthRepository) UpdateUserRole(username string, new_role string) error 
 		return err
 	}
 
-	utils.Logger.Trace().Msg("Successfully updated role for " + username)
+	utils.Logger.Debug().Msg("Successfully updated role for " + username)
 	return nil
 }
 
 // Change existing password for user. Returns nil on success
-func (r *AuthRepository) UpdateUserPassword(username string, new_password string) error {
+func (r *AuthRepository) UpdatePassword(username string, new_password string) error {
 	query := fmt.Sprintf(`UPDATE %s SET password=$1 WHERE username=$2;`, AUTH_TABLE)
 
 	_, err := r.Db.Exec(context.Background(), query, new_password, username)
@@ -68,6 +69,6 @@ func (r *AuthRepository) UpdateUserPassword(username string, new_password string
 		return err
 	}
 
-	utils.Logger.Trace().Msg("Successfully updated password for " + username)
+	utils.Logger.Debug().Msg("Successfully updated password for " + username)
 	return nil
 }

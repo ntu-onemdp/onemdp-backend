@@ -8,11 +8,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type DeletePostHandler struct {
-	PostService *services.PostService
-}
-
-func (h *DeletePostHandler) HandleDeletePost(c *gin.Context) {
+func DeletePostsHandler(c *gin.Context) {
 	postID := c.Param("post_id")
 
 	// For debugging purposes
@@ -29,7 +25,7 @@ func (h *DeletePostHandler) HandleDeletePost(c *gin.Context) {
 	utils.Logger.Info().Msg("Delete post request received from " + claim.Username)
 
 	// Delete post
-	err = h.PostService.DeletePost(postID, claim)
+	err = services.Posts.DeletePost(postID, claim)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting post")
 

@@ -9,12 +9,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type UpdatePostHandler struct {
-	PostService   *services.PostService
-	ThreadService *services.ThreadService
-}
-
-func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
+func UpdatePostHandler(c *gin.Context) {
 	// Bind with post object
 	var updatedPost models.Post
 
@@ -52,7 +47,7 @@ func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
 	utils.Logger.Info().Msg("Update post request received from " + author)
 
 	// Update post
-	err = h.PostService.UpdatePost(updatedPost, claim)
+	err = services.Posts.UpdatePost(updatedPost, claim)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating post")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -65,7 +60,7 @@ func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
 	// Update thread last activity
 	if updatedPost.IsHeader {
 		// Header post: update title, preview, and last activity
-		err = h.ThreadService.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.PostContent, claim)
+		err = services.Threads.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.PostContent, claim)
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating thread")
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -76,7 +71,7 @@ func (h *UpdatePostHandler) HandleUpdatePost(c *gin.Context) {
 		}
 	} else {
 		// All other posts: update only last activity
-		err = h.ThreadService.UpdateThreadLastActivity(updatedPost.ThreadId)
+		err = services.Threads.UpdateThreadLastActivity(updatedPost.ThreadId)
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating thread last activity")
 			c.JSON(http.StatusInternalServerError, gin.H{

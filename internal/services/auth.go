@@ -15,10 +15,12 @@ type AuthService struct {
 	UsersRepo *repositories.UsersRepository
 }
 
+var Auth *AuthService
+
 // Insert new user auth into database.
 // Password is the plaintext password.
 // This function hashes the password before inserting into the database.
-func (s *AuthService) InsertNewAuth(username string, password string) error {
+func (s *AuthService) Create(username string, password string) error {
 	// Hash password
 	stored_hashed_pw, err := HashPassword(password)
 	if err != nil {
@@ -33,7 +35,7 @@ func (s *AuthService) InsertNewAuth(username string, password string) error {
 		Role:     models.STUDENT_ROLE, // Default role is student
 	}
 
-	return s.AuthRepo.InsertAuthDetails(&auth)
+	return s.AuthRepo.Insert(&auth)
 }
 
 // Returns user information only if:
@@ -43,9 +45,9 @@ func (s *AuthService) InsertNewAuth(username string, password string) error {
 // If authenticated, this function returns (true, *user, role)
 // else, this function returns (false, nil, "")
 // This service is designed to minimize the number of DB read operations
-func (s *AuthService) AuthenticateUser(username string, password string) (bool, *models.User, string) {
+func (s *AuthService) Authenticate(username string, password string) (bool, *models.User, string) {
 	// Query database for username and password
-	auth, err := s.AuthRepo.GetAuthByUsername(username)
+	auth, err := s.AuthRepo.Get(username)
 	if err != nil {
 		utils.Logger.Error().Err(err)
 		return false, nil, ""
@@ -78,7 +80,7 @@ func (s *AuthService) AuthenticateUser(username string, password string) (bool, 
 // This service checks that the role given is valid.
 //
 // This service does not check if the new role is the same as the old role.
-func (s *AuthService) UpdateUserRole(username string, new_role string) error {
+func (s *AuthService) UpdateRole(username string, new_role string) error {
 	// Convert new role to lowercase
 	new_role = strings.ToLower(new_role)
 
@@ -87,7 +89,7 @@ func (s *AuthService) UpdateUserRole(username string, new_role string) error {
 		return fmt.Errorf("invalid role: %s", new_role)
 	}
 
-	return s.AuthRepo.UpdateUserRole(username, new_role)
+	return s.AuthRepo.UpdateRole(username, new_role)
 }
 
 // Check if user role is valid
@@ -104,9 +106,9 @@ func isValidRole(role string) bool {
 // Update user's password.
 // This service hashes the new password before updating the database.
 // This service also ensures that the new password is not the same as the old password.
-func (s *AuthService) UpdateUserPassword(username string, new_password string) error {
+func (s *AuthService) UpdatePassword(username string, new_password string) error {
 	// Retrieve old password
-	auth, err := s.AuthRepo.GetAuthByUsername(username)
+	auth, err := s.AuthRepo.Get(username)
 	if err != nil || auth == nil {
 		utils.Logger.Error().Err(err).Msg("Error retrieving auth")
 		return err
@@ -127,7 +129,7 @@ func (s *AuthService) UpdateUserPassword(username string, new_password string) e
 	}
 
 	// Update password
-	return s.AuthRepo.UpdateUserPassword(username, stored_hashed_pw)
+	return s.AuthRepo.UpdatePassword(username, stored_hashed_pw)
 }
 
 // Utility services

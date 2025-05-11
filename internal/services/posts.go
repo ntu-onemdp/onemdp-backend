@@ -11,6 +11,8 @@ type PostService struct {
 	postFactory *models.PostFactory
 }
 
+var Posts *PostService
+
 func NewPostService(postRepo *repositories.PostsRepository) *PostService {
 	return &PostService{
 		postRepo:    postRepo,

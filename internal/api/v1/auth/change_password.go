@@ -6,10 +6,6 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type ChangePasswordHandler struct {
-	AuthService *services.AuthService
-}
-
 // Password change form sent from frontend.
 type ChangePasswordForm struct {
 	OldPassword string `form:"old_password" binding:"required"` // Plaintext password
@@ -21,7 +17,7 @@ type ChangePasswordResponse struct {
 	Message string `json:"message"`
 }
 
-func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
+func ChangePasswordHandler(c *gin.Context) {
 	var form ChangePasswordForm
 	username := c.Param("username")
 	tokenString := c.Request.Header.Get("Authorization")
@@ -51,7 +47,7 @@ func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
 	}
 
 	// Check if old password matches old password in database
-	isAuthenticated, _, _ := h.AuthService.AuthenticateUser(username, form.OldPassword)
+	isAuthenticated, _, _ := services.Auth.Authenticate(username, form.OldPassword)
 	if !isAuthenticated {
 		response := ChangePasswordResponse{
 			Success: false,
@@ -63,7 +59,7 @@ func (h *ChangePasswordHandler) HandleChangeUserPassword(c *gin.Context) {
 	}
 
 	// Change password
-	err := h.AuthService.UpdateUserPassword(username, form.NewPassword)
+	err := services.Auth.UpdatePassword(username, form.NewPassword)
 	if err != nil {
 		response := ChangePasswordResponse{
 			Success: false,

@@ -11,17 +11,19 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type ThreadRepository struct {
-	ContentRepository
-	Db *pgxpool.Pool
-}
-
 // Threads table name in db
 const THREADS_TABLE = "threads"
 
+type ThreadsRepository struct {
+	_  ContentRepository
+	Db *pgxpool.Pool
+}
+
+var Threads *ThreadsRepository
+
 // Insert new thread into the database. Returns thread ID and UUID of header post on successful insert
 // Although function takes in a thread object, only author, title and preview are used.
-func (r *ThreadRepository) Create(thread *models.Thread) error {
+func (r *ThreadsRepository) Create(thread *models.Thread) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (thread_id, author, title, preview) 
 	VALUES ($1, $2, $3, $4);`, THREADS_TABLE)
@@ -37,14 +39,14 @@ func (r *ThreadRepository) Create(thread *models.Thread) error {
 	return nil
 }
 
-// Get all threads from a certain timestamp. Cursor given is the timestamp of the last thread in the previous page.
+// GetAll all threads from a certain timestamp. Cursor given is the timestamp of the last thread in the previous page.
 // Number of threads returned is not hardcoded, can be chosen in frontend.
 // Params
 // column: column to sort by
 // cursor: timestamp of the last thread in the previous page
 // size: page size; number of threads to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadRepository) GetThreads(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -67,7 +69,7 @@ func (r *ThreadRepository) GetThreads(column models.ThreadColumn, cursor time.Ti
 }
 
 // Get threads metadata
-func (r *ThreadRepository) GetThreadsMetadata() (models.ThreadsMetadata, error) {
+func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
 	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE is_available = true;`, THREADS_TABLE)
 
 	var num_threads int
@@ -82,7 +84,7 @@ func (r *ThreadRepository) GetThreadsMetadata() (models.ThreadsMetadata, error) 
 }
 
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
-func (r *ThreadRepository) GetByID(thread_id string) (*models.Thread, error) {
+func (r *ThreadsRepository) GetByID(thread_id string) (*models.Thread, error) {
 	// This function is called only when a thread is requested by its ID, so views are incremented here
 	query := fmt.Sprintf(`
 	WITH thread AS (
@@ -106,7 +108,7 @@ func (r *ThreadRepository) GetByID(thread_id string) (*models.Thread, error) {
 }
 
 // Get thread author
-func (r *ThreadRepository) GetAuthor(thread_id string) (string, error) {
+func (r *ThreadsRepository) GetAuthor(thread_id string) (string, error) {
 	query := fmt.Sprintf(`SELECT author FROM %s WHERE thread_id = $1 AND is_available = true;`, THREADS_TABLE)
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting author of thread with id: %v", thread_id))
@@ -123,7 +125,7 @@ func (r *ThreadRepository) GetAuthor(thread_id string) (string, error) {
 }
 
 // Returns true if the thread exists
-func (r *ThreadRepository) IsAvailable(thread_id string) bool {
+func (r *ThreadsRepository) IsAvailable(thread_id string) bool {
 	query := fmt.Sprintf(`SELECT is_available FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
 
 	var is_available bool
@@ -136,7 +138,7 @@ func (r *ThreadRepository) IsAvailable(thread_id string) bool {
 }
 
 // Update thread's last activity timestamp to current time. Returns nil if successful.
-func (r *ThreadRepository) UpdateActivity(thread_id string) error {
+func (r *ThreadsRepository) UpdateActivity(thread_id string) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
 	SET last_activity = NOW()
@@ -154,7 +156,7 @@ func (r *ThreadRepository) UpdateActivity(thread_id string) error {
 
 // Update thread's title and preview. Returns nil if successful.
 // Thread's title and preview is updated only when the header post is updated.
-func (r *ThreadRepository) Update(threadID string, title string, preview string) error {
+func (r *ThreadsRepository) Update(threadID string, title string, preview string) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
 	SET title = $1, preview = $2, last_activity = NOW()
@@ -171,7 +173,7 @@ func (r *ThreadRepository) Update(threadID string, title string, preview string)
 }
 
 // Perform soft delete of the thread in the database. Returns nil if successful.
-func (r *ThreadRepository) Delete(threadID string) error {
+func (r *ThreadsRepository) Delete(threadID string) error {
 	query := fmt.Sprintf(`
 	WITH deleted_rows AS (
 		UPDATE %s
@@ -197,7 +199,7 @@ func (r *ThreadRepository) Delete(threadID string) error {
 
 // (NOT USED)
 // Perform hard delete of the thread in the database. Returns nil if successful.
-func (r *ThreadRepository) HardDelete(threadID string) error {
+func (r *ThreadsRepository) HardDelete(threadID string) error {
 	query := fmt.Sprintf(`
 	DELETE FROM %s
 	WHERE thread_id = $1;`, THREADS_TABLE)
@@ -214,7 +216,7 @@ func (r *ThreadRepository) HardDelete(threadID string) error {
 
 // Restore deleted thread by thread_id. Returns nil if successful.
 // Currently unused.
-func (r *ThreadRepository) Restore(threadID string) error {
+func (r *ThreadsRepository) Restore(threadID string) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
 	SET is_available = true
