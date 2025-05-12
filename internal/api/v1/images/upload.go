@@ -14,7 +14,7 @@ func UploadImageHandler(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Failed to get file from request")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file is received"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file is received: " + err.Error()})
 		return
 	}
 
@@ -22,7 +22,7 @@ func UploadImageHandler(c *gin.Context) {
 	id, err := services.Images.Insert(file)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Failed to save file")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file: " + err.Error()})
 		return
 	}
 
