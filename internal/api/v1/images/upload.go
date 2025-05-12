@@ -27,5 +27,5 @@ func UploadImageHandler(c *gin.Context) {
 	}
 
 	utils.Logger.Debug().Str("file_id", id).Msg("File uploaded successfully")
-	c.JSON(http.StatusCreated, gin.H{"message": "File uploaded successfully", "filename": file.Filename})
+	c.JSON(http.StatusCreated, gin.H{"message": "File uploaded successfully", "id": id})
 }
