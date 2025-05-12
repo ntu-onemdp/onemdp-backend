@@ -1,9 +1,7 @@
 package services
 
 import (
-	"bufio"
 	"errors"
-	"io"
 	"mime/multipart"
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
@@ -35,8 +33,6 @@ func (s *ImageService) Insert(image *multipart.FileHeader) (string, error) {
 		return "", errors.New("unsupported image type")
 	}
 
-	bytes := make([]byte, image.Size)
-
 	// Open image file
 	file, err := image.Open()
 	if err != nil {
@@ -45,15 +41,15 @@ func (s *ImageService) Insert(image *multipart.FileHeader) (string, error) {
 	}
 	defer file.Close()
 
-	// Read image file into bytes
-	_, err = bufio.NewReader(file).Read(bytes)
-	if err != nil && err != io.EOF {
-		utils.Logger.Error().Err(err).Msg("Failed to read image file")
+	// Sanitize image
+	img, err := utils.SanitizeImage(image)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to sanitize image")
 		return "", err
 	}
 
 	// Insert into db
-	id, err := s.imageRepo.Insert(bytes)
+	id, err := s.imageRepo.Insert(img)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Failed to insert image into db")
 		return "", err
