@@ -38,6 +38,8 @@ type Post struct {
 func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *Post {
 	// Sanitize content to prevent XSS attacks
 	policy := bluemonday.UGCPolicy()
+	// Allow styles on images (to allow image resizing)
+	policy.AllowStyles("width", "height", "draggable").OnElements("img")
 	content = policy.Sanitize(content)
 
 	return &Post{
