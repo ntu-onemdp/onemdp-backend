@@ -35,6 +35,10 @@ Routes that are accessible to any authenticated user.
 */
 // Image routes
 func RegisterImageRoutes(router *gin.RouterGroup) {
+	router.GET("/:id", func(c *gin.Context) {
+		images.RetrieveImageHandler(c)
+	})
+
 	router.POST("/upload", func(c *gin.Context) {
 		images.UploadImageHandler(c)
 	})

@@ -15,6 +15,11 @@ type ImageService struct {
 
 var Images *ImageService
 
+// Retrieve image from database
+func (s *ImageService) Get(id string) ([]byte, error) {
+	return s.imageRepo.Get(id)
+}
+
 // Process image into bytes array and pass it to the repository. Returns UUID of image on success
 func (s *ImageService) Insert(image *multipart.FileHeader) (string, error) {
 	bytes := make([]byte, image.Size)

@@ -24,6 +24,9 @@ func main() {
 
 	r := gin.Default()
 
+	// Reduce max memory limit for multipart form data
+	r.MaxMultipartMemory = 2 << 20 // 2 MiB
+
 	r.Use(cors.Default())
 
 	// Initialize repositories
