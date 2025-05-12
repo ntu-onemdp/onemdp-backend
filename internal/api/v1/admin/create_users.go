@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -86,5 +87,5 @@ func CreateUsersHandler(c *gin.Context) {
 		}
 	}
 
-	c.JSON(201, createUserResponse)
+	c.JSON(http.StatusCreated, createUserResponse)
 }

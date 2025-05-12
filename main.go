@@ -24,6 +24,9 @@ func main() {
 
 	r := gin.Default()
 
+	// Reduce max memory limit for multipart form data
+	r.MaxMultipartMemory = 2 << 20 // 2 MiB
+
 	r.Use(cors.Default())
 
 	// Initialize repositories
@@ -48,7 +51,11 @@ func main() {
 
 	// Register post routes
 	postRoutes := r.Group("/api/v1/posts", middlewares.AuthGuard())
-	routes.RegisterPostRoutes(postRoutes, db.Pool)
+	routes.RegisterPostRoutes(postRoutes)
+
+	// Register image routes
+	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard())
+	routes.RegisterImageRoutes(imageRoutes)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())

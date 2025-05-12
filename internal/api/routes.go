@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
@@ -33,15 +33,22 @@ func RegisterLoginRoute(router *gin.Engine) {
 
 Routes that are accessible to any authenticated user.
 */
-// TODO: Upload images
-func RegisterUploadImageRoute(router *gin.Engine) {
-	router.POST("/api/v1/upload", func(c *gin.Context) {
+// Image routes
+func RegisterImageRoutes(router *gin.RouterGroup) {
+	// [AE-88] GET /api/v1/images/:id
+	router.GET("/:id", func(c *gin.Context) {
+		images.RetrieveImageHandler(c)
+	})
+
+	// [AE-87] POST /api/v1/images/upload
+	router.POST("/upload", func(c *gin.Context) {
+		images.UploadImageHandler(c)
 	})
 }
 
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
-
+	// [AE-6] GET /api/v1/users/:username
 	router.GET("/", func(c *gin.Context) {
 		users.GetProfileHandler(c)
 	})
@@ -95,7 +102,7 @@ func RegisterThreadRoutes(router *gin.RouterGroup) {
 }
 
 // Routes starting with /posts
-func RegisterPostRoutes(router *gin.RouterGroup, db *pgxpool.Pool) {
+func RegisterPostRoutes(router *gin.RouterGroup) {
 	// [AE-21] POST /api/v1/posts/new
 	router.POST("/new", func(c *gin.Context) {
 		posts.NewPostHandler(c)
