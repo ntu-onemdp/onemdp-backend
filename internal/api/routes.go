@@ -35,10 +35,12 @@ Routes that are accessible to any authenticated user.
 */
 // Image routes
 func RegisterImageRoutes(router *gin.RouterGroup) {
+	// [AE-88] GET /api/v1/images/:id
 	router.GET("/:id", func(c *gin.Context) {
 		images.RetrieveImageHandler(c)
 	})
 
+	// [AE-87] POST /api/v1/images/upload
 	router.POST("/upload", func(c *gin.Context) {
 		images.UploadImageHandler(c)
 	})
@@ -46,7 +48,7 @@ func RegisterImageRoutes(router *gin.RouterGroup) {
 
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
-
+	// [AE-6] GET /api/v1/users/:username
 	router.GET("/", func(c *gin.Context) {
 		users.GetProfileHandler(c)
 	})
