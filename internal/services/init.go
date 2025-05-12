@@ -8,4 +8,5 @@ func Init() {
 	Likes = &LikeService{repositories.Likes}
 	Auth = &AuthService{repositories.Auth, repositories.Users}
 	Users = &UserService{repositories.Users}
+	Images = &ImageService{repositories.Images}
 }

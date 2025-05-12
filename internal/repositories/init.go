@@ -9,4 +9,5 @@ func Init(db *pgxpool.Pool) {
 	Posts = &PostsRepository{Db: db}
 	Threads = &ThreadsRepository{Db: db}
 	Users = &UsersRepository{Db: db}
+	Images = &ImagesRepository{Db: db}
 }

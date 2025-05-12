@@ -4,10 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
-	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 /*
@@ -36,18 +36,7 @@ Routes that are accessible to any authenticated user.
 // Image routes
 func RegisterImageRoutes(router *gin.RouterGroup) {
 	router.POST("/upload", func(c *gin.Context) {
-		file, _ := c.FormFile("file")
-		utils.Logger.Debug().Msgf("Uploaded file: %s", file.Filename)
-
-		// Save the file to the server
-		err := c.SaveUploadedFile(file, "./uploads/"+file.Filename)
-		if err != nil {
-			utils.Logger.Error().Err(err).Msg("Failed to save file")
-			c.JSON(500, gin.H{"error": "Failed to save file"})
-			return
-		}
-
-		c.JSON(200, gin.H{"message": "File uploaded successfully at /uploads/" + file.Filename})
+		images.UploadImageHandler(c)
 	})
 }
 
