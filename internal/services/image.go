@@ -2,8 +2,10 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"mime/multipart"
 
+	c "github.com/ntu-onemdp/onemdp-backend/config"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -22,9 +24,10 @@ func (s *ImageService) Get(id string) ([]byte, error) {
 // Process image into bytes array and pass it to the repository. Returns UUID of image on success
 func (s *ImageService) Insert(image *multipart.FileHeader) (string, error) {
 	// Reject is image size is too large
-	if image.Size > 2*1024*1024 { // 2 MB
-		utils.Logger.Error().Msg("Image size exceeds 2 MB")
-		return "", errors.New("image size exceeds 2 MB")
+	if image.Size > c.MAX_IMAGE_SIZE {
+		err := fmt.Sprintf("image size exceeds %d MB", c.MAX_IMAGE_SIZE/(1024*1024))
+		utils.Logger.Error().Msg(err)
+		return "", errors.New(err)
 	}
 
 	// Reject if image type is not supported
