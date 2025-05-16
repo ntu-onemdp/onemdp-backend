@@ -27,6 +27,11 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 	return err
 }
 
+// Retrieve post by post_id
+func (s *PostService) GetPost(postID string) (*models.Post, error) {
+	return s.postRepo.Get(postID)
+}
+
 // Check if post is available (exists and not deleted)
 func (s *PostService) PostExists(postID string) bool {
 	return s.postRepo.IsAvailable(postID)
