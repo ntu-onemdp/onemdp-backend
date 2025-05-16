@@ -34,42 +34,60 @@ func (r *PostsRepository) Create(post *models.Post) error {
 		return err
 	}
 
-	utils.Logger.Info().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
+	utils.Logger.Debug().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
 	return nil
 }
 
+// Get post by post_id. Returns post object if found, nil otherwise.
+func (r *PostsRepository) Get(postID string) (*models.Post, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE post_id = $1 AND is_available = true;`, POSTS_TABLE)
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting post with id: %s", postID))
+
+	row, _ := r.Db.Query(context.Background(), query, postID)
+	post, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Post])
+
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Post with id %v found", postID))
+	return &post, nil
+}
+
 // Get posts by thread_id. Returns slice of post objects if found, nil otherwise.
-func (r *PostsRepository) GetPostByThreadId(threadId string) ([]models.Post, error) {
+func (r *PostsRepository) GetPostByThreadId(threadID string) ([]models.Post, error) {
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true ORDER BY time_created ASC;`, POSTS_TABLE)
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadId))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadID))
 
-	rows, _ := r.Db.Query(context.Background(), query, threadId)
+	rows, _ := r.Db.Query(context.Background(), query, threadID)
 	posts, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Post])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error serializing rows to post structs")
 		return nil, err
 	}
 
-	utils.Logger.Trace().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadId))
+	utils.Logger.Debug().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadID))
 	return posts, nil
 }
 
 // Get number of replies by in a thread. Returns number of replies if found, 0 otherwise.
 // Note that the header post is not counted.
-func (r *PostsRepository) GetNumReplies(threadId string) int {
+func (r *PostsRepository) GetNumReplies(threadID string) int {
 	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE thread_id = $1 AND is_header = false AND is_available = true;`, POSTS_TABLE)
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("Getting number of replies with thread_id: %s", threadId))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting number of replies with thread_id: %s", threadID))
 
 	var numReplies int
-	err := r.Db.QueryRow(context.Background(), query, threadId).Scan(&numReplies)
+	err := r.Db.QueryRow(context.Background(), query, threadID).Scan(&numReplies)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return 0
 	}
 
-	utils.Logger.Info().Int("Number of replies", numReplies).Msg(fmt.Sprintf("Number of replies with thread_id %s found", threadId))
+	utils.Logger.Debug().Int("Number of replies", numReplies).Msg(fmt.Sprintf("Number of replies with thread_id %s found", threadID))
 	return numReplies
 }
 
@@ -86,7 +104,7 @@ func (r *PostsRepository) GetAuthor(postID string) (string, error) {
 		return "", err
 	}
 
-	utils.Logger.Info().Msg(fmt.Sprintf("Author of post with id %v is %v", postID, author))
+	utils.Logger.Debug().Msg(fmt.Sprintf("Author of post with id %v is %v", postID, author))
 	return author, nil
 }
 
@@ -103,7 +121,7 @@ func (r *PostsRepository) IsAvailable(postID string) bool {
 		return false
 	}
 
-	utils.Logger.Trace().Bool("Is available", isAvailable).Msg(fmt.Sprintf("Post with id %v exists", postID))
+	utils.Logger.Debug().Bool("Is available", isAvailable).Msg(fmt.Sprintf("Post with id %v exists", postID))
 	return isAvailable
 }
 
@@ -114,13 +132,13 @@ func (r *PostsRepository) Update(postID string, updated_post models.Post) error 
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Updating content of post with id: %v", postID))
 
-	_, err := r.Db.Exec(context.Background(), query, updated_post.Title, updated_post.Content, updated_post.ReplyTo, postID)
+	_, err := r.Db.Exec(context.Background(), query, updated_post.Title, updated_post.PostContent, updated_post.ReplyTo, postID)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return err
 	}
 
-	utils.Logger.Info().Msg(fmt.Sprintf("Content of post with id %v successfully updated", postID))
+	utils.Logger.Debug().Msg(fmt.Sprintf("Content of post with id %v successfully updated", postID))
 	return nil
 }
 
@@ -146,7 +164,7 @@ func (r *PostsRepository) Delete(postID string) error {
 		utils.Logger.Warn().Msg("No rows deleted")
 	}
 
-	utils.Logger.Info().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Post with id %v successfully deleted from database", postID))
+	utils.Logger.Debug().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Post with id %v successfully deleted from database", postID))
 	return nil
 }
 
@@ -171,7 +189,7 @@ func (r *PostsRepository) DeletePostsByThread(threadId string) error {
 		utils.Logger.Warn().Msg("No rows deleted")
 	}
 
-	utils.Logger.Info().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Posts with thread_id %s successfully deleted from database", threadId))
+	utils.Logger.Debug().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Posts with thread_id %s successfully deleted from database", threadId))
 	return nil
 }
 
@@ -192,7 +210,7 @@ func (r *PostsRepository) Restore(postID string) error {
 		return err
 	}
 
-	utils.Logger.Info().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Post with id %v successfully restored", postID))
+	utils.Logger.Debug().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Post with id %v successfully restored", postID))
 	return nil
 }
 
@@ -213,6 +231,6 @@ func (r *PostsRepository) RestorePostsByThread(threadId string) error {
 		return err
 	}
 
-	utils.Logger.Info().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Posts with thread_id %s successfully restored", threadId))
+	utils.Logger.Debug().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Posts with thread_id %s successfully restored", threadId))
 	return nil
 }

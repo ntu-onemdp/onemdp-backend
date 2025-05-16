@@ -108,6 +108,11 @@ func RegisterPostRoutes(router *gin.RouterGroup) {
 		posts.NewPostHandler(c)
 	})
 
+	// [AE-89] GET /api/v1/posts/:post_id
+	router.GET("/:post_id", func(c *gin.Context) {
+		posts.GetPostHandler(c)
+	})
+
 	// [AE-26] POST /api/v1/posts/:post_id/like
 	router.POST("/:post_id/like", func(c *gin.Context) {
 		posts.LikePostHandler(c)
