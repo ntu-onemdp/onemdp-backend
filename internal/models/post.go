@@ -17,7 +17,6 @@ func NewPostFactory() *PostFactory {
 }
 
 type Post struct {
-	Content     `json:"-" db:"-"`
 	PostID      string    `json:"post_id" db:"post_id"`
 	Author      string    `json:"author" db:"author" binding:"required"`
 	ThreadId    string    `json:"thread_id" db:"thread_id" binding:"required"`
