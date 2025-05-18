@@ -56,7 +56,10 @@ func NewPostHandler(c *gin.Context) {
 	err = services.Posts.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating new post")
-		c.JSON(http.StatusInternalServerError, nil)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Error creating new post: " + err.Error(),
+		})
 		return
 	}
 

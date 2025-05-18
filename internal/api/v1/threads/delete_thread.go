@@ -26,15 +26,15 @@ func DeleteThreadHandler(c *gin.Context) {
 	if err == utils.NewErrUnauthorized() {
 		utils.Logger.Error().Err(err).Msg("User is student and not author. Unauthorized to delete thread")
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"success":  false,
-			"errorMsg": "Unauthorized to delete thread. You need to be a staff/admin or the original author to delete the thread",
+			"success": false,
+			"error":   "Unauthorized to delete thread. You need to be a staff/admin or the original author to delete the thread",
 		})
 		return
 	} else if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting thread")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success":  false,
-			"errorMsg": "Error deleting thread",
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Error deleting thread: " + err.Error(),
 		})
 		return
 	}

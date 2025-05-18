@@ -22,17 +22,47 @@ var Posts *PostsRepository
 
 // Insert new post into the database. Returns post ID and nil on successful insert
 func (r *PostsRepository) Create(post *models.Post) error {
+	ctx := context.Background()
+
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return err
+	}
+	defer tx.Rollback(ctx)
+	utils.Logger.Trace().Interface("post", post).Msg(fmt.Sprintf("Transaction begin. Inserting post with id: %v", post.PostID))
+
+	// Insert post into posts table
 	query := fmt.Sprintf(`
 	INSERT INTO %s (post_id, author, thread_id, title, content, reply_to, is_header) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7);`, POSTS_TABLE)
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("Inserting post: %v", post))
-
-	_, err := r.Db.Exec(context.Background(), query, post.PostID, post.Author, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
+	if _, err = tx.Exec(ctx, query, post.PostID, post.Author, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error inserting post into database")
 		return err
 	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("Post with id %v successfully inserted into database", post.PostID))
+
+	// Update user karma
+	// Do not update karma if post is a header post as karma would have been updated when the thread was created
+	if !post.IsHeader {
+		query = fmt.Sprintf(`
+		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+
+		if _, err = tx.Exec(ctx, query, post.Author); err != nil {
+			utils.Logger.Error().Err(err).Msg("Error updating user karma")
+			return err
+		}
+		utils.Logger.Trace().Msg(fmt.Sprintf("User %s karma successfully updated", post.Author))
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error committing transaction")
+		return err
+	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("Transaction committed. Post with id %s successfully inserted into database", post.PostID))
 
 	utils.Logger.Debug().Msg(fmt.Sprintf("%s successfully inserted into database", post.Title))
 	return nil
@@ -126,9 +156,10 @@ func (r *PostsRepository) IsAvailable(postID string) bool {
 }
 
 // Edit content of post
+// TODO: update last edited for parent thread
 func (r *PostsRepository) Update(postID string, updated_post models.Post) error {
 	query := fmt.Sprintf(`
-	UPDATE %s SET title = $1, content = $2, reply_to = $3, last_edited = NOW() WHERE post_id = $4;`, POSTS_TABLE)
+	UPDATE %s SET title = $1, content = $2, reply_to = $3, last_edited = NOW() WHERE post_id = $4 AND is_available = true;`, POSTS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Updating content of post with id: %v", postID))
 
@@ -142,75 +173,108 @@ func (r *PostsRepository) Update(postID string, updated_post models.Post) error 
 	return nil
 }
 
-// Delete post from database using post_id. Returns nil if successful.
+// Delete one post from database matching post_id. Returns nil if successful.
 // Soft delete is performed.
 func (r *PostsRepository) Delete(postID string) error {
-	query := fmt.Sprintf(`
-	WITH deleted_rows AS (
-		UPDATE %s SET is_available = false WHERE post_id = $1 RETURNING thread_id
-	)
-	SELECT COUNT(*) FROM deleted_rows;`, POSTS_TABLE)
+	ctx := context.Background()
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Deleting post with id: %v", postID))
-
-	var num_deleted int
-	err := r.Db.QueryRow(context.Background(), query, postID).Scan(&num_deleted)
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return err
+	}
+	defer tx.Rollback(ctx)
+	utils.Logger.Trace().Msg(fmt.Sprintf("Transaction begin. Deleting post with id: %s", postID))
+
+	// Remove post from posts table
+	query := fmt.Sprintf(`
+		UPDATE %s SET is_available = false WHERE post_id = $1 AND is_available = true RETURNING author;`, POSTS_TABLE)
+
+	var author string
+	if err = tx.QueryRow(ctx, query, postID).Scan(&author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error deleting post from database")
 		return err
 	}
 
-	if num_deleted == 0 {
+	if author == "" {
 		utils.Logger.Warn().Msg("No rows deleted")
+		return fmt.Errorf("no rows deleted")
 	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("Post with id %s successfully deleted from database", postID))
 
-	utils.Logger.Debug().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Post with id %v successfully deleted from database", postID))
-	return nil
-}
-
-// Delete all posts from database matching thread_id. Returns nil if successful.
-func (r *PostsRepository) DeletePostsByThread(threadId string) error {
-	query := fmt.Sprintf(`
-	WITH deleted_rows AS (
-		UPDATE %s SET is_available = false WHERE thread_id = $1 RETURNING thread_id
-	)
-	SELECT COUNT(*) FROM deleted_rows;`, POSTS_TABLE)
-
-	utils.Logger.Debug().Msg(fmt.Sprintf("Deleting posts with thread_id: %s", threadId))
-
-	var num_deleted int
-	err := r.Db.QueryRow(context.Background(), query, threadId).Scan(&num_deleted)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
+	// Remove post from likes table
+	query = fmt.Sprintf(`
+	DELETE FROM %s WHERE content_id = $1;`, LIKES_TABLE)
+	if _, err = tx.Exec(ctx, query, postID); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error deleting post from likes table")
 		return err
 	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("Post with id %s deleted from likes table", postID))
 
-	if num_deleted == 0 {
-		utils.Logger.Warn().Msg("No rows deleted")
+	// Update user karma
+	query = fmt.Sprintf(`
+		UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+	if _, err = tx.Exec(ctx, query, author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error updating user karma")
+		return err
 	}
+	utils.Logger.Trace().Msg("User karma successfully updated")
 
-	utils.Logger.Debug().Int("Rows deleted", num_deleted).Msg(fmt.Sprintf("Posts with thread_id %s successfully deleted from database", threadId))
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error committing transaction")
+		return err
+	}
+	utils.Logger.Debug().Msg(fmt.Sprintf("Post with id %s successfully deleted from database", postID))
 	return nil
 }
 
 // Restore deleted post by post_id. Returns nil if successful.
 func (r *PostsRepository) Restore(postID string) error {
-	query := fmt.Sprintf(`
-	WITH restored_rows AS (
-		UPDATE %s SET is_available = true WHERE post_id = $1 RETURNING thread_id
-	)
-	SELECT COUNT(*) FROM restored_rows;`, POSTS_TABLE)
+	ctx := context.Background()
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Restoring post with id: %v", postID))
-
-	var num_restored int
-	err := r.Db.QueryRow(context.Background(), query, postID).Scan(&num_restored)
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error restoring post")
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return err
+	}
+	defer tx.Rollback(ctx)
+	utils.Logger.Trace().Msg(fmt.Sprintf("Transaction begin. Restoring post with id: %v", postID))
+
+	// Restore post from posts table
+	query := fmt.Sprintf(`
+		UPDATE %s SET is_available = true WHERE post_id = $1 AND is_available = false RETURNING author;`, POSTS_TABLE)
+
+	var author string
+	if err := tx.QueryRow(ctx, query, postID).Scan(&author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error restoring post from database")
+		return err
+	}
+	if author == "" {
+		utils.Logger.Warn().Msg("No rows restored")
+		return fmt.Errorf("no rows restored")
+	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("Post with id %s successfully restored from database", postID))
+
+	// Restore user's karma
+	query = fmt.Sprintf(`
+		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+
+	if _, err = tx.Exec(ctx, query, author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error restoring user karma")
+		return err
+	}
+	utils.Logger.Trace().Msg(fmt.Sprintf("User %s karma successfully restored", author))
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error committing transaction")
 		return err
 	}
 
-	utils.Logger.Debug().Int("Rows restored", num_restored).Msg(fmt.Sprintf("Post with id %v successfully restored", postID))
+	utils.Logger.Debug().Msg(fmt.Sprintf("Post with id %s successfully restored", postID))
 	return nil
 }
 
@@ -218,7 +282,7 @@ func (r *PostsRepository) Restore(postID string) error {
 func (r *PostsRepository) RestorePostsByThread(threadId string) error {
 	query := fmt.Sprintf(`
 	WITH restored_rows AS (
-		UPDATE %s SET is_available = true WHERE thread_id = $1 RETURNING thread_id
+		UPDATE %s SET is_available = true WHERE thread_id = $1 AND is_available = false RETURNING thread_id
 	)
 	SELECT COUNT(*) FROM restored_rows;`, POSTS_TABLE)
 

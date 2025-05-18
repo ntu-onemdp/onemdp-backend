@@ -30,19 +30,20 @@ func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repo
 }
 
 // Create new thread and insert into the repository
-func (s *ThreadService) CreateNewThread(author string, title string, content string) error {
+// Returns thread id on success
+func (s *ThreadService) CreateNewThread(author string, title string, content string) (string, error) {
 	thread := s.threadFactory.New(author, title, content)
 
 	err := s.threadRepo.Create(thread)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	postFactory := models.PostFactory{}
 	post := postFactory.New(thread.Author, thread.ThreadID, thread.Title, content, nil, true)
 
 	err = s.postRepo.Create(post)
-	return err
+	return thread.ThreadID, err
 }
 
 // Retrieve all threads after cursor
@@ -150,11 +151,5 @@ func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) er
 		}
 	}
 
-	err := s.threadRepo.Delete(threadID)
-	if err != nil {
-		utils.Logger.Trace().Msg("Error deleting thread")
-		return err
-	}
-
-	return s.postRepo.DeletePostsByThread(threadID)
+	return s.threadRepo.Delete(threadID)
 }

@@ -4,6 +4,6 @@ package models
 
 const (
 	CREATE_THREAD_PTS = 10
-	POST_REPLY_PTS    = 5
+	CREATE_POST_PTS   = 5
 	LIKE_PTS          = 1
 )
