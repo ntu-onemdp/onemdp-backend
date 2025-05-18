@@ -11,6 +11,7 @@ type User struct {
 	PasswordChanged bool       `json:"password_changed" db:"password_changed"`
 	ProfilePhoto    *string    `json:"profile_photo" db:"profile_photo"`
 	Status          string     `json:"status" db:"status"`
+	Karma           int        `json:"karma" db:"karma"`
 }
 
 // Initialize a new user for insertion into database
@@ -23,6 +24,7 @@ func CreateUser(username string, name string, semester int) *User {
 		PasswordChanged: false,
 		ProfilePhoto:    nil,
 		Status:          "active",
+		Karma:           0,
 	}
 }
 
@@ -31,4 +33,5 @@ type UserProfile struct {
 	Name         string  `json:"username"`
 	ProfilePhoto *string `json:"profile_photo" db:"profile_photo"`
 	Semester     int     `json:"semester"`
+	Karma        int     `json:"karma"`
 }

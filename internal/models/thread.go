@@ -37,7 +37,7 @@ type Thread struct {
 // Create a new thread with a unique thread ID
 func (f *ThreadFactory) New(author string, title string, content string) *Thread {
 	return &Thread{
-		ThreadID:     gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
+		ThreadID:     "t" + gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
 		Author:       author,
 		Title:        title,
 		TimeCreated:  time.Now(),

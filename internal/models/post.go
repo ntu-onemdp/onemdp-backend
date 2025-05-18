@@ -42,7 +42,7 @@ func (f *PostFactory) New(author string, threadId string, title string, content 
 	content = policy.Sanitize(content)
 
 	return &Post{
-		PostID:      gonanoid.Must(constants.CONTENT_ID_LENGTH),
+		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		Author:      author,
 		ThreadId:    threadId,
 		ReplyTo:     replyTo,

@@ -21,8 +21,8 @@ func CreateThreadHandler(c *gin.Context) {
 	if err := c.ShouldBind(&createThreadRequest); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error processing new thread request")
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"errorMsg": "Malformed request",
+			"success": false,
+			"error":   "Malformed request",
 		})
 		return
 	}
@@ -38,15 +38,16 @@ func CreateThreadHandler(c *gin.Context) {
 	author := claim.Username
 	utils.Logger.Info().Msg("New thread request received from " + author)
 
-	err = services.Threads.CreateNewThread(author, createThreadRequest.Title, createThreadRequest.Content)
+	id, err := services.Threads.CreateNewThread(author, createThreadRequest.Title, createThreadRequest.Content)
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error creating new thread")
+		utils.Logger.Error().Err(err).Msg("Error creating new thread " + err.Error())
 		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"message": "Thread created successfully",
+		"success":  true,
+		"message":  "Thread created successfully",
+		"threadId": id,
 	})
 }
