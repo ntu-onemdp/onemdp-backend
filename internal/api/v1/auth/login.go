@@ -16,11 +16,11 @@ type loginForm struct {
 }
 
 type LoginResponse struct {
-	Success bool         `json:"success"`
-	Error   string       `json:"error"`
-	Jwt     *string      `json:"jwt"`
-	Role    *string      `json:"role"`
-	User    *models.User `json:"user"`
+	Success bool                `json:"success"`
+	Error   string              `json:"error"`
+	Jwt     *string             `json:"jwt"`
+	Role    *string             `json:"role"`
+	User    *models.UserProfile `json:"user"`
 }
 
 func LoginHandler(c *gin.Context) {

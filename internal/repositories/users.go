@@ -116,7 +116,7 @@ func (r *UsersRepository) GetUserPasswordChanged(username string) (bool, error) 
 
 // Retrieve public profile information by username
 func (r *UsersRepository) GetUserProfile(username string) (*models.UserProfile, error) {
-	query := fmt.Sprintf(`SELECT name, profile_photo, semester, karma FROM %s WHERE username=$1 AND status='active';`, USERS_TABLE)
+	query := fmt.Sprintf(`SELECT username, name, profile_photo, semester, karma FROM %s WHERE username=$1 AND status='active';`, USERS_TABLE)
 
 	row, _ := r.Db.Query(context.Background(), query, username)
 	profile, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.UserProfile])

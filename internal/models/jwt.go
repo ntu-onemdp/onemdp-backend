@@ -13,7 +13,7 @@ type JwtClaim struct {
 	jwt.RegisteredClaims
 }
 
-func NewClaim(user *User, role string) *JwtClaim {
+func NewClaim(user *UserProfile, role string) *JwtClaim {
 	return &JwtClaim{
 		Username: user.Username,
 		Role:     role,
