@@ -45,7 +45,7 @@ func (s *AuthService) Create(username string, password string) error {
 // If authenticated, this function returns (true, *user, role)
 // else, this function returns (false, nil, "")
 // This service is designed to minimize the number of DB read operations
-func (s *AuthService) Authenticate(username string, password string) (bool, *models.User, string) {
+func (s *AuthService) Authenticate(username string, password string) (bool, *models.UserProfile, string) {
 	// Query database for username and password
 	auth, err := s.AuthRepo.Get(username)
 	if err != nil {
@@ -62,7 +62,7 @@ func (s *AuthService) Authenticate(username string, password string) (bool, *mod
 	utils.Logger.Debug().Msg(fmt.Sprintf("%t", match))
 
 	// Query for user's information if user is active
-	user, err := s.UsersRepo.GetUserByUsername(username)
+	user, err := s.UsersRepo.GetUserProfile(username)
 	if err != nil {
 		utils.Logger.Err(err).Msg("")
 		return false, nil, ""

@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
@@ -24,7 +25,7 @@ func AuthGuard() gin.HandlerFunc {
 		claim, err := services.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
@@ -50,13 +51,13 @@ func AdminGuard() gin.HandlerFunc {
 		claim, err := services.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
 		if claim.Role != "admin" {
-			c.JSON(401, gin.H{"error": "Unauthorized. You need to be an admin to access this function."})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized. You need to be an admin to access this function."})
 			c.Abort()
 			return
 		}

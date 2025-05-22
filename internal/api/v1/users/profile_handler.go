@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
@@ -22,17 +23,17 @@ func HasPasswordChangedHandler(c *gin.Context) {
 
 	// JWT does not match username
 	if !services.JwtHandler.ValidateUsername(username, tokenString) {
-		c.JSON(401, nil)
+		c.JSON(http.StatusUnauthorized, nil)
 		return
 	}
 
 	password_changed, err := services.Users.HasPasswordChanged(username)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
-		c.JSON(500, nil)
+		c.JSON(http.StatusInternalServerError, nil)
 	}
 
-	c.JSON(200, HasPasswordChangedResponse{
+	c.JSON(http.StatusOK, HasPasswordChangedResponse{
 		Username:         username,
 		Password_changed: password_changed,
 	})
@@ -48,9 +49,9 @@ func GetProfileHandler(c *gin.Context) {
 	if err != nil {
 		utils.Logger.Debug().Msg("profile may be nil. returning 404 here")
 		utils.Logger.Error().Err(err).Msg("")
-		c.JSON(404, nil)
+		c.JSON(http.StatusNotFound, nil)
 		return
 	}
 
-	c.JSON(200, profile)
+	c.JSON(http.StatusOK, profile)
 }

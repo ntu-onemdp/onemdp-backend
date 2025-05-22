@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
@@ -14,12 +16,11 @@ type loginForm struct {
 }
 
 type LoginResponse struct {
-	Success  bool   `json:"success"`
-	ErrorMsg string `json:"error_msg"`
-	Jwt      string `json:"jwt"`
-	Role     string `json:"role"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
+	Success bool                `json:"success"`
+	Error   string              `json:"error"`
+	Jwt     *string             `json:"jwt"`
+	Role    *string             `json:"role"`
+	User    *models.UserProfile `json:"user"`
 }
 
 func LoginHandler(c *gin.Context) {
@@ -30,11 +31,11 @@ func LoginHandler(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error processing login request")
 		response := LoginResponse{
-			Success:  false,
-			ErrorMsg: "Malformed request",
+			Success: false,
+			Error:   "Malformed request",
 		}
 
-		c.JSON(200, &response) // TODO: Change the error code in the future
+		c.JSON(http.StatusBadRequest, &response) // TODO: Change the error code in the future
 		return
 	}
 
@@ -42,11 +43,11 @@ func LoginHandler(c *gin.Context) {
 	isAuthenticated, user, role := services.Auth.Authenticate(form.Username, form.Password)
 	if !isAuthenticated {
 		response := LoginResponse{
-			Success:  false,
-			ErrorMsg: "Unauthorized: Incorrect username/password",
+			Success: false,
+			Error:   "Unauthorized: Incorrect username/password",
 		}
 
-		c.JSON(200, &response)
+		c.JSON(http.StatusOK, &response)
 		return
 	}
 
@@ -55,15 +56,14 @@ func LoginHandler(c *gin.Context) {
 	jwt, err := services.JwtHandler.GenerateJwt(claim)
 	if err != nil {
 		utils.Logger.Error().Err(err)
-		c.JSON(500, "Internal server error")
+		c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
 	response := LoginResponse{
-		Success:  true,
-		Jwt:      jwt,
-		Role:     role,
-		Name:     user.Name,
-		Username: user.Username,
+		Success: true,
+		Jwt:     &jwt,
+		Role:    &role,
+		User:    user,
 	}
-	c.JSON(200, &response)
+	c.JSON(http.StatusOK, &response)
 }
