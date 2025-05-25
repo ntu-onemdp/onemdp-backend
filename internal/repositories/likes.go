@@ -130,9 +130,11 @@ func (r *LikesRepository) Delete(username string, content_id string) error {
 	// Get username of author
 	contentType := string(content_id[0]) // Content type is the first character of content_id
 	var author string                    // Username of author
-	switch contentType {                 // Note that threads will not be liked directly, so we do not check for it
+	switch contentType {
 	case "p": // Post
 		query = `SELECT author FROM posts WHERE post_id = $1;`
+	case "t": // Thread
+		query = `SELECT author FROM threads WHERE thread_id = $1;`
 	default:
 		utils.Logger.Error().Msg("Unknown content type")
 		return fmt.Errorf("unknown content type: %s", contentType)
