@@ -33,7 +33,7 @@ func LikeThreadHandler(c *gin.Context) {
 	if hasLiked {
 		utils.Logger.Trace().Msg("User has already liked thread")
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
+			"success": false,
 			"message": "User has already liked thread",
 			"error":   nil,
 		})
@@ -81,7 +81,7 @@ func UnlikeThreadHandler(c *gin.Context) {
 	if !hasLiked {
 		utils.Logger.Trace().Msg("User has not liked thread")
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
+			"success": false,
 			"message": "User has not liked thread",
 			"error":   nil,
 		})

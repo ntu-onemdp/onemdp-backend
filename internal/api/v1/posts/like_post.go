@@ -48,7 +48,7 @@ func LikePostHandler(c *gin.Context) {
 	if hasLiked {
 		utils.Logger.Trace().Msg("User has already liked post")
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
+			"success": false,
 			"message": "User has already liked post",
 			"error":   nil,
 		})
@@ -100,7 +100,7 @@ func UnlikePostHandler(c *gin.Context) {
 	if !hasLiked {
 		utils.Logger.Trace().Msg("User has not liked post")
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
+			"success": false,
 			"message": "User has not liked post",
 			"error":   nil,
 		})
