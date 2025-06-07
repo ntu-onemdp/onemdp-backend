@@ -29,7 +29,7 @@ func InitJwt() {
 
 		key, err = os.ReadFile("config/jwt-key.txt")
 		if err != nil {
-			utils.Logger.Panic().Err(err).Msg("Error reading JWT secret key")
+			utils.Logger.Panic().Err(err).Msg("Error reading JWT secret key. Make sure the secret key is configured correctly.")
 		}
 	}
 
@@ -49,11 +49,10 @@ func (j *Jwt) GenerateJwt(claim *models.JwtClaim) (string, error) {
 
 	// Generate JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": claim.Username,
-		"role":     claim.Role,
-		"name":     claim.Name,
-		"semester": claim.Semester,
-		"iat":      time.Now().Unix(),
+		"uid":  claim.Uid,
+		"role": claim.Role,
+		"name": claim.Name,
+		"iat":  time.Now().Unix(),
 	})
 
 	// Sign key
@@ -81,7 +80,7 @@ func (j *Jwt) GetUsernameFromJwt(c *gin.Context) string {
 		return ""
 	}
 
-	return claim.Username
+	return claim.Uid
 }
 
 // Validate if username matches jwt token. Automatically returns false if error.
@@ -97,7 +96,7 @@ func (j *Jwt) ValidateUsername(username string, tokenString string) bool {
 		return false
 	}
 
-	return claim.Username == username
+	return claim.Uid == username
 }
 
 // Parse signed jwt string

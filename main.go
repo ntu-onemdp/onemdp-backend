@@ -38,9 +38,6 @@ func main() {
 	// Register public routes
 	routes.RegisterLoginRoute(r)
 
-	// Register change password route
-	routes.RegisterChangePasswordRoute(r)
-
 	// Register student routes
 	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
 	routes.RegisterStudentUserRoutes(studentRoutes)

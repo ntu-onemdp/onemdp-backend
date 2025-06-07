@@ -41,7 +41,7 @@ func NewPostHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, nil)
 		return
 	}
-	author := claim.Username
+	author := claim.Uid
 	utils.Logger.Info().Msg("New post request received from " + author)
 
 	// Check if reply to is blank

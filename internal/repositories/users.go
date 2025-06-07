@@ -12,6 +12,7 @@ import (
 
 // Users table name in db
 const USERS_TABLE = "users"
+const PENDING_USERS_TABLE = "pending_users"
 
 type UsersRepository struct {
 	Db *pgxpool.Pool
@@ -19,21 +20,92 @@ type UsersRepository struct {
 
 var Users *UsersRepository
 
-// Insert one empty user into the database. Returns nil on successful insert
+// Insert one empty user into pending users table. Returns nil on successful insert
 // Use this function for user creation
-func (r *UsersRepository) InsertOneUser(user *models.User) error {
+func (r *UsersRepository) InsertOneUser(user *models.PendingUser) error {
 	query := `
-	INSERT INTO users (username, name, semester) 
-	VALUES ($1, $2, $3);`
+	INSERT INTO pending_users (email, role, semester) 
+	VALUES ($1, $2, $3)
+	WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE email = $1);` // Ensure that the user does not already exist in the users table
 
-	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
+	_, err := r.Db.Exec(context.Background(), query, user.Email, user.Role, user.Semester)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return err
 	}
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
+	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Email))
 	return nil
+}
+
+// Registers a user by moving them from pending_users to users table.
+func (r *UsersRepository) RegisterUser(uid string, email string, name string) error {
+	ctx := context.Background()
+
+	tx, err := r.Db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to begin transaction")
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Retrieve pending user
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE email=$1;`, PENDING_USERS_TABLE)
+
+	row, _ := tx.Query(ctx, query, email)
+	defer row.Close()
+	pending_user, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.PendingUser])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to retrieve pending user")
+		return err
+	}
+	utils.Logger.Trace().Msgf("Retrieved pending user: %s", pending_user.Email)
+
+	// Create new user from pending user
+	user := models.CreateUser(uid, name, pending_user.Email, pending_user.Semester, pending_user.Role)
+
+	// Insert user into users table
+	query = fmt.Sprintf(`
+	INSERT INTO %s (email, uid, name, role, semester)
+	VALUES ($1, $2, $3, $4, $5)
+	ON CONFLICT (email) DO UPDATE
+	SET uid = EXCLUDED.uid, name = EXCLUDED.name, role = EXCLUDED.role, semester = EXCLUDED.semester;`, USERS_TABLE)
+
+	if _, err := tx.Exec(ctx, query, user.Email, user.Uid, user.Name, user.Role, user.Semester); err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to insert user into users table")
+		return err
+	}
+	utils.Logger.Trace().Msgf("Inserted user: %s into users table", user.Email)
+
+	// Delete pending user
+	query = fmt.Sprintf(`DELETE FROM %s WHERE email=$1;`, PENDING_USERS_TABLE)
+	if _, err := tx.Exec(ctx, query, pending_user.Email); err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to delete pending user")
+		return err
+	}
+	utils.Logger.Trace().Msgf("Deleted pending user: %s", pending_user.Email)
+
+	// Commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to commit transaction")
+	}
+
+	utils.Logger.Debug().Msgf("User %s successfully registered", user.Email)
+	return nil
+}
+
+// Checks if user is pending registration
+func (r *UsersRepository) IsUserPending(email string) (bool, error) {
+	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE email=$1);`, PENDING_USERS_TABLE)
+	var exists bool
+	err := r.Db.QueryRow(context.Background(), query, email).Scan(&exists)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking if user is pending")
+		return false, err
+	}
+
+	return exists, nil
 }
 
 // Admin: Retrieve all users from the database, regardless of status
@@ -54,13 +126,13 @@ func (r *UsersRepository) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-// Retrieve user's status based on the username.
-// Throws error if username cannot be found
-func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
-	query := fmt.Sprintf(`SELECT status FROM %s WHERE username=$1;`, USERS_TABLE)
+// Retrieve user's status based on the email.
+// Throws error if email cannot be found
+func (r *UsersRepository) GetStatusByEmail(email string) (string, error) {
+	query := fmt.Sprintf(`SELECT status FROM %s WHERE email=$1;`, USERS_TABLE)
 
 	var status string
-	err := r.Db.QueryRow(context.Background(), query, username).Scan(&status)
+	err := r.Db.QueryRow(context.Background(), query, email).Scan(&status)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return "", err
@@ -114,11 +186,11 @@ func (r *UsersRepository) GetUserPasswordChanged(username string) (bool, error) 
 	return password_changed, nil
 }
 
-// Retrieve public profile information by username
-func (r *UsersRepository) GetUserProfile(username string) (*models.UserProfile, error) {
-	query := fmt.Sprintf(`SELECT username, name, profile_photo, semester, karma FROM %s WHERE username=$1 AND status='active';`, USERS_TABLE)
+// Retrieve public profile information by email
+func (r *UsersRepository) GetUserProfile(email string) (*models.UserProfile, error) {
+	query := fmt.Sprintf(`SELECT email, name, role, profile_photo, semester, karma FROM %s WHERE email=$1 AND status='active';`, USERS_TABLE)
 
-	row, _ := r.Db.Query(context.Background(), query, username)
+	row, _ := r.Db.Query(context.Background(), query, email)
 	profile, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.UserProfile])
 	if err != nil {
 		utils.Logger.Debug().Msg("Returning nil, possible that user is not found")

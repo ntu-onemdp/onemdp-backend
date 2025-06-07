@@ -43,7 +43,7 @@ func UpdatePostHandler(c *gin.Context) {
 		return
 	}
 
-	author := claim.Username
+	author := claim.Uid
 	utils.Logger.Info().Msg("Update post request received from " + author)
 
 	// Update post

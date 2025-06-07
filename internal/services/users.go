@@ -1,8 +1,6 @@
 package services
 
 import (
-	"time"
-
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -15,18 +13,10 @@ type UserService struct {
 var Users *UserService
 
 // Create new user and insert into the repository
-func (s *UserService) CreateNewUser(username string, name string, semester int) error {
-	user := models.User{
-		Username:        username,
-		Name:            name,
-		DateCreated:     time.Now(),
-		Semester:        semester,
-		PasswordChanged: false,
-		ProfilePhoto:    nil,
-		Status:          "active",
-	}
+func (s *UserService) CreateNewUser(email string, semester string, role string) error {
+	user := models.CreatePendingUser(email, semester, role)
 
-	err := s.UsersRepo.InsertOneUser(&user)
+	err := s.UsersRepo.InsertOneUser(user)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("User not inserted into database")
 		return err
@@ -35,14 +25,19 @@ func (s *UserService) CreateNewUser(username string, name string, semester int) 
 	return nil
 }
 
-// Check if user's password has been changed
-func (s *UserService) HasPasswordChanged(username string) (bool, error) {
-	return s.UsersRepo.GetUserPasswordChanged(username)
+// Register user by moving them from pending_users to users table
+func (s *UserService) RegisterUser(uid string, email string, name string) error {
+	return s.UsersRepo.RegisterUser(uid, email, name)
 }
 
 // Get user profile
-func (s *UserService) GetProfile(username string) (*models.UserProfile, error) {
-	return s.UsersRepo.GetUserProfile(username)
+func (s *UserService) GetProfile(email string) (*models.UserProfile, error) {
+	return s.UsersRepo.GetUserProfile(email)
+}
+
+// Check if user is pending registration
+func (s *UserService) IsUserPending(email string) (bool, error) {
+	return s.UsersRepo.IsUserPending(email)
 }
 
 // Admin: Get user information

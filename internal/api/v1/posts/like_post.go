@@ -23,7 +23,7 @@ func LikePostHandler(c *gin.Context) {
 		return
 	}
 
-	username := claim.Username
+	username := claim.Uid
 	utils.Logger.Info().Msg("Like post request received from " + username)
 
 	// Get post id from URL
@@ -88,7 +88,7 @@ func UnlikePostHandler(c *gin.Context) {
 		return
 	}
 
-	username := claim.Username
+	username := claim.Uid
 	utils.Logger.Info().Msg("Unlike post request received from " + username)
 
 	// Get post id from URL
