@@ -53,19 +53,6 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 		users.GetProfileHandler(c)
 	})
 
-	// [AE-7] GET /api/v1/users/:username/password-changed
-	router.GET("/password-changed", func(c *gin.Context) {
-		users.HasPasswordChangedHandler(c)
-	})
-
-}
-
-// Register change password routes
-func RegisterChangePasswordRoute(router *gin.Engine) {
-	// [AE-4] POST /api/v1/auth/:username/change-password
-	router.POST("/api/v1/auth/:username/change-password", func(c *gin.Context) {
-		auth.ChangePasswordHandler(c)
-	})
 }
 
 // Routes starting with /threads

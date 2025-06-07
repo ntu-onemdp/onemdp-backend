@@ -9,36 +9,6 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-type HasPasswordChangedResponse struct {
-	Username         string `json:"username"`
-	Password_changed bool   `json:"password_changed"` // False if user has not changed his password yet
-}
-
-func HasPasswordChangedHandler(c *gin.Context) {
-	// Retrieve username and jwt
-	username := c.Param("username")
-	tokenString := c.Request.Header.Get("Authorization")
-
-	utils.Logger.Info().Msg(fmt.Sprintf("Password changed query received for %s", username))
-
-	// JWT does not match username
-	if !services.JwtHandler.ValidateUsername(username, tokenString) {
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
-
-	password_changed, err := services.Users.HasPasswordChanged(username)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("")
-		c.JSON(http.StatusInternalServerError, nil)
-	}
-
-	c.JSON(http.StatusOK, HasPasswordChangedResponse{
-		Username:         username,
-		Password_changed: password_changed,
-	})
-}
-
 // Retrieve public user profile information as defined in models.UserProfile
 func GetProfileHandler(c *gin.Context) {
 	username := c.Param("username")

@@ -3,11 +3,11 @@ package models
 import "time"
 
 type User struct {
-	Uid          *string    `json:"uid" db:"uid"`
-	Name         *string    `json:"name" db:"name"`
+	Uid          string     `json:"uid" db:"uid"`
+	Name         string     `json:"name" db:"name"`
 	Email        string     `json:"email" db:"email"`
 	Role         string     `json:"role" db:"role"`
-	DateCreated  *time.Time `json:"date_created" db:"date_created"`
+	DateCreated  time.Time  `json:"date_created" db:"date_created"`
 	DateRemoved  *time.Time `json:"date_removed,omitempty" db:"date_removed"`
 	Semester     string     `json:"semester" db:"semester"`
 	ProfilePhoto *[]byte    `json:"profile_photo" db:"profile_photo"`
@@ -15,25 +15,41 @@ type User struct {
 	Karma        int        `json:"karma" db:"karma"`
 }
 
-// Initialize a new user for insertion into database
-// Optional parameters:
-// - role: If not provided, defaults to "student"
-func CreateUser(email string, semester string, role string) *User {
+// User pending registration
+type PendingUser struct {
+	Email       string    `json:"email" db:"email"`
+	Role        string    `json:"role" db:"role"`
+	Semester    string    `json:"semester" db:"semester"`
+	TimeCreated time.Time `json:"time_created" db:"time_created"`
+}
+
+// Initialize a new user for insertion into user table after registration
+func CreateUser(uid string, name string, email string, semester string, role string) *User {
+	return &User{
+		Uid:          uid,
+		Name:         name,
+		Email:        email,
+		Role:         role,
+		DateCreated:  time.Now(),
+		Semester:     semester,
+		ProfilePhoto: nil,
+		Status:       "active",
+		Karma:        0,
+	}
+}
+
+// Create a pending user for registration
+func CreatePendingUser(email string, semester string, role string) *PendingUser {
 	// Defaults to student if not provided
 	if role == "" {
 		role = "student"
 	}
 
-	return &User{
-		Uid:          nil,
-		Name:         nil,
-		Email:        email,
-		Role:         role,
-		DateCreated:  nil,
-		Semester:     semester,
-		ProfilePhoto: nil,
-		Status:       "active",
-		Karma:        0,
+	return &PendingUser{
+		Email:       email,
+		Role:        role,
+		Semester:    semester,
+		TimeCreated: time.Now(),
 	}
 }
 

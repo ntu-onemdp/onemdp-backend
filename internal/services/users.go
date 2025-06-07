@@ -14,7 +14,7 @@ var Users *UserService
 
 // Create new user and insert into the repository
 func (s *UserService) CreateNewUser(email string, semester string, role string) error {
-	user := models.CreateUser(email, semester, role)
+	user := models.CreatePendingUser(email, semester, role)
 
 	err := s.UsersRepo.InsertOneUser(user)
 	if err != nil {
@@ -25,14 +25,19 @@ func (s *UserService) CreateNewUser(email string, semester string, role string) 
 	return nil
 }
 
-// Check if user's password has been changed
-func (s *UserService) HasPasswordChanged(username string) (bool, error) {
-	return s.UsersRepo.GetUserPasswordChanged(username)
+// Register user by moving them from pending_users to users table
+func (s *UserService) RegisterUser(uid string, email string, name string) error {
+	return s.UsersRepo.RegisterUser(uid, email, name)
 }
 
 // Get user profile
-func (s *UserService) GetProfile(username string) (*models.UserProfile, error) {
-	return s.UsersRepo.GetUserProfile(username)
+func (s *UserService) GetProfile(email string) (*models.UserProfile, error) {
+	return s.UsersRepo.GetUserProfile(email)
+}
+
+// Check if user is pending registration
+func (s *UserService) IsUserPending(email string) (bool, error) {
+	return s.UsersRepo.IsUserPending(email)
 }
 
 // Admin: Get user information
