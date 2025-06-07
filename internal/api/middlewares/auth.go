@@ -30,7 +30,7 @@ func AuthGuard() gin.HandlerFunc {
 			return
 		}
 
-		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Username, claim.Role))
+		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Uid, claim.Role))
 		c.Next()
 	}
 }
@@ -61,7 +61,7 @@ func AdminGuard() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Username, claim.Role))
+		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Uid, claim.Role))
 		c.Next()
 	}
 }

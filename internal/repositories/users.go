@@ -23,16 +23,16 @@ var Users *UsersRepository
 // Use this function for user creation
 func (r *UsersRepository) InsertOneUser(user *models.User) error {
 	query := `
-	INSERT INTO users (username, name, semester) 
+	INSERT INTO users (email, role, semester) 
 	VALUES ($1, $2, $3);`
 
-	_, err := r.Db.Exec(context.Background(), query, user.Username, user.Name, user.Semester)
+	_, err := r.Db.Exec(context.Background(), query, user.Email, user.Role, user.Semester)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return err
 	}
 
-	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Username))
+	utils.Logger.Trace().Msg(fmt.Sprintf("%s successfully inserted into database", user.Email))
 	return nil
 }
 
@@ -54,13 +54,13 @@ func (r *UsersRepository) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-// Retrieve user's status based on the username.
-// Throws error if username cannot be found
-func (r *UsersRepository) GetStatusByUsername(username string) (string, error) {
-	query := fmt.Sprintf(`SELECT status FROM %s WHERE username=$1;`, USERS_TABLE)
+// Retrieve user's status based on the email.
+// Throws error if email cannot be found
+func (r *UsersRepository) GetStatusByEmail(email string) (string, error) {
+	query := fmt.Sprintf(`SELECT status FROM %s WHERE email=$1;`, USERS_TABLE)
 
 	var status string
-	err := r.Db.QueryRow(context.Background(), query, username).Scan(&status)
+	err := r.Db.QueryRow(context.Background(), query, email).Scan(&status)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return "", err

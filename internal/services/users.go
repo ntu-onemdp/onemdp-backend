@@ -1,8 +1,6 @@
 package services
 
 import (
-	"time"
-
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -15,18 +13,10 @@ type UserService struct {
 var Users *UserService
 
 // Create new user and insert into the repository
-func (s *UserService) CreateNewUser(username string, name string, semester int) error {
-	user := models.User{
-		Username:        username,
-		Name:            name,
-		DateCreated:     time.Now(),
-		Semester:        semester,
-		PasswordChanged: false,
-		ProfilePhoto:    nil,
-		Status:          "active",
-	}
+func (s *UserService) CreateNewUser(email string, semester string, role string) error {
+	user := models.CreateUser(email, semester, role)
 
-	err := s.UsersRepo.InsertOneUser(&user)
+	err := s.UsersRepo.InsertOneUser(user)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("User not inserted into database")
 		return err

@@ -127,7 +127,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 		}
 
 		// Check if author of thread matches the author in JWT claim
-		if author != claim.Username {
+		if author != claim.Uid {
 			return utils.NewErrUnauthorized()
 		}
 	}
@@ -146,7 +146,7 @@ func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) er
 		}
 
 		// Check if author of thread matches the author in JWT claim
-		if author != claim.Username {
+		if author != claim.Uid {
 			return utils.NewErrUnauthorized()
 		}
 	}

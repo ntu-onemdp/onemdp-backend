@@ -5,25 +5,17 @@ import (
 )
 
 type JwtClaim struct {
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	Name     string `json:"name"`
-	Semester int    `json:"semester"`
+	Uid  string `json:"uid"`
+	Role string `json:"role"`
+	Name string `json:"name"`
 
 	jwt.RegisteredClaims
 }
 
-func NewClaim(user *UserProfile, role string) *JwtClaim {
+func NewClaim(user *UserProfile, uid string) *JwtClaim {
 	return &JwtClaim{
-		Username: user.Username,
-		Role:     role,
-		Name:     user.Name,
-		Semester: user.Semester,
+		Uid:  uid,
+		Role: user.Role,
+		Name: user.Name,
 	}
 }
-
-// // Represent user claim before signing the JWT token.
-// type UserClaim struct {
-// 	Username string `json:"username"`
-// 	Role     string `json:"role"`
-// }

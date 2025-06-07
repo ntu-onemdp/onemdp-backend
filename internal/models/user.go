@@ -3,36 +3,46 @@ package models
 import "time"
 
 type User struct {
-	Username        string     `json:"username" db:"username"`
-	Name            string     `json:"name" db:"name"`
-	DateCreated     time.Time  `json:"date_created" db:"date_created"`
-	DateRemoved     *time.Time `json:"date_removed,omitempty" db:"date_removed"`
-	Semester        int        `json:"semester" db:"semester"`
-	PasswordChanged bool       `json:"password_changed" db:"password_changed"`
-	ProfilePhoto    *string    `json:"profile_photo" db:"profile_photo"`
-	Status          string     `json:"status" db:"status"`
-	Karma           int        `json:"karma" db:"karma"`
+	Uid          *string    `json:"uid" db:"uid"`
+	Name         *string    `json:"name" db:"name"`
+	Email        string     `json:"email" db:"email"`
+	Role         string     `json:"role" db:"role"`
+	DateCreated  *time.Time `json:"date_created" db:"date_created"`
+	DateRemoved  *time.Time `json:"date_removed,omitempty" db:"date_removed"`
+	Semester     string     `json:"semester" db:"semester"`
+	ProfilePhoto *[]byte    `json:"profile_photo" db:"profile_photo"`
+	Status       string     `json:"status" db:"status"`
+	Karma        int        `json:"karma" db:"karma"`
 }
 
 // Initialize a new user for insertion into database
-func CreateUser(username string, name string, semester int) *User {
+// Optional parameters:
+// - role: If not provided, defaults to "student"
+func CreateUser(email string, semester string, role string) *User {
+	// Defaults to student if not provided
+	if role == "" {
+		role = "student"
+	}
+
 	return &User{
-		Username:        username,
-		Name:            name,
-		DateCreated:     time.Now(),
-		Semester:        semester,
-		PasswordChanged: false,
-		ProfilePhoto:    nil,
-		Status:          "active",
-		Karma:           0,
+		Uid:          nil,
+		Name:         nil,
+		Email:        email,
+		Role:         role,
+		DateCreated:  nil,
+		Semester:     semester,
+		ProfilePhoto: nil,
+		Status:       "active",
+		Karma:        0,
 	}
 }
 
 // Public user profile details returned by HandleGetUserProfile
 type UserProfile struct {
-	Username     string  `json:"username"`
+	Email        string  `json:"email"`
 	Name         string  `json:"name"`
-	ProfilePhoto *string `json:"profile_photo" db:"profile_photo"`
-	Semester     int     `json:"semester"`
+	ProfilePhoto *[]byte `json:"profile_photo" db:"profile_photo"`
+	Semester     string  `json:"semester"`
 	Karma        int     `json:"karma"`
+	Role         string  `json:"role"`
 }

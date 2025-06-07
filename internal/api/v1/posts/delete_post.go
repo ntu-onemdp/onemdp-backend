@@ -22,7 +22,7 @@ func DeletePostsHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, nil)
 		return
 	}
-	utils.Logger.Info().Msg("Delete post request received from " + claim.Username)
+	utils.Logger.Info().Msg("Delete post request received from " + claim.Uid)
 
 	// Delete post
 	err = services.Posts.DeletePost(postID, claim)

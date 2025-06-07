@@ -20,7 +20,7 @@ func DeleteThreadHandler(c *gin.Context) {
 		return
 	}
 
-	utils.Logger.Info().Msg("Delete thread request received from " + claim.Username)
+	utils.Logger.Info().Msg("Delete thread request received from " + claim.Uid)
 
 	err = services.Threads.DeleteThread(threadId, claim)
 	if err == utils.NewErrUnauthorized() {

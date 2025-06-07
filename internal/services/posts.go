@@ -48,7 +48,7 @@ func (s *PostService) UpdatePost(updated_post models.Post, claim *models.JwtClai
 		}
 
 		// Check if author of post matches the author in JWT claim
-		if author != claim.Username {
+		if author != claim.Uid {
 			return utils.ErrUnauthorized{}
 		}
 	}
@@ -66,7 +66,7 @@ func (s *PostService) DeletePost(postID string, claim *models.JwtClaim) error {
 		}
 
 		// Check if author of post matches the author in JWT claim
-		if author != claim.Username {
+		if author != claim.Uid {
 			return utils.ErrUnauthorized{}
 		}
 	}

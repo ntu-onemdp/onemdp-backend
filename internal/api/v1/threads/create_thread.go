@@ -35,7 +35,7 @@ func CreateThreadHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, nil)
 		return
 	}
-	author := claim.Username
+	author := claim.Uid
 	utils.Logger.Info().Msg("New thread request received from " + author)
 
 	id, err := services.Threads.CreateNewThread(author, createThreadRequest.Title, createThreadRequest.Content)
