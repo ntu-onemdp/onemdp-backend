@@ -12,10 +12,16 @@ import (
 // Retrieve public user profile information as defined in models.UserProfile
 func GetProfileHandler(c *gin.Context) {
 	username := c.Param("username")
+	if username == "" {
+		utils.Logger.Error().Msg("Username is empty")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username is required"})
+		return
+	}
 
 	utils.Logger.Info().Str("username", username).Msg(fmt.Sprintf("Get user profile request received for %s", username))
+	email := username + "@e.ntu.edu.sg"
 
-	profile, err := services.Users.GetProfile(username)
+	profile, err := services.Users.GetProfile(email)
 	if err != nil {
 		utils.Logger.Debug().Msg("profile may be nil. returning 404 here")
 		utils.Logger.Error().Err(err).Msg("")
