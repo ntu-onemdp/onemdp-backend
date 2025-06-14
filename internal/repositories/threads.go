@@ -50,7 +50,7 @@ func (r *ThreadsRepository) Create(thread *models.Thread) error {
 	query = fmt.Sprintf(`
 	UPDATE %s
 	SET karma = karma + %d
-	WHERE username = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
+	WHERE uid = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
 	if _, err = tx.Exec(ctx, query, thread.Author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
 		return err
@@ -236,7 +236,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 	query = fmt.Sprintf(`
 	UPDATE %s
 	SET karma = GREATEST(karma - %d, 0)
-	WHERE username = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
+	WHERE uid = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
 
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
@@ -298,7 +298,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 			query = fmt.Sprintf(`
 			UPDATE %s
 			SET karma = GREATEST(karma - %d, 0)
-			WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+			WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 			batch.Queue(query, author)
 			utils.Logger.Trace().Str("query", query).Msg("Query added to batch")

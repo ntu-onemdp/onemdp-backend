@@ -19,7 +19,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 	const DEFAULT_SORT_DESCENDING = true
 
 	// Get username from jwt
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUidFromJwt(c)
 
 	size := c.GetInt("size")
 	if size == 0 {
@@ -69,7 +69,7 @@ func GetOneThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
 	// Get username from jwt
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUidFromJwt(c)
 
 	thread, posts, err := services.Threads.GetThread(threadId, username)
 	if err != nil {

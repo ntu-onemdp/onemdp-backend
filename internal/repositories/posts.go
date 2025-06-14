@@ -48,7 +48,7 @@ func (r *PostsRepository) Create(post *models.Post) error {
 	// Do not update karma if post is a header post as karma would have been updated when the thread was created
 	if !post.IsHeader {
 		query = fmt.Sprintf(`
-		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 		if _, err = tx.Exec(ctx, query, post.Author); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating user karma")
@@ -214,7 +214,7 @@ func (r *PostsRepository) Delete(postID string) error {
 
 	// Update user karma
 	query = fmt.Sprintf(`
-		UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating user karma")
 		return err
@@ -260,7 +260,7 @@ func (r *PostsRepository) Restore(postID string) error {
 
 	// Restore user's karma
 	query = fmt.Sprintf(`
-		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error restoring user karma")

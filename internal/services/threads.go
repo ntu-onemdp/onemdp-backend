@@ -62,7 +62,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	for i := range threads {
 		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
 		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
-		threads[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, threads[i].ThreadID)
+		threads[i].IsLiked = s.likesRepo.GetByUidAndContentId(username, threads[i].ThreadID)
 	}
 
 	return threads, nil
@@ -74,7 +74,7 @@ func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
 }
 
 // Retrieve thread and all associated posts
-func (s *ThreadService) GetThread(threadID string, username string) (*models.Thread, []models.Post, error) {
+func (s *ThreadService) GetThread(threadID string, uid string) (*models.Thread, []models.Post, error) {
 	// Retrieve thread from db
 	thread, err := s.threadRepo.GetByID(threadID)
 	if err != nil {
@@ -95,10 +95,10 @@ func (s *ThreadService) GetThread(threadID string, username string) (*models.Thr
 	// Get number of likes for each post
 	for i := range posts {
 		if posts[i].IsHeader {
-			posts[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, threadID)
+			posts[i].IsLiked = s.likesRepo.GetByUidAndContentId(uid, threadID)
 			posts[i].NumLikes = s.likesRepo.GetNumLikes(threadID)
 		} else {
-			posts[i].IsLiked = s.likesRepo.GetByUsernameAndContentId(username, posts[i].PostID)
+			posts[i].IsLiked = s.likesRepo.GetByUidAndContentId(uid, posts[i].PostID)
 			posts[i].NumLikes = s.likesRepo.GetNumLikes(posts[i].PostID)
 		}
 	}
@@ -117,9 +117,15 @@ func (s *ThreadService) UpdateThreadLastActivity(threadID string) error {
 }
 
 // Update thread's title and preview
-func (s *ThreadService) UpdateThread(threadID string, title string, content string, claim *models.JwtClaim) error {
+func (s *ThreadService) UpdateThread(threadID string, title string, content string, uid string) error {
 	// Check if role is admin or staff
-	if !HasStaffPermission(claim) {
+	hasStaffPermission, err := Users.HasStaffPermission(uid)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking staff permission")
+		return err
+	}
+
+	if !hasStaffPermission {
 		author, err := s.threadRepo.GetAuthor(threadID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
@@ -127,7 +133,7 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 		}
 
 		// Check if author of thread matches the author in JWT claim
-		if author != claim.Uid {
+		if author != uid {
 			return utils.NewErrUnauthorized()
 		}
 	}
@@ -136,9 +142,15 @@ func (s *ThreadService) UpdateThread(threadID string, title string, content stri
 }
 
 // Delete thread and all associated posts
-func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) error {
+func (s *ThreadService) DeleteThread(threadID string, uid string) error {
 	// Check if role is admin or staff
-	if !HasStaffPermission(claim) {
+	hasStaffPermission, err := Users.HasStaffPermission(uid)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking staff permission")
+		return err
+	}
+
+	if !hasStaffPermission {
 		author, err := s.threadRepo.GetAuthor(threadID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of thread")
@@ -146,7 +158,7 @@ func (s *ThreadService) DeleteThread(threadID string, claim *models.JwtClaim) er
 		}
 
 		// Check if author of thread matches the author in JWT claim
-		if author != claim.Uid {
+		if author != uid {
 			return utils.NewErrUnauthorized()
 		}
 	}

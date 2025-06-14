@@ -39,8 +39,14 @@ func (s *PostService) PostExists(postID string) bool {
 
 // Update post. Only the content and the title can be updated.
 // Post can only be updated by the author of the post or by admin or staff
-func (s *PostService) UpdatePost(updated_post models.Post, claim *models.JwtClaim) error {
-	if !HasStaffPermission(claim) {
+func (s *PostService) UpdatePost(updated_post models.Post, uid string) error {
+	hasStaffPermission, err := Users.HasStaffPermission(uid)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking staff permission")
+		return err
+	}
+
+	if !hasStaffPermission {
 		author, err := s.postRepo.GetAuthor(updated_post.PostID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of post")
@@ -48,8 +54,8 @@ func (s *PostService) UpdatePost(updated_post models.Post, claim *models.JwtClai
 		}
 
 		// Check if author of post matches the author in JWT claim
-		if author != claim.Uid {
-			return utils.ErrUnauthorized{}
+		if author != uid {
+			return utils.NewErrUnauthorized()
 		}
 	}
 
@@ -57,8 +63,14 @@ func (s *PostService) UpdatePost(updated_post models.Post, claim *models.JwtClai
 }
 
 // Delete post only if author matches the author of the post or if user is admin or staff
-func (s *PostService) DeletePost(postID string, claim *models.JwtClaim) error {
-	if !HasStaffPermission(claim) {
+func (s *PostService) DeletePost(postID string, uid string) error {
+	hasStaffPermission, err := Users.HasStaffPermission(uid)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking staff permission")
+		return err
+	}
+
+	if !hasStaffPermission {
 		author, err := s.postRepo.GetAuthor(postID)
 		if author == "" || err != nil {
 			utils.Logger.Error().Err(err).Msg("Error getting author of post")
@@ -66,8 +78,8 @@ func (s *PostService) DeletePost(postID string, claim *models.JwtClaim) error {
 		}
 
 		// Check if author of post matches the author in JWT claim
-		if author != claim.Uid {
-			return utils.ErrUnauthorized{}
+		if author != uid {
+			return utils.NewErrUnauthorized()
 		}
 	}
 	return s.postRepo.Delete(postID)

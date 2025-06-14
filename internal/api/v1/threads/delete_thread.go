@@ -12,17 +12,11 @@ func DeleteThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
 	// Get author from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
+	author := services.JwtHandler.GetUidFromJwt(c)
 
-	utils.Logger.Info().Msg("Delete thread request received from " + claim.Uid)
+	utils.Logger.Info().Msg("Delete thread request received from " + author)
 
-	err = services.Threads.DeleteThread(threadId, claim)
+	err := services.Threads.DeleteThread(threadId, author)
 	if err == utils.NewErrUnauthorized() {
 		utils.Logger.Error().Err(err).Msg("User is student and not author. Unauthorized to delete thread")
 		c.JSON(http.StatusUnauthorized, gin.H{

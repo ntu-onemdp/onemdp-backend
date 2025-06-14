@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -10,34 +12,32 @@ import (
 func GetAllUsersHandler(c *gin.Context) {
 	utils.Logger.Info().Msg("Get users request received")
 
-	users, err := services.Users.GetAllUsersInformation()
+	users, err := services.Users.GetAllUsersAdmin()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when getting all users")
-		c.JSON(500, nil)
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
-	// Success response: return 200
-	c.JSON(200, users)
+	c.JSON(http.StatusOK, users)
 }
 
 // Get individual user
 func GetOneUserHandler(c *gin.Context) {
-	username := c.Param("username")
-	utils.Logger.Info().Msg("Get user request received for " + username)
+	uid := c.Param("uid")
+	utils.Logger.Info().Msg("Get user request received for " + uid)
 
-	user, err := services.Users.GetUserInformation(username)
+	user, err := services.Users.GetUserAdmin(uid)
 	if user == nil {
 		utils.Logger.Error().Msg("User not found")
-		c.JSON(404, nil)
+		c.JSON(http.StatusNotFound, nil)
 		return
 	}
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when getting user")
-		c.JSON(500, nil)
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
-	// Success response: return 200
-	c.JSON(200, user)
+	c.JSON(http.StatusOK, user)
 }

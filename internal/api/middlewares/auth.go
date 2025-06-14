@@ -30,7 +30,7 @@ func AuthGuard() gin.HandlerFunc {
 			return
 		}
 
-		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Uid, claim.Role))
+		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s", claim.Uid))
 		c.Next()
 	}
 }
@@ -56,12 +56,21 @@ func AdminGuard() gin.HandlerFunc {
 			return
 		}
 
-		if claim.Role != "admin" {
+		user, err := services.Users.GetProfile(claim.Uid)
+		if err != nil {
+			utils.Logger.Error().Err(err).Msg("Error retrieving user profile")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Internal server error"})
+			c.Abort()
+			return
+		}
+
+		if user.Role != "admin" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized. You need to be an admin to access this function."})
 			c.Abort()
 			return
 		}
-		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Uid, claim.Role))
+
+		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s of role %s", claim.Uid, user.Role))
 		c.Next()
 	}
 }
