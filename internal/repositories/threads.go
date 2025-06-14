@@ -40,7 +40,7 @@ func (r *ThreadsRepository) Create(thread *models.DbThread) error {
 	INSERT INTO %s (thread_id, author, title, preview) 
 	VALUES ($1, $2, $3, $4);`, THREADS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.Author, thread.Title, thread.Preview); err != nil {
+	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting into database")
 		return err
 	}
@@ -51,7 +51,7 @@ func (r *ThreadsRepository) Create(thread *models.DbThread) error {
 	UPDATE %s
 	SET karma = karma + %d
 	WHERE uid = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
-	if _, err = tx.Exec(ctx, query, thread.Author); err != nil {
+	if _, err = tx.Exec(ctx, query, thread.AuthorUid); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
 		return err
 	}
@@ -70,10 +70,11 @@ func (r *ThreadsRepository) Create(thread *models.DbThread) error {
 // Number of threads returned is not hardcoded, can be chosen in frontend.
 // Params
 // column: column to sort by
+// uid: user ID of the user requesting the threads; used to determine if the thread is liked by the user
 // cursor: timestamp of the last thread in the previous page
 // size: page size; number of threads to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.DbThread, error) {
+func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -81,11 +82,49 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time,
 
 	// Example SQL statement after formatting:
 	// SELECT * FROM threads WHERE time_created < cursor AND is_available = true ORDER BY time_created DESC LIMIT size;
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s < $1 AND is_available = true ORDER BY %s %s LIMIT $2;`, THREADS_TABLE, column, column, desc)
+	query := fmt.Sprintf(`SELECT
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		U.NAME AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1) - 1
+			FROM
+				posts P
+			WHERE
+				P.THREAD_ID = T.THREAD_ID
+		) AS NUM_REPLIES,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $1 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		THREADS T
+		INNER JOIN USERS U ON T.AUTHOR = U.UID
+		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+	WHERE
+		T.%s < $2
+		AND T.IS_AVAILABLE = TRUE
+	GROUP BY
+		T.THREAD_ID,
+		U.UID
+	ORDER BY
+		T.%s %s
+	LIMIT $3;`, column, column, desc)
 
 	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
-	rows, _ := r.Db.Query(context.Background(), query, cursor, size)
-	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.DbThread])
+	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err

@@ -40,34 +40,22 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	}
 
 	postFactory := models.PostFactory{}
-	post := postFactory.New(thread.Author, thread.ThreadID, thread.Title, content, nil, true)
+	post := postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true)
 
 	err = s.postRepo.Create(post)
 	return thread.ThreadID, err
 }
 
 // Retrieve all threads after cursor
-func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time, username string) ([]models.Thread, error) {
+func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time, uid string) ([]models.Thread, error) {
 	// Convert sort string to ThreadColumn
 	column := models.StrToThreadColumn(sort)
 
 	// Retrieve threads from db
-	dbThreads, err := s.threadRepo.GetAll(column, cursor, size, descending)
+	threads, err := s.threadRepo.GetAll(column, uid, cursor, size, descending)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting threads from db")
 		return nil, err
-	}
-
-	var threads []models.Thread
-
-	// Retrieve number of likes and replies for each thread
-	for i := range dbThreads {
-		threads = append(threads, models.Thread{
-			DbThread:   dbThreads[i],
-			NumLikes:   s.likesRepo.GetNumLikes(dbThreads[i].ThreadID),
-			NumReplies: s.postRepo.GetNumReplies(dbThreads[i].ThreadID),
-			IsLiked:    s.likesRepo.GetByUidAndContentId(username, dbThreads[i].ThreadID),
-		})
 	}
 
 	return threads, nil

@@ -21,16 +21,16 @@ func NewThreadFactory() *ThreadFactory {
 type Thread struct {
 	DbThread
 
-	// Following fields are not stored in the database
-	NumLikes   int  `json:"num_likes" db:"-"`
-	NumReplies int  `json:"num_replies" db:"-"`
-	IsLiked    bool `json:"is_liked" db:"-"` // Whether the thread is liked by the user
+	Author     string `json:"author" db:"author_name"` // Name of the author
+	NumLikes   int    `json:"num_likes" db:"num_likes"`
+	NumReplies int    `json:"num_replies" db:"num_replies"`
+	IsLiked    bool   `json:"is_liked" db:"is_liked"` // Whether the thread is liked by the user
 }
 
 // DbThread models how a thread is stored in the database.
 type DbThread struct {
 	ThreadID     string    `json:"thread_id" db:"thread_id"`
-	Author       string    `json:"author" db:"author"`
+	AuthorUid    string    `json:"author_uid" db:"author"`
 	Title        string    `json:"title" db:"title"`
 	TimeCreated  time.Time `json:"time_created" db:"time_created"`
 	LastActivity time.Time `json:"last_activity" db:"last_activity"`
@@ -44,7 +44,7 @@ type DbThread struct {
 func (f *ThreadFactory) New(author string, title string, content string) *DbThread {
 	return &DbThread{
 		ThreadID:     "t" + gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
-		Author:       author,
+		AuthorUid:    author,
 		Title:        title,
 		TimeCreated:  time.Now(),
 		LastActivity: time.Now(),
@@ -85,7 +85,7 @@ func (t *DbThread) GetID() string {
 }
 
 func (t *DbThread) GetAuthor() string {
-	return t.Author
+	return t.AuthorUid
 }
 
 func (t *DbThread) GetTitle() string {
