@@ -3,11 +3,11 @@
 -- Table: public.likes
 CREATE TABLE IF NOT EXISTS public.likes
 (
-    username text COLLATE pg_catalog."default" NOT NULL,
+    uid text COLLATE pg_catalog."default" NOT NULL,
     content_id text NOT NULL,
     "timestamp" timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT likes_pkey PRIMARY KEY (username, content_id),
-    CONSTRAINT fk_likes_username_users_uid FOREIGN KEY (username)
+    CONSTRAINT likes_pkey PRIMARY KEY (uid, content_id),
+    CONSTRAINT fk_likes_uid_users_uid FOREIGN KEY (uid)
         REFERENCES public.users (uid) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
