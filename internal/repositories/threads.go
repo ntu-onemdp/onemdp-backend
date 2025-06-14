@@ -24,7 +24,7 @@ var Threads *ThreadsRepository
 
 // Insert new thread into the database. Returns thread ID and UUID of header post on successful insert
 // Although function takes in a thread object, only author, title and preview are used.
-func (r *ThreadsRepository) Create(thread *models.Thread) error {
+func (r *ThreadsRepository) Create(thread *models.DbThread) error {
 	ctx := context.Background()
 
 	// Begin transaction
@@ -73,7 +73,7 @@ func (r *ThreadsRepository) Create(thread *models.Thread) error {
 // cursor: timestamp of the last thread in the previous page
 // size: page size; number of threads to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.DbThread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -85,7 +85,7 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time,
 
 	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
 	rows, _ := r.Db.Query(context.Background(), query, cursor, size)
-	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
+	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.DbThread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err
@@ -111,7 +111,7 @@ func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
 }
 
 // Get thread by thread_id. Returns thread object if found, nil otherwise.
-func (r *ThreadsRepository) GetByID(thread_id string) (*models.Thread, error) {
+func (r *ThreadsRepository) GetByID(thread_id string) (*models.DbThread, error) {
 	// This function is called only when a thread is requested by its ID, so views are incremented here
 	query := fmt.Sprintf(`
 	WITH thread AS (
@@ -125,7 +125,7 @@ func (r *ThreadsRepository) GetByID(thread_id string) (*models.Thread, error) {
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
 	row, _ := r.Db.Query(context.Background(), query, thread_id)
-	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
+	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.DbThread])
 	if err != nil {
 		return nil, err
 	}

@@ -52,17 +52,22 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 	column := models.StrToThreadColumn(sort)
 
 	// Retrieve threads from db
-	threads, err := s.threadRepo.GetAll(column, cursor, size, descending)
+	dbThreads, err := s.threadRepo.GetAll(column, cursor, size, descending)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting threads from db")
 		return nil, err
 	}
 
+	var threads []models.Thread
+
 	// Retrieve number of likes and replies for each thread
-	for i := range threads {
-		threads[i].NumLikes = s.likesRepo.GetNumLikes(threads[i].ThreadID)
-		threads[i].NumReplies = s.postRepo.GetNumReplies(threads[i].ThreadID)
-		threads[i].IsLiked = s.likesRepo.GetByUidAndContentId(username, threads[i].ThreadID)
+	for i := range dbThreads {
+		threads = append(threads, models.Thread{
+			DbThread:   dbThreads[i],
+			NumLikes:   s.likesRepo.GetNumLikes(dbThreads[i].ThreadID),
+			NumReplies: s.postRepo.GetNumReplies(dbThreads[i].ThreadID),
+			IsLiked:    s.likesRepo.GetByUidAndContentId(username, dbThreads[i].ThreadID),
+		})
 	}
 
 	return threads, nil
@@ -76,10 +81,17 @@ func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
 // Retrieve thread and all associated posts
 func (s *ThreadService) GetThread(threadID string, uid string) (*models.Thread, []models.Post, error) {
 	// Retrieve thread from db
-	thread, err := s.threadRepo.GetByID(threadID)
+	dbThread, err := s.threadRepo.GetByID(threadID)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting thread")
 		return nil, nil, err
+	}
+
+	thread := &models.Thread{
+		DbThread:   *dbThread,
+		NumLikes:   s.likesRepo.GetNumLikes(threadID),
+		NumReplies: s.postRepo.GetNumReplies(threadID),
+		IsLiked:    s.likesRepo.GetByUidAndContentId(uid, threadID),
 	}
 
 	// Get number of likes for thread
