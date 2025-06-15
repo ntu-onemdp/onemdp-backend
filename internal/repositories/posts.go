@@ -21,7 +21,7 @@ type PostsRepository struct {
 var Posts *PostsRepository
 
 // Insert new post into the database. Returns post ID and nil on successful insert
-func (r *PostsRepository) Create(post *models.Post) error {
+func (r *PostsRepository) Create(post *models.DbPost) error {
 	ctx := context.Background()
 
 	// Begin transaction
@@ -48,7 +48,7 @@ func (r *PostsRepository) Create(post *models.Post) error {
 	// Do not update karma if post is a header post as karma would have been updated when the thread was created
 	if !post.IsHeader {
 		query = fmt.Sprintf(`
-		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 		if _, err = tx.Exec(ctx, query, post.Author); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating user karma")
@@ -69,13 +69,13 @@ func (r *PostsRepository) Create(post *models.Post) error {
 }
 
 // Get post by post_id. Returns post object if found, nil otherwise.
-func (r *PostsRepository) Get(postID string) (*models.Post, error) {
+func (r *PostsRepository) Get(postID string) (*models.DbPost, error) {
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE post_id = $1 AND is_available = true;`, POSTS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting post with id: %s", postID))
 
 	row, _ := r.Db.Query(context.Background(), query, postID)
-	post, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Post])
+	post, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.DbPost])
 
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
@@ -87,17 +87,59 @@ func (r *PostsRepository) Get(postID string) (*models.Post, error) {
 }
 
 // Get posts by thread_id. Returns slice of post objects if found, nil otherwise.
-func (r *PostsRepository) GetPostByThreadId(threadID string) ([]models.Post, error) {
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE thread_id = $1 AND is_available = true ORDER BY time_created ASC;`, POSTS_TABLE)
+func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]models.Post, error) {
+	query := fmt.Sprintf(`SELECT
+			P.POST_ID,
+			P.AUTHOR,
+			P.THREAD_ID,
+			P.REPLY_TO,
+			P.TITLE,
+			P.CONTENT,
+			P.TIME_CREATED,
+			P.LAST_EDITED,
+			P.FLAGGED,
+			P.IS_AVAILABLE,
+			P.IS_HEADER,
+			U.NAME AS AUTHOR_NAME,
+			COALESCE(l.like_count, 0) AS num_likes,
+			COALESCE(ul.user_liked, false) AS is_liked
+		FROM %s P
+		INNER JOIN USERS U ON P.AUTHOR = U.UID
+		LEFT JOIN (
+			SELECT 
+				content_id,
+				COUNT(*) AS like_count
+			FROM likes
+			GROUP BY content_id
+		) l ON l.content_id = CASE 
+			WHEN P.IS_HEADER THEN P.THREAD_ID::TEXT 
+			ELSE P.POST_ID::TEXT 
+		END
+		LEFT JOIN (
+			SELECT 
+				content_id,
+				TRUE AS user_liked
+			FROM likes
+			WHERE uid = $1  -- User ID parameter
+		) ul ON ul.content_id = CASE 
+			WHEN P.IS_HEADER THEN P.THREAD_ID::TEXT 
+			ELSE P.POST_ID::TEXT 
+		END
+		WHERE P.THREAD_ID = $2  -- Thread ID parameter
+		AND P.IS_AVAILABLE = TRUE
+		ORDER BY P.TIME_CREATED ASC;
+		`, POSTS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting posts with thread_id: %s", threadID))
 
-	rows, _ := r.Db.Query(context.Background(), query, threadID)
+	rows, _ := r.Db.Query(context.Background(), query, uid, threadID)
 	posts, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Post])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error serializing rows to post structs")
 		return nil, err
 	}
+
+	utils.Logger.Trace().Msg(fmt.Sprintf("Found %d posts with thread_id: %s", len(posts), threadID))
 
 	utils.Logger.Debug().Interface("Posts", posts).Msg(fmt.Sprintf("Posts with thread_id %s found", threadID))
 	return posts, nil
@@ -157,7 +199,7 @@ func (r *PostsRepository) IsAvailable(postID string) bool {
 
 // Edit content of post
 // TODO: update last edited for parent thread
-func (r *PostsRepository) Update(postID string, updated_post models.Post) error {
+func (r *PostsRepository) Update(postID string, updated_post models.DbPost) error {
 	query := fmt.Sprintf(`
 	UPDATE %s SET title = $1, content = $2, reply_to = $3, last_edited = NOW() WHERE post_id = $4 AND is_available = true;`, POSTS_TABLE)
 
@@ -214,7 +256,7 @@ func (r *PostsRepository) Delete(postID string) error {
 
 	// Update user karma
 	query = fmt.Sprintf(`
-		UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating user karma")
 		return err
@@ -260,7 +302,7 @@ func (r *PostsRepository) Restore(postID string) error {
 
 	// Restore user's karma
 	query = fmt.Sprintf(`
-		UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+		UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error restoring user karma")

@@ -11,16 +11,16 @@ type LikeService struct {
 
 var Likes *LikeService
 
-// Create a new like for username and contentID
-func (s *LikeService) CreateLike(username string, contentID string) error {
-	like := models.NewLike(username, contentID)
+// Create a new like for uid and contentID
+func (s *LikeService) CreateLike(uid string, contentID string) error {
+	like := models.NewLike(uid, contentID)
 
 	return s.likesRepository.Insert(like)
 }
 
-// Check if username has liked a content
-func (s *LikeService) HasLiked(username string, contentID string) bool {
-	return s.likesRepository.GetByUsernameAndContentId(username, contentID)
+// Check if uid has liked a content
+func (s *LikeService) HasLiked(uid string, contentID string) bool {
+	return s.likesRepository.GetByUidAndContentId(uid, contentID)
 }
 
 // Get number of likes for a content
@@ -28,7 +28,7 @@ func (s *LikeService) GetNumLikes(contentID string) int {
 	return s.likesRepository.GetNumLikes(contentID)
 }
 
-// Remove like for username and contentID
-func (s *LikeService) RemoveLike(username string, contentID string) error {
-	return s.likesRepository.Delete(username, contentID)
+// Remove like for uid and contentID
+func (s *LikeService) RemoveLike(uid string, contentID string) error {
+	return s.likesRepository.Delete(uid, contentID)
 }

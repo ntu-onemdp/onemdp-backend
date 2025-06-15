@@ -11,7 +11,7 @@ import (
 // Handle like thread request
 func LikeThreadHandler(c *gin.Context) {
 	// Get username form JWT token
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUidFromJwt(c)
 	if username == "" {
 		return
 	}
@@ -60,7 +60,7 @@ func LikeThreadHandler(c *gin.Context) {
 
 // Handle unlike thread request
 func UnlikeThreadHandler(c *gin.Context) {
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	username := services.JwtHandler.GetUidFromJwt(c)
 	if username == "" {
 		return
 	}

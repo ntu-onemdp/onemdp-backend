@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -8,8 +10,8 @@ import (
 
 // For now this handler will only update one user role per request
 type UpdateUserRoleRequest struct {
-	Username string `json:"username" binding:"required"`
-	Role     string `json:"role" binding:"required"`
+	Uid  string `json:"uid" binding:"required"`
+	Role string `json:"role" binding:"required"`
 }
 
 func UpdateRoleHandler(c *gin.Context) {
@@ -23,13 +25,15 @@ func UpdateRoleHandler(c *gin.Context) {
 		return
 	}
 
-	err := services.Auth.UpdateRole(updateUserRoleRequest.Username, updateUserRoleRequest.Role)
+	utils.Logger.Trace().Interface("updateUserRoleRequest", updateUserRoleRequest).Msg("Parsed request")
+
+	err := services.Users.UpdateRole(updateUserRoleRequest.Uid, updateUserRoleRequest.Role)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when updating user role")
-		c.JSON(500, nil)
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	// Success response: return 200
-	c.JSON(200, nil)
+	c.JSON(http.StatusOK, nil)
 }

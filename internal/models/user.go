@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type User struct {
 	Uid          string     `json:"uid" db:"uid"`
@@ -55,10 +58,34 @@ func CreatePendingUser(email string, semester string, role string) *PendingUser 
 
 // Public user profile details returned by HandleGetUserProfile
 type UserProfile struct {
+	Uid          string  `json:"uid"`
 	Email        string  `json:"email"`
 	Name         string  `json:"name"`
 	ProfilePhoto *[]byte `json:"profile_photo" db:"profile_photo"`
 	Semester     string  `json:"semester"`
 	Karma        int     `json:"karma"`
 	Role         string  `json:"role"`
+}
+
+// Role levels
+type UserRole int
+
+const (
+	Unknown          = 0
+	Student UserRole = iota
+	Staff
+	Admin
+)
+
+func ParseRole(role string) (UserRole, error) {
+	switch role {
+	case "student":
+		return Student, nil
+	case "staff":
+		return Staff, nil
+	case "admin":
+		return Admin, nil
+	default:
+		return Student, fmt.Errorf("unknown role: %s", role)
+	}
 }

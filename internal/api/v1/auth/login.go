@@ -24,7 +24,6 @@ type LoginResponse struct {
 	Success bool                `json:"success"`
 	Error   string              `json:"error"`
 	Jwt     *string             `json:"jwt"`
-	Role    *string             `json:"role"`
 	User    *models.UserProfile `json:"user"`
 }
 
@@ -68,7 +67,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Return user profile
-	profile, err := services.Users.GetProfile(user.UserMetadata.Email)
+	profile, err := services.Users.GetProfile(user.Uid)
 	if err != nil {
 		utils.Logger.Debug().Msg("User profile not found")
 		response := LoginResponse{
@@ -80,7 +79,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Generate jwt
-	claim := models.NewClaim(profile, user.Uid)
+	claim := models.NewClaim(user.Uid)
 	jwt, err := services.JwtHandler.GenerateJwt(claim)
 	if err != nil {
 		utils.Logger.Error().Err(err)
@@ -90,7 +89,6 @@ func LoginHandler(c *gin.Context) {
 	response := LoginResponse{
 		Success: true,
 		Jwt:     &jwt,
-		Role:    &profile.Role,
 		User:    profile,
 	}
 	c.JSON(http.StatusOK, &response)

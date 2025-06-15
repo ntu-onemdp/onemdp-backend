@@ -48,8 +48,8 @@ func RegisterImageRoutes(router *gin.RouterGroup) {
 
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
-	// [AE-6] GET /api/v1/users/:username
-	router.GET("/", func(c *gin.Context) {
+	// [AE-6] GET /api/v1/users/:uid
+	router.GET("/:uid", func(c *gin.Context) {
 		users.GetProfileHandler(c)
 	})
 
@@ -141,7 +141,7 @@ func RegisterAdminUserRoutes(router *gin.RouterGroup) {
 	})
 
 	// [AE-8] GET /api/v1/admin/users/:username
-	router.GET("/users/:username", func(c *gin.Context) {
+	router.GET("/users/:uid", func(c *gin.Context) {
 		admin.GetOneUserHandler(c)
 	})
 

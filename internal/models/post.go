@@ -16,9 +16,19 @@ func NewPostFactory() *PostFactory {
 	return &PostFactory{}
 }
 
+// Post models how a post is retrieved from the database.
 type Post struct {
+	DbPost
+
+	Author   string `json:"author" db:"author_name"` // Name of the author
+	NumLikes int    `json:"num_likes" db:"num_likes"`
+	IsLiked  bool   `json:"is_liked" db:"is_liked"` // Whether the post is liked by the user
+}
+
+// DbPost models how a post is stored in the database.
+type DbPost struct {
 	PostID      string    `json:"post_id" db:"post_id"`
-	Author      string    `json:"author" db:"author" binding:"required"`
+	Author      string    `json:"author_uid" db:"author" binding:"required"`
 	ThreadId    string    `json:"thread_id" db:"thread_id" binding:"required"`
 	ReplyTo     *string   `json:"reply_to" db:"reply_to"`
 	Title       string    `json:"title" db:"title" binding:"required"`
@@ -28,20 +38,16 @@ type Post struct {
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
 	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
-
-	// These columns are not in the database
-	NumLikes int  `json:"num_likes" db:"-"`
-	IsLiked  bool `json:"is_liked" db:"-"`
 }
 
-func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *Post {
+func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *DbPost {
 	// Sanitize content to prevent XSS attacks
 	policy := bluemonday.UGCPolicy()
 	// Allow styles on images (to allow image resizing)
 	policy.AllowStyles("width", "height", "draggable").OnElements("img")
 	content = policy.Sanitize(content)
 
-	return &Post{
+	return &DbPost{
 		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		Author:      author,
 		ThreadId:    threadId,
@@ -56,26 +62,26 @@ func (f *PostFactory) New(author string, threadId string, title string, content 
 	}
 }
 
-func (p *Post) GetID() string {
+func (p *DbPost) GetID() string {
 	return p.PostID
 }
 
-func (p *Post) GetAuthor() string {
+func (p *DbPost) GetAuthor() string {
 	return p.Author
 }
 
-func (p *Post) GetTitle() string {
+func (p *DbPost) GetTitle() string {
 	return p.Title
 }
 
-func (p *Post) GetTimeCreated() time.Time {
+func (p *DbPost) GetTimeCreated() time.Time {
 	return p.TimeCreated
 }
 
-func (p *Post) GetLastActivity() time.Time {
+func (p *DbPost) GetLastActivity() time.Time {
 	return p.LastEdited
 }
 
-func (p *Post) GetFlagged() bool {
+func (p *DbPost) GetFlagged() bool {
 	return p.Flagged
 }

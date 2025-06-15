@@ -39,7 +39,7 @@ func main() {
 	routes.RegisterLoginRoute(r)
 
 	// Register student routes
-	studentRoutes := r.Group("/api/v1/users/:username", middlewares.AuthGuard())
+	studentRoutes := r.Group("/api/v1/users", middlewares.AuthGuard())
 	routes.RegisterStudentUserRoutes(studentRoutes)
 
 	// Register thread routes

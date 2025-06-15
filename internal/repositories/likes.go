@@ -32,12 +32,12 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 
 	// Insert like into database
 	query := fmt.Sprintf(`	
-	INSERT INTO %s (username, content_id) 
+	INSERT INTO %s (uid, content_id) 
 	VALUES ($1, $2)
-	ON CONFLICT (username, content_id) DO NOTHING;
+	ON CONFLICT (uid, content_id) DO NOTHING;
 	`, LIKES_TABLE)
 
-	if _, err = tx.Exec(context.Background(), query, like.Username, like.ContentId); err != nil {
+	if _, err = tx.Exec(context.Background(), query, like.Uid, like.ContentId); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting like into database")
 		return err
 	}
@@ -62,7 +62,7 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 	}
 
 	// Update author's karma
-	query = fmt.Sprintf(`UPDATE %s SET karma = karma + %d WHERE username = $1;`, USERS_TABLE, models.LIKE_PTS)
+	query = fmt.Sprintf(`UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.LIKE_PTS)
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
 		return err
@@ -77,22 +77,23 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 	return nil
 }
 
-// Get like by username and content_id. Returns true if like exists, false otherwise.
-func (r *LikesRepository) GetByUsernameAndContentId(username string, content_id string) bool {
-	query := fmt.Sprintf(`SELECT 1 FROM %s WHERE username = $1 AND content_id = $2;`, LIKES_TABLE)
+// Get like by uid and content_id. Returns true if like exists, false otherwise.
+func (r *LikesRepository) GetByUidAndContentId(uid string, content_id string) bool {
+	query := fmt.Sprintf(`SELECT 1 FROM %s WHERE uid = $1 AND content_id = $2;`, LIKES_TABLE)
 
 	var num_likes int
-	err := r.Db.QueryRow(context.Background(), query, username, content_id).Scan(&num_likes)
+	err := r.Db.QueryRow(context.Background(), query, uid, content_id).Scan(&num_likes)
 	if num_likes == 0 || err != nil {
-		utils.Logger.Trace().Str("username", username).Str("content_id", content_id).Msg("Like not found")
+		utils.Logger.Trace().Str("uid", uid).Str("content_id", content_id).Msg("Like not found")
 		return false
 	}
 
-	utils.Logger.Trace().Str("username", username).Str("content_id", content_id).Msg("Like found")
+	utils.Logger.Trace().Str("uid", uid).Str("content_id", content_id).Msg("Like found")
 	return true
 }
 
 // Get number of likes
+// TODO: get in 1 transaction in posts etc.
 func (r *LikesRepository) GetNumLikes(content_id string) int {
 	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE content_id = $1;`, LIKES_TABLE)
 
@@ -109,7 +110,7 @@ func (r *LikesRepository) GetNumLikes(content_id string) int {
 }
 
 // Remove like. We perform hard deletes for likes.
-func (r *LikesRepository) Delete(username string, content_id string) error {
+func (r *LikesRepository) Delete(uid string, content_id string) error {
 	ctx := context.Background()
 
 	// Begin transaction
@@ -121,15 +122,15 @@ func (r *LikesRepository) Delete(username string, content_id string) error {
 	defer tx.Rollback(ctx)
 
 	// Delete like from database
-	query := fmt.Sprintf(`DELETE FROM %s WHERE username = $1 AND content_id = $2;`, LIKES_TABLE)
-	if _, err = tx.Exec(ctx, query, username, content_id); err != nil {
+	query := fmt.Sprintf(`DELETE FROM %s WHERE uid = $1 AND content_id = $2;`, LIKES_TABLE)
+	if _, err = tx.Exec(ctx, query, uid, content_id); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting like from database")
 		return err
 	}
 
-	// Get username of author
+	// Get uid of author
 	contentType := string(content_id[0]) // Content type is the first character of content_id
-	var author string                    // Username of author
+	var author string                    // UID of author
 	switch contentType {
 	case "p": // Post
 		query = `SELECT author FROM posts WHERE post_id = $1;`
@@ -146,7 +147,7 @@ func (r *LikesRepository) Delete(username string, content_id string) error {
 	}
 
 	// Update author's karma
-	query = fmt.Sprintf(`UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE username = $1;`, USERS_TABLE, models.LIKE_PTS)
+	query = fmt.Sprintf(`UPDATE %s SET karma = GREATEST(karma - %d, 0) WHERE uid = $1;`, USERS_TABLE, models.LIKE_PTS)
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
 		return err
