@@ -68,10 +68,10 @@ func GetAllThreadsHandler(c *gin.Context) {
 func GetOneThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
-	// Get username from jwt
-	username := services.JwtHandler.GetUidFromJwt(c)
+	// Get uid from jwt
+	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	thread, posts, err := services.Threads.GetThread(threadId, username)
+	thread, posts, err := services.Threads.GetThread(threadId, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread")
 

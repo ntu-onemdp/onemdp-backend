@@ -11,7 +11,7 @@ import (
 
 func UpdatePostHandler(c *gin.Context) {
 	// Bind with post object
-	var updatedPost models.Post
+	var updatedPost models.DbPost
 
 	if err := c.ShouldBindJSON(&updatedPost); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error binding JSON")

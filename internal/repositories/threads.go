@@ -149,23 +149,72 @@ func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
 	return models.ThreadsMetadata{NumThreads: num_threads}, nil
 }
 
-// Get thread by thread_id. Returns thread object if found, nil otherwise.
-func (r *ThreadsRepository) GetByID(thread_id string) (*models.DbThread, error) {
+// Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
+func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Thread, error) {
 	// This function is called only when a thread is requested by its ID, so views are incremented here
 	query := fmt.Sprintf(`
-	WITH thread AS (
-		UPDATE %s
-		SET views = views + 1
-		WHERE thread_id = $1 AND is_available = true
-		RETURNING *
-	)
-	SELECT * FROM thread;`, THREADS_TABLE)
+	WITH
+		T AS (
+			UPDATE %s
+			SET
+				VIEWS = VIEWS + 1
+			WHERE
+				THREAD_ID = $1
+				AND IS_AVAILABLE = TRUE
+			RETURNING
+				*
+		)
+	SELECT
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		USERS.NAME AS AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1) - 1
+			FROM
+				POSTS P
+			WHERE
+				P.THREAD_ID = T.THREAD_ID
+		) AS NUM_REPLIES,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $2 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		T
+		INNER JOIN USERS ON T.AUTHOR = USERS.UID
+		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+	WHERE
+		T.IS_AVAILABLE = TRUE
+		AND T.THREAD_ID = $1
+	GROUP BY
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		USERS.NAME;`, THREADS_TABLE)
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
-	row, _ := r.Db.Query(context.Background(), query, thread_id)
-	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.DbThread])
+	row, _ := r.Db.Query(context.Background(), query, thread_id, uid)
+	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
 	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting thread by ID")
 		return nil, err
 	}
 

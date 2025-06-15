@@ -28,7 +28,7 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 }
 
 // Retrieve post by post_id
-func (s *PostService) GetPost(postID string) (*models.Post, error) {
+func (s *PostService) GetPost(postID string) (*models.DbPost, error) {
 	return s.postRepo.Get(postID)
 }
 
@@ -39,7 +39,7 @@ func (s *PostService) PostExists(postID string) bool {
 
 // Update post. Only the content and the title can be updated.
 // Post can only be updated by the author of the post or by admin or staff
-func (s *PostService) UpdatePost(updated_post models.Post, uid string) error {
+func (s *PostService) UpdatePost(updated_post models.DbPost, uid string) error {
 	hasStaffPermission, err := Users.HasStaffPermission(uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error checking staff permission")
