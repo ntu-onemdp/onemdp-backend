@@ -10,21 +10,9 @@ import (
 
 // Handle like post request
 func LikePostHandler(c *gin.Context) {
-	// Get username from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Error parsing JWT token",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	username := claim.Username
-	utils.Logger.Info().Msg("Like post request received from " + username)
+	// Get uid from JWT token
+	uid := services.JwtHandler.GetUidFromJwt(c)
+	utils.Logger.Info().Msg("Like post request received from " + uid)
 
 	// Get post id from URL
 	postID := c.Param("post_id")
@@ -42,7 +30,7 @@ func LikePostHandler(c *gin.Context) {
 	}
 
 	// Check if user has liked the post
-	hasLiked := services.Likes.HasLiked(username, postID)
+	hasLiked := services.Likes.HasLiked(uid, postID)
 
 	// User has already liked the post, do nothing
 	if hasLiked {
@@ -55,7 +43,7 @@ func LikePostHandler(c *gin.Context) {
 		return
 	}
 
-	err = services.Likes.CreateLike(username, postID)
+	err := services.Likes.CreateLike(uid, postID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error creating like")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -75,28 +63,16 @@ func LikePostHandler(c *gin.Context) {
 
 // Handle unlike post request
 func UnlikePostHandler(c *gin.Context) {
-	// Get username from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Error parsing JWT token",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	username := claim.Username
-	utils.Logger.Info().Msg("Unlike post request received from " + username)
+	// Get uid from JWT token
+	uid := services.JwtHandler.GetUidFromJwt(c)
+	utils.Logger.Info().Msg("Unlike post request received from " + uid)
 
 	// Get post id from URL
 	postID := c.Param("post_id")
 	utils.Logger.Trace().Str("post_id", postID).Msg("")
 
 	// If user has not liked the post, do nothing
-	hasLiked := services.Likes.HasLiked(username, postID)
+	hasLiked := services.Likes.HasLiked(uid, postID)
 	if !hasLiked {
 		utils.Logger.Trace().Msg("User has not liked post")
 		c.JSON(http.StatusOK, gin.H{
@@ -107,7 +83,7 @@ func UnlikePostHandler(c *gin.Context) {
 		return
 	}
 
-	err = services.Likes.RemoveLike(username, postID)
+	err := services.Likes.RemoveLike(uid, postID)
 	if err != nil {
 		utils.Logger.Err(err).Msg("Error removing like")
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -27,15 +27,8 @@ func CreateThreadHandler(c *gin.Context) {
 		return
 	}
 
-	// Get author from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
-	author := claim.Username
+	// Get author uid from JWT token
+	author := services.JwtHandler.GetUidFromJwt(c)
 	utils.Logger.Info().Msg("New thread request received from " + author)
 
 	id, err := services.Threads.CreateNewThread(author, createThreadRequest.Title, createThreadRequest.Content)

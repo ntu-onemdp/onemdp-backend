@@ -11,7 +11,7 @@ import (
 
 func UpdatePostHandler(c *gin.Context) {
 	// Bind with post object
-	var updatedPost models.Post
+	var updatedPost models.DbPost
 
 	if err := c.ShouldBindJSON(&updatedPost); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error binding JSON")
@@ -35,19 +35,12 @@ func UpdatePostHandler(c *gin.Context) {
 	}
 
 	// Get author from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
+	author := services.JwtHandler.GetUidFromJwt(c)
 
-	author := claim.Username
 	utils.Logger.Info().Msg("Update post request received from " + author)
 
 	// Update post
-	err = services.Posts.UpdatePost(updatedPost, claim)
+	err := services.Posts.UpdatePost(updatedPost, author)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating post")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -60,7 +53,7 @@ func UpdatePostHandler(c *gin.Context) {
 	// Update thread last activity
 	if updatedPost.IsHeader {
 		// Header post: update title, preview, and last activity
-		err = services.Threads.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.PostContent, claim)
+		err = services.Threads.UpdateThread(updatedPost.ThreadId, updatedPost.Title, updatedPost.PostContent, author)
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating thread")
 			c.JSON(http.StatusInternalServerError, gin.H{

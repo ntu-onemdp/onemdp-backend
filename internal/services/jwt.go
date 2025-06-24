@@ -29,7 +29,7 @@ func InitJwt() {
 
 		key, err = os.ReadFile("config/jwt-key.txt")
 		if err != nil {
-			utils.Logger.Panic().Err(err).Msg("Error reading JWT secret key")
+			utils.Logger.Panic().Err(err).Msg("Error reading JWT secret key. Make sure the secret key is configured correctly.")
 		}
 	}
 
@@ -49,11 +49,8 @@ func (j *Jwt) GenerateJwt(claim *models.JwtClaim) (string, error) {
 
 	// Generate JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": claim.Username,
-		"role":     claim.Role,
-		"name":     claim.Name,
-		"semester": claim.Semester,
-		"iat":      time.Now().Unix(),
+		"uid": claim.Uid,
+		"iat": time.Now().Unix(),
 	})
 
 	// Sign key
@@ -66,9 +63,10 @@ func (j *Jwt) GenerateJwt(claim *models.JwtClaim) (string, error) {
 	return tokenString, nil
 }
 
-// Get username from JWT token in request
-func (j *Jwt) GetUsernameFromJwt(c *gin.Context) string {
-	// Get username from JWT token
+// Get uid from JWT token in request.
+// This acts as a middleware, so it automatically returns a 401 Unauthorized response if the JWT is invalid or missing.
+func (j *Jwt) GetUidFromJwt(c *gin.Context) string {
+	// Get Uid from JWT token
 	jwt := c.Request.Header.Get("Authorization")
 	claim, err := j.ParseJwt(jwt)
 	if err != nil {
@@ -81,23 +79,7 @@ func (j *Jwt) GetUsernameFromJwt(c *gin.Context) string {
 		return ""
 	}
 
-	return claim.Username
-}
-
-// Validate if username matches jwt token. Automatically returns false if error.
-func (j *Jwt) ValidateUsername(username string, tokenString string) bool {
-	// Remove "Bearer " prefix if included
-	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
-		tokenString = tokenString[7:]
-	}
-
-	claim, err := j.ParseJwt(tokenString)
-	if err != nil {
-		utils.Logger.Error().Err(err)
-		return false
-	}
-
-	return claim.Username == username
+	return claim.Uid
 }
 
 // Parse signed jwt string

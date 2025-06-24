@@ -24,7 +24,7 @@ var Threads *ThreadsRepository
 
 // Insert new thread into the database. Returns thread ID and UUID of header post on successful insert
 // Although function takes in a thread object, only author, title and preview are used.
-func (r *ThreadsRepository) Insert(thread *models.Thread) error {
+func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 	ctx := context.Background()
 
 	// Begin transaction
@@ -40,7 +40,7 @@ func (r *ThreadsRepository) Insert(thread *models.Thread) error {
 	INSERT INTO %s (thread_id, author, title, preview) 
 	VALUES ($1, $2, $3, $4);`, THREADS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.Author, thread.Title, thread.Preview); err != nil {
+	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting into database")
 		return err
 	}
@@ -50,8 +50,8 @@ func (r *ThreadsRepository) Insert(thread *models.Thread) error {
 	query = fmt.Sprintf(`
 	UPDATE %s
 	SET karma = karma + %d
-	WHERE username = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
-	if _, err = tx.Exec(ctx, query, thread.Author); err != nil {
+	WHERE uid = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
+	if _, err = tx.Exec(ctx, query, thread.AuthorUid); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
 		return err
 	}
@@ -70,10 +70,11 @@ func (r *ThreadsRepository) Insert(thread *models.Thread) error {
 // Number of threads returned is not hardcoded, can be chosen in frontend.
 // Params
 // column: column to sort by
+// uid: user ID of the user requesting the threads; used to determine if the thread is liked by the user
 // cursor: timestamp of the last thread in the previous page
 // size: page size; number of threads to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -81,10 +82,48 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, cursor time.Time,
 
 	// Example SQL statement after formatting:
 	// SELECT * FROM threads WHERE time_created < cursor AND is_available = true ORDER BY time_created DESC LIMIT size;
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s < $1 AND is_available = true ORDER BY %s %s LIMIT $2;`, THREADS_TABLE, column, column, desc)
+	query := fmt.Sprintf(`SELECT
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		U.NAME AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1) - 1
+			FROM
+				posts P
+			WHERE
+				P.THREAD_ID = T.THREAD_ID
+		) AS NUM_REPLIES,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $1 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		THREADS T
+		INNER JOIN USERS U ON T.AUTHOR = U.UID
+		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+	WHERE
+		T.%s < $2
+		AND T.IS_AVAILABLE = TRUE
+	GROUP BY
+		T.THREAD_ID,
+		U.UID
+	ORDER BY
+		T.%s %s
+	LIMIT $3;`, column, column, desc)
 
 	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
-	rows, _ := r.Db.Query(context.Background(), query, cursor, size)
+	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
@@ -110,23 +149,72 @@ func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
 	return models.ThreadsMetadata{NumThreads: num_threads}, nil
 }
 
-// Get thread by thread_id. Returns thread object if found, nil otherwise.
-func (r *ThreadsRepository) GetByID(thread_id string) (*models.Thread, error) {
+// Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
+func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Thread, error) {
 	// This function is called only when a thread is requested by its ID, so views are incremented here
 	query := fmt.Sprintf(`
-	WITH thread AS (
-		UPDATE %s
-		SET views = views + 1
-		WHERE thread_id = $1 AND is_available = true
-		RETURNING *
-	)
-	SELECT * FROM thread;`, THREADS_TABLE)
+	WITH
+		T AS (
+			UPDATE %s
+			SET
+				VIEWS = VIEWS + 1
+			WHERE
+				THREAD_ID = $1
+				AND IS_AVAILABLE = TRUE
+			RETURNING
+				*
+		)
+	SELECT
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		USERS.NAME AS AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1) - 1
+			FROM
+				POSTS P
+			WHERE
+				P.THREAD_ID = T.THREAD_ID
+		) AS NUM_REPLIES,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $2 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		T
+		INNER JOIN USERS ON T.AUTHOR = USERS.UID
+		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+	WHERE
+		T.IS_AVAILABLE = TRUE
+		AND T.THREAD_ID = $1
+	GROUP BY
+		T.THREAD_ID,
+		T.TITLE,
+		T.AUTHOR,
+		T.TIME_CREATED,
+		T.LAST_ACTIVITY,
+		T.VIEWS,
+		T.FLAGGED,
+		T.PREVIEW,
+		T.IS_AVAILABLE,
+		USERS.NAME;`, THREADS_TABLE)
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
+	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
-	row, _ := r.Db.Query(context.Background(), query, thread_id)
+	row, _ := r.Db.Query(context.Background(), query, thread_id, uid)
 	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
 	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting thread by ID")
 		return nil, err
 	}
 
@@ -236,7 +324,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 	query = fmt.Sprintf(`
 	UPDATE %s
 	SET karma = GREATEST(karma - %d, 0)
-	WHERE username = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
+	WHERE uid = $1;`, USERS_TABLE, models.CREATE_THREAD_PTS)
 
 	if _, err = tx.Exec(ctx, query, author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma")
@@ -298,7 +386,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 			query = fmt.Sprintf(`
 			UPDATE %s
 			SET karma = GREATEST(karma - %d, 0)
-			WHERE username = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
+			WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
 			batch.Queue(query, author)
 			utils.Logger.Trace().Str("query", query).Msg("Query added to batch")

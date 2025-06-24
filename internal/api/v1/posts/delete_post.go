@@ -15,17 +15,11 @@ func DeletePostsHandler(c *gin.Context) {
 	utils.Logger.Info().Str("postID", postID).Msg("Delete post request received")
 
 	// Get author from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
-	utils.Logger.Info().Msg("Delete post request received from " + claim.Username)
+	author := services.JwtHandler.GetUidFromJwt(c)
+	utils.Logger.Info().Msg("Delete post request received from " + author)
 
 	// Delete post
-	err = services.Posts.DeletePost(postID, claim)
+	err := services.Posts.DeletePost(postID, author)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting post")
 

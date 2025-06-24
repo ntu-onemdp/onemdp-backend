@@ -18,8 +18,8 @@ func GetAllThreadsHandler(c *gin.Context) {
 	const DEFAULT_SORT_COLUMN = models.TIME_CREATED_COL
 	const DEFAULT_SORT_DESCENDING = true
 
-	// Get username from jwt
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	// Get uid from jwt
+	uid := services.JwtHandler.GetUidFromJwt(c)
 
 	size := c.GetInt("size")
 	if size == 0 {
@@ -34,7 +34,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 
 	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
 
-	threads, err := services.Threads.GetThreads(sort, size, desc, timestamp, username)
+	threads, err := services.Threads.GetThreads(sort, size, desc, timestamp, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -68,10 +68,10 @@ func GetAllThreadsHandler(c *gin.Context) {
 func GetOneThreadHandler(c *gin.Context) {
 	threadId := c.Param("thread_id")
 
-	// Get username from jwt
-	username := services.JwtHandler.GetUsernameFromJwt(c)
+	// Get uid from jwt
+	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	thread, posts, err := services.Threads.GetThread(threadId, username)
+	thread, posts, err := services.Threads.GetThread(threadId, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread")
 

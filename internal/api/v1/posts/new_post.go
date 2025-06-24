@@ -34,14 +34,7 @@ func NewPostHandler(c *gin.Context) {
 	utils.Logger.Debug().Interface("newPostRequest", newPostRequest).Msg("New post request")
 
 	// Get author from JWT token
-	jwt := c.Request.Header.Get("Authorization")
-	claim, err := services.JwtHandler.ParseJwt(jwt)
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error parsing JWT token")
-		c.JSON(http.StatusUnauthorized, nil)
-		return
-	}
-	author := claim.Username
+	author := services.JwtHandler.GetUidFromJwt(c)
 	utils.Logger.Info().Msg("New post request received from " + author)
 
 	// Check if reply to is blank
@@ -53,7 +46,7 @@ func NewPostHandler(c *gin.Context) {
 	}
 
 	// Create new post
-	err = services.Posts.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content)
+	err := services.Posts.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating new post")
 		c.JSON(http.StatusInternalServerError, gin.H{

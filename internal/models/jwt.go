@@ -4,26 +4,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Jwt will store only Uid. Retrieve role from database instead of jwt.
 type JwtClaim struct {
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	Name     string `json:"name"`
-	Semester int    `json:"semester"`
+	Uid string `json:"uid"`
 
 	jwt.RegisteredClaims
 }
 
-func NewClaim(user *UserProfile, role string) *JwtClaim {
+func NewClaim(uid string) *JwtClaim {
 	return &JwtClaim{
-		Username: user.Username,
-		Role:     role,
-		Name:     user.Name,
-		Semester: user.Semester,
+		Uid: uid,
 	}
 }
-
-// // Represent user claim before signing the JWT token.
-// type UserClaim struct {
-// 	Username string `json:"username"`
-// 	Role     string `json:"role"`
-// }

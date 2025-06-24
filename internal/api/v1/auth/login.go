@@ -9,50 +9,77 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-// Login form sent from frontend.
-type loginForm struct {
-	Username string `form:"username" binding:"required"`
-	Password string `form:"password" binding:"required"` // Plaintext password
+// uid + user object retrieved from supabase
+type user struct {
+	Uid          string       `json:"uid" binding:"required"`
+	UserMetadata userMetadata `json:"user_metadata" binding:"required"`
+}
+
+type userMetadata struct {
+	Email string `json:"email" binding:"required"`
+	Name  string `json:"full_name" binding:"required"`
 }
 
 type LoginResponse struct {
 	Success bool                `json:"success"`
 	Error   string              `json:"error"`
 	Jwt     *string             `json:"jwt"`
-	Role    *string             `json:"role"`
 	User    *models.UserProfile `json:"user"`
 }
 
+// Implemented for SSO. After SSO login, the handler will return the JWT and user profile
 func LoginHandler(c *gin.Context) {
-	utils.Logger.Trace().Str("username", c.PostForm("username")).Msg("Login request received")
-	var form loginForm
+	utils.Logger.Trace().Msg("Login request received")
+	var user user
 
 	// Bind with form
-	if err := c.ShouldBind(&form); err != nil {
+	if err := c.ShouldBindJSON(&user); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error processing login request")
 		response := LoginResponse{
 			Success: false,
 			Error:   "Malformed request",
 		}
 
-		c.JSON(http.StatusBadRequest, &response) // TODO: Change the error code in the future
+		c.JSON(http.StatusBadRequest, &response)
 		return
 	}
 
-	// Authenticate user
-	isAuthenticated, user, role := services.Auth.Authenticate(form.Username, form.Password)
-	if !isAuthenticated {
+	// Check if user is pending registration
+	isPending, err := services.Users.IsUserPending(user.UserMetadata.Email)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error checking if user is pending")
+		c.JSON(http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if isPending {
+		utils.Logger.Debug().Msg("User is pending registration")
+
+		if err := services.Users.RegisterUser(user.Uid, user.UserMetadata.Email, user.UserMetadata.Name); err != nil {
+			utils.Logger.Error().Err(err).Msg("Error registering user")
+			response := LoginResponse{
+				Success: false,
+				Error:   "Internal server error",
+			}
+			c.JSON(http.StatusInternalServerError, &response)
+			return
+		}
+	}
+
+	// Return user profile
+	profile, err := services.Users.GetProfile(user.Uid)
+	if err != nil {
+		utils.Logger.Debug().Msg("User profile not found")
 		response := LoginResponse{
 			Success: false,
-			Error:   "Unauthorized: Incorrect username/password",
+			Error:   "Unauthorized: User not registered",
 		}
-
-		c.JSON(http.StatusOK, &response)
+		c.JSON(http.StatusUnauthorized, &response)
 		return
 	}
 
 	// Generate jwt
-	claim := models.NewClaim(user, role)
+	claim := models.NewClaim(user.Uid)
 	jwt, err := services.JwtHandler.GenerateJwt(claim)
 	if err != nil {
 		utils.Logger.Error().Err(err)
@@ -62,8 +89,7 @@ func LoginHandler(c *gin.Context) {
 	response := LoginResponse{
 		Success: true,
 		Jwt:     &jwt,
-		Role:    &role,
-		User:    user,
+		User:    profile,
 	}
 	c.JSON(http.StatusOK, &response)
 }

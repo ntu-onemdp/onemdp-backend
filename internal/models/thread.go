@@ -17,9 +17,20 @@ func NewThreadFactory() *ThreadFactory {
 	return &ThreadFactory{}
 }
 
+// Thread models how a thread is retrieved from the database.
 type Thread struct {
+	DbThread
+
+	Author     string `json:"author" db:"author_name"` // Name of the author
+	NumLikes   int    `json:"num_likes" db:"num_likes"`
+	NumReplies int    `json:"num_replies" db:"num_replies"`
+	IsLiked    bool   `json:"is_liked" db:"is_liked"` // Whether the thread is liked by the user
+}
+
+// DbThread models how a thread is stored in the database.
+type DbThread struct {
 	ThreadID     string    `json:"thread_id" db:"thread_id"`
-	Author       string    `json:"author" db:"author"`
+	AuthorUid    string    `json:"author_uid" db:"author"`
 	Title        string    `json:"title" db:"title"`
 	TimeCreated  time.Time `json:"time_created" db:"time_created"`
 	LastActivity time.Time `json:"last_activity" db:"last_activity"`
@@ -27,18 +38,13 @@ type Thread struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
-
-	// Following fields are not stored in the database
-	NumLikes   int  `json:"num_likes" db:"-"`
-	NumReplies int  `json:"num_replies" db:"-"`
-	IsLiked    bool `json:"is_liked" db:"-"` // Whether the thread is liked by the user
 }
 
 // Create a new thread with a unique thread ID
-func (f *ThreadFactory) New(author string, title string, content string) *Thread {
-	return &Thread{
+func (f *ThreadFactory) New(author string, title string, content string) *DbThread {
+	return &DbThread{
 		ThreadID:     "t" + gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
-		Author:       author,
+		AuthorUid:    author,
 		Title:        title,
 		TimeCreated:  time.Now(),
 		LastActivity: time.Now(),
@@ -74,27 +80,27 @@ func StrToThreadColumn(s string) ThreadColumn {
 	}
 }
 
-func (t *Thread) GetID() string {
+func (t *DbThread) GetID() string {
 	return t.ThreadID
 }
 
-func (t *Thread) GetAuthor() string {
-	return t.Author
+func (t *DbThread) GetAuthor() string {
+	return t.AuthorUid
 }
 
-func (t *Thread) GetTitle() string {
+func (t *DbThread) GetTitle() string {
 	return t.Title
 }
 
-func (t *Thread) GetTimeCreated() time.Time {
+func (t *DbThread) GetTimeCreated() time.Time {
 	return t.TimeCreated
 }
 
-func (t *Thread) GetLastActivity() time.Time {
+func (t *DbThread) GetLastActivity() time.Time {
 	return t.LastActivity
 }
 
-func (t *Thread) GetFlagged() bool {
+func (t *DbThread) GetFlagged() bool {
 	return t.Flagged
 }
 
