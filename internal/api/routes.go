@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
@@ -118,6 +119,14 @@ func RegisterPostRoutes(router *gin.RouterGroup) {
 	// [AE-85] DELETE /api/v1/posts/:post_id/like
 	router.DELETE("/:post_id/like", func(c *gin.Context) {
 		posts.UnlikePostHandler(c)
+	})
+}
+
+// Routes starting with /articles
+func RegisterArticleRoutes(router *gin.RouterGroup) {
+	// [AE-61] POST /api/v1/articles/new
+	router.POST("/new", func(c *gin.Context) {
+		articles.CreateArticleHandler(c)
 	})
 }
 
