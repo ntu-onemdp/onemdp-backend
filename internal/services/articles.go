@@ -7,17 +7,15 @@ import (
 
 type ArticleService struct {
 	articleRepo *repositories.ArticleRepository
-	likesRepo   *repositories.LikesRepository
 
 	articleFactory *models.ArticleFactory
 }
 
 var Articles *ArticleService
 
-func NewArticleService(articleRepo *repositories.ArticleRepository, likesRepo *repositories.LikesRepository) *ArticleService {
+func NewArticleService(articleRepo *repositories.ArticleRepository) *ArticleService {
 	return &ArticleService{
 		articleRepo: articleRepo,
-		likesRepo:   likesRepo,
 	}
 }
 

@@ -20,8 +20,10 @@ type ArticleRepository struct {
 var Articles *ArticleRepository
 
 // Insert new article into database.
-func (r *ArticleRepository) Insert(article *models.Article) error {
+func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 	ctx := context.Background()
+
+	utils.Logger.Trace().Interface("article", article).Msg("")
 
 	// Begin transaction
 	tx, err := r.Db.Begin(ctx)
@@ -47,7 +49,7 @@ func (r *ArticleRepository) Insert(article *models.Article) error {
 	query = fmt.Sprintf(`
 	UPDATE %s
 	SET karma = karma + %d
-	WHERE username = $1`, USERS_TABLE, models.CREATE_ARTICLE_PTS)
+	WHERE uid = $1`, USERS_TABLE, models.CREATE_ARTICLE_PTS)
 
 	if _, err := tx.Exec(ctx, query, article.Author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating author's karma after article creation")
@@ -70,6 +72,11 @@ func (r *ArticleRepository) GetAll() {
 	panic("not implemented")
 }
 
-func (r *ArticleRepository) GetByID(articleID string) (*models.Article, error) {
+// Get articles metadata
+func (r *ArticleRepository) GetMetadata() (models.ArticlesMetadata, error) {
+	panic("not implemented")
+}
+
+func (r *ArticleRepository) GetByID(articleID string) (*models.DbArticle, error) {
 	panic("not implemented")
 }
