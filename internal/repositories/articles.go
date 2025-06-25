@@ -73,11 +73,10 @@ func (r *ArticleRepository) GetAll() {
 	panic("not implemented")
 }
 
-// Get articles metadata
-func (r *ArticleRepository) GetMetadata() (models.ArticlesMetadata, error) {
-	panic("not implemented")
-}
-
+// Retrieve an article by its ID and increment its view count.
+// It also returns the article's author name, number of comments, number of likes, and
+// whether the article is liked by the user with the given UID.
+// If the article is not found or an error occurs, it returns an error.
 func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Article, error) {
 	ctx := context.Background()
 
