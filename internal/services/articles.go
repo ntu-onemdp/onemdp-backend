@@ -31,3 +31,8 @@ func (s *ArticleService) CreateNewArticle(author string, title string, content s
 
 	return article.ArticleID, nil
 }
+
+// Retrieve article and all related comments
+func (s *ArticleService) GetArticle(articleID string, uid string) (*models.Article, error) {
+	return s.articleRepo.GetByID(articleID, uid)
+}

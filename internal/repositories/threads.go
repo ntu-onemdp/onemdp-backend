@@ -182,6 +182,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 				POSTS P
 			WHERE
 				P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
 		) AS NUM_REPLIES,
 		COUNT(L.CONTENT_ID) AS NUM_LIKES,
 		MAX(

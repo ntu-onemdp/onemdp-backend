@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -77,6 +78,86 @@ func (r *ArticleRepository) GetMetadata() (models.ArticlesMetadata, error) {
 	panic("not implemented")
 }
 
-func (r *ArticleRepository) GetByID(articleID string) (*models.DbArticle, error) {
-	panic("not implemented")
+func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Article, error) {
+	ctx := context.Background()
+
+	utils.Logger.Trace().Msgf("Fetching article with ID %s for user %s", articleID, uid)
+
+	query := fmt.Sprintf(`
+	WITH
+	A AS (
+		UPDATE %s
+		SET
+			VIEWS = VIEWS + 1
+		WHERE
+			ARTICLE_ID = $1
+			AND IS_AVAILABLE = TRUE
+		RETURNING
+			*
+	)
+	SELECT
+		A.ARTICLE_ID,
+		A.AUTHOR,
+		A.TITLE,
+		A.TIME_CREATED,
+		A.LAST_ACTIVITY,
+		A.VIEWS,
+		A.FLAGGED,
+		A.IS_AVAILABLE,
+		A.CONTENT,
+		USERS.NAME AS AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1)
+			FROM
+				COMMENTS C
+			WHERE
+				C.ARTICLE_ID = A.ARTICLE_ID
+				AND C.IS_AVAILABLE = TRUE
+		) AS NUM_COMMENTS,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $2 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		A
+		INNER JOIN USERS ON A.AUTHOR = USERS.UID
+		LEFT JOIN LIKES L ON A.ARTICLE_ID = L.CONTENT_ID
+	WHERE
+		A.IS_AVAILABLE = TRUE
+		AND A.ARTICLE_ID = $1
+	GROUP BY
+		A.ARTICLE_ID,
+		A.AUTHOR,
+		A.TITLE,
+		A.TIME_CREATED,
+		A.LAST_ACTIVITY,
+		A.VIEWS,
+		A.FLAGGED,
+		A.IS_AVAILABLE,
+		A.CONTENT,
+		USERS.NAME;
+	`, ARTICLES_TABLE)
+
+	utils.Logger.Trace().Msgf("Getting article with id: %s", articleID)
+
+	row, _ := r.Db.Query(ctx, query, articleID, uid)
+	defer row.Close()
+	article, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.Article])
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			utils.Logger.Warn().Msgf("No article found with ID %s", articleID)
+		}
+
+		utils.Logger.Error().Err(err).Msgf("Error fetching article with ID %s",
+			articleID)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("Successfully fetched article with ID %s", articleID)
+	return article, nil
+
 }
