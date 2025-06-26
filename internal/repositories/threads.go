@@ -24,7 +24,7 @@ var Threads *ThreadsRepository
 
 // Insert new thread into the database. Returns thread ID and UUID of header post on successful insert
 // Although function takes in a thread object, only author, title and preview are used.
-func (r *ThreadsRepository) Create(thread *models.DbThread) error {
+func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 	ctx := context.Background()
 
 	// Begin transaction
@@ -182,6 +182,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 				POSTS P
 			WHERE
 				P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
 		) AS NUM_REPLIES,
 		COUNT(L.CONTENT_ID) AS NUM_LIKES,
 		MAX(

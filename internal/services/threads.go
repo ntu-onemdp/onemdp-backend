@@ -34,7 +34,7 @@ func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repo
 func (s *ThreadService) CreateNewThread(author string, title string, content string) (string, error) {
 	thread := s.threadFactory.New(author, title, content)
 
-	err := s.threadRepo.Create(thread)
+	err := s.threadRepo.Insert(thread)
 	if err != nil {
 		return "", err
 	}
