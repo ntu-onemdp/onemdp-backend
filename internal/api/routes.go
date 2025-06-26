@@ -133,6 +133,11 @@ func RegisterArticleRoutes(router *gin.RouterGroup) {
 	router.GET("/:article_id", func(c *gin.Context) {
 		articles.GetOneArticleHandler(c)
 	})
+
+	// [AE-58] DELETE /api/v1/articles/:article_id
+	router.DELETE("/:article_id", func(c *gin.Context) {
+		articles.DeleteArticleHandler(c)
+	})
 }
 
 /*

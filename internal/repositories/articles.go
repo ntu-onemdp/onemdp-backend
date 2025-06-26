@@ -160,3 +160,96 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 	return article, nil
 
 }
+
+// Get article author by article ID.
+// Returns the author's UID if found, otherwise empty string.
+func (r *ArticleRepository) GetAuthor(articleID string) (string, error) {
+	ctx := context.Background()
+
+	utils.Logger.Trace().Msgf("Fetching author for article with ID %s", articleID)
+
+	query := fmt.Sprintf(`
+	SELECT AUTHOR
+	FROM %s
+	WHERE ARTICLE_ID = $1 AND IS_AVAILABLE = TRUE;
+	`, ARTICLES_TABLE)
+
+	var author string
+	if err := r.Db.QueryRow(ctx, query, articleID).Scan(&author); err != nil {
+		if err == pgx.ErrNoRows {
+			utils.Logger.Warn().Msgf("No author found for article with ID %s", articleID)
+			return "", nil
+		}
+		utils.Logger.Error().Err(err).Msgf("Error fetching author for article with ID %s", articleID)
+		return "", err
+	}
+
+	utils.Logger.Info().Msgf("Successfully fetched author %s for article with ID %s", author, articleID)
+	return author, nil
+}
+
+// Perform soft delete of an article by its ID.
+// It also updates the author's karma by subtracting the points for article creation.
+func (r *ArticleRepository) Delete(articleID string) error {
+	ctx := context.Background()
+
+	utils.Logger.Trace().Msgf("Deleting article with ID %s", articleID)
+
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error starting transaction for deleting article")
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Author's uid
+	var author string
+	// Soft delete the article
+	query := fmt.Sprintf(`
+		UPDATE %s
+		SET IS_AVAILABLE = FALSE, last_activity = NOW()
+		WHERE ARTICLE_ID = $1
+		AND IS_AVAILABLE = TRUE
+		RETURNING AUTHOR;
+	`, ARTICLES_TABLE)
+
+	if err := tx.QueryRow(ctx, query, articleID).Scan(&author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error soft deleting article")
+		return err
+	}
+
+	utils.Logger.Trace().Msgf("Soft deleted article with ID %s", articleID)
+
+	// Update author's karma
+	query = fmt.Sprintf(`
+	UPDATE %s
+	SET karma = GREATEST(karma - %d, 0)
+	WHERE uid = $1`, USERS_TABLE, models.CREATE_ARTICLE_PTS)
+
+	if _, err := tx.Exec(ctx, query, author); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error updating author's karma after article deletion")
+		return err
+	}
+
+	utils.Logger.Trace().Msgf("Updated karma for author %s after article deletion", author)
+
+	// Remove article from likes table
+	query = fmt.Sprintf(`
+	DELETE FROM %s
+	WHERE CONTENT_ID = $1;`, LIKES_TABLE)
+
+	if _, err := tx.Exec(ctx, query, articleID); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error removing article from likes table")
+		return err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error committing transaction after deleting article")
+		return err
+	}
+
+	utils.Logger.Debug().Msgf("Successfully deleted article with ID %s and updated author's karma", articleID)
+	return nil
+}
