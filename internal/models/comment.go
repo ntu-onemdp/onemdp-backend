@@ -11,12 +11,24 @@ type Comment struct {
 
 // DbComment models how a comment is stored in the database
 type DbComment struct {
-	CommentId   string `json:"comment_id" db:"comment_id"`
-	AuthorUid   string `json:"author_uid" db:"author" binding:"required"`
-	ArticleId   string `json:"article_id" db:"article_id" `
+	CommentID   string `json:"comment_id" db:"comment_id"`
+	AuthorUID   string `json:"author_uid" db:"author" binding:"required"`
+	ArticleID   string `json:"article_id" db:"article_id" `
 	Content     string `json:"content" db:"content" binding:"required"`
 	TimeCreated string `json:"time_created" db:"time_created"`
 	LastEdited  string `json:"last_edited" db:"last_edited"`
 	Flagged     bool   `json:"flagged" db:"flagged"`
 	IsAvailable bool   `json:"is_available" db:"is_available"`
+}
+
+type CommentFactory struct {
+	ContentFactory
+}
+
+func NewCommentFactory() *CommentFactory {
+	return &CommentFactory{}
+}
+
+func (f *CommentFactory) New(authorUID string, articleID string) {
+
 }
