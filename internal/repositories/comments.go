@@ -63,6 +63,22 @@ func (r *CommentsRepository) Create(comment *models.DbComment) error {
 	return nil
 }
 
+// Get comment's author
+func (r *CommentsRepository) GetAuthor(commentID string) (string, error) {
+	query := fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE COMMENT_ID=$1;`, COMMENTS_TABLE)
+
+	utils.Logger.Trace().Msgf("Getting author of comment with id %s", commentID)
+
+	var author string // UID of comment's author
+	if err := r.Db.QueryRow(context.Background(), query, commentID).Scan(&author); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error retrieving author for comment id %s", commentID)
+		return "", err
+	}
+
+	utils.Logger.Debug().Msgf("Author of comment with id %s is %s", commentID, author)
+	return author, nil
+}
+
 // Delete comment from database
 func (r *CommentsRepository) Delete(commentID string) error {
 	ctx := context.Background()
