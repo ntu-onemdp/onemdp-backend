@@ -54,6 +54,10 @@ func main() {
 	articleRoutes := r.Group("/api/v1/articles", middlewares.AuthGuard())
 	routes.RegisterArticleRoutes(articleRoutes)
 
+	// Register comment routes
+	commentRoutes := r.Group("/api/v1/comments", middlewares.AuthGuard())
+	routes.RegisterCommentRoutes(commentRoutes)
+
 	// Register image routes
 	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard())
 	routes.RegisterImageRoutes(imageRoutes)

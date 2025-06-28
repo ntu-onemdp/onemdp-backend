@@ -14,10 +14,17 @@ type CommentService struct {
 
 var Comments *CommentService
 
+func NewCommentService(repo *repositories.CommentsRepository) *CommentService {
+	return &CommentService{
+		repo:           repo,
+		commentFactory: models.NewCommentFactory(),
+	}
+}
+
 // Create a new comment and insert into the repository.
 // Returns comment id on success
-func (s *CommentService) Create(authorUID string, articleUID string, content string) (string, error) {
-	comment := s.commentFactory.New(authorUID, articleUID, content)
+func (s *CommentService) Create(authorUID string, articleID string, content string) (string, error) {
+	comment := s.commentFactory.New(authorUID, articleID, content)
 
 	if err := s.repo.Create(comment); err != nil {
 		return "", err

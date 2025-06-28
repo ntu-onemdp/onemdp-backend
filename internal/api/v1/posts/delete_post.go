@@ -25,15 +25,15 @@ func DeletePostsHandler(c *gin.Context) {
 
 		if (err == utils.ErrUnauthorized{}) {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"success":  false,
-				"errorMsg": "Unauthorized to delete post. You need to be a staff/admin or the original author to delete the post",
+				"success": false,
+				"error":   "Unauthorized to delete post. You need to be a staff/admin or the original author to delete the post",
 			})
 			return
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success":  false,
-			"errorMsg": "Error deleting post",
+			"success": false,
+			"error":   "Error deleting post",
 		})
 		return
 	}
