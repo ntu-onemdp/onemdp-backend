@@ -28,7 +28,7 @@ type Post struct {
 // DbPost models how a post is stored in the database.
 type DbPost struct {
 	PostID      string    `json:"post_id" db:"post_id"`
-	Author      string    `json:"author_uid" db:"author" binding:"required"`
+	AuthorUid   string    `json:"author_uid" db:"author" binding:"required"`
 	ThreadId    string    `json:"thread_id" db:"thread_id" binding:"required"`
 	ReplyTo     *string   `json:"reply_to" db:"reply_to"`
 	Title       string    `json:"title" db:"title" binding:"required"`
@@ -49,7 +49,7 @@ func (f *PostFactory) New(author string, threadId string, title string, content 
 
 	return &DbPost{
 		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
-		Author:      author,
+		AuthorUid:   author,
 		ThreadId:    threadId,
 		ReplyTo:     replyTo,
 		Title:       title,
@@ -67,7 +67,7 @@ func (p *DbPost) GetID() string {
 }
 
 func (p *DbPost) GetAuthor() string {
-	return p.Author
+	return p.AuthorUid
 }
 
 func (p *DbPost) GetTitle() string {

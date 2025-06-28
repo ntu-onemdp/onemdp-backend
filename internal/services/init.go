@@ -9,4 +9,5 @@ func Init() {
 	Users = &UserService{repositories.Users}
 	Images = &ImageService{repositories.Images}
 	Articles = NewArticleService(repositories.Articles)
+	Comments = NewCommentService(repositories.Comments)
 }

@@ -38,7 +38,7 @@ func (r *PostsRepository) Create(post *models.DbPost) error {
 	INSERT INTO %s (post_id, author, thread_id, title, content, reply_to, is_header) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7);`, POSTS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, post.PostID, post.Author, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader); err != nil {
+	if _, err = tx.Exec(ctx, query, post.PostID, post.AuthorUid, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting post into database")
 		return err
 	}
@@ -50,11 +50,11 @@ func (r *PostsRepository) Create(post *models.DbPost) error {
 		query = fmt.Sprintf(`
 		UPDATE %s SET karma = karma + %d WHERE uid = $1;`, USERS_TABLE, models.CREATE_POST_PTS)
 
-		if _, err = tx.Exec(ctx, query, post.Author); err != nil {
+		if _, err = tx.Exec(ctx, query, post.AuthorUid); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error updating user karma")
 			return err
 		}
-		utils.Logger.Trace().Msg(fmt.Sprintf("User %s karma successfully updated", post.Author))
+		utils.Logger.Trace().Msg(fmt.Sprintf("User %s karma successfully updated", post.AuthorUid))
 	}
 
 	// Commit transaction

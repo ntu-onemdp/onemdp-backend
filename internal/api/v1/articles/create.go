@@ -38,8 +38,8 @@ func CreateArticleHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"success":   true,
-		"message":   "Article created successfully",
-		"articleId": id,
+		"success":    true,
+		"message":    "Article created successfully",
+		"article_id": id,
 	})
 }

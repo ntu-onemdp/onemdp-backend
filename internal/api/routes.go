@@ -5,6 +5,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
@@ -137,6 +138,19 @@ func RegisterArticleRoutes(router *gin.RouterGroup) {
 	// [AE-58] DELETE /api/v1/articles/:article_id
 	router.DELETE("/:article_id", func(c *gin.Context) {
 		articles.DeleteArticleHandler(c)
+	})
+}
+
+// Routes starting with /comments
+func RegisterCommentRoutes(router *gin.RouterGroup) {
+	// [AE-57] POST /api/v1/comments/new
+	router.POST("/new", func(c *gin.Context) {
+		comments.CreateCommentHandler(c)
+	})
+
+	// [AE-53] DELETE /api/v1/comments/:comment_id
+	router.DELETE("/:comment_id", func(c *gin.Context) {
+		comments.DeleteCommentHandler(c)
 	})
 }
 

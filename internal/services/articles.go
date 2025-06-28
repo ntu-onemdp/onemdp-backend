@@ -16,7 +16,8 @@ var Articles *ArticleService
 
 func NewArticleService(articleRepo *repositories.ArticleRepository) *ArticleService {
 	return &ArticleService{
-		articleRepo: articleRepo,
+		articleRepo:    articleRepo,
+		articleFactory: models.NewArticleFactory(),
 	}
 }
 
