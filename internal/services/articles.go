@@ -7,16 +7,18 @@ import (
 )
 
 type ArticleService struct {
-	articleRepo *repositories.ArticleRepository
+	articleRepo  *repositories.ArticleRepository
+	commentsRepo *repositories.CommentsRepository
 
 	articleFactory *models.ArticleFactory
 }
 
 var Articles *ArticleService
 
-func NewArticleService(articleRepo *repositories.ArticleRepository) *ArticleService {
+func NewArticleService(articleRepo *repositories.ArticleRepository, commentsRepo *repositories.CommentsRepository) *ArticleService {
 	return &ArticleService{
 		articleRepo:    articleRepo,
+		commentsRepo:   commentsRepo,
 		articleFactory: models.NewArticleFactory(),
 	}
 }
@@ -35,8 +37,22 @@ func (s *ArticleService) CreateNewArticle(author string, title string, content s
 }
 
 // Retrieve article and all related comments
-func (s *ArticleService) GetArticle(articleID string, uid string) (*models.Article, error) {
-	return s.articleRepo.GetByID(articleID, uid)
+func (s *ArticleService) GetArticle(articleID string, uid string) (*models.Article, []models.Comment, error) {
+	// Retrieve article
+	article, err := s.articleRepo.GetByID(articleID, uid)
+	if err != nil {
+		utils.Logger.Trace().Err(err).Msg("Error retrieving article")
+		return nil, nil, err
+	}
+
+	// Retrive comments
+	comments, err := s.commentsRepo.GetCommentsByArticleID(articleID, uid)
+	if err != nil {
+		utils.Logger.Trace().Err(err).Msg("Error retrieving comments")
+		return article, nil, err
+	}
+
+	return article, comments, nil
 }
 
 // Delete article and all associated comments

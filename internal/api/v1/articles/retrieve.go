@@ -15,7 +15,7 @@ func GetOneArticleHandler(c *gin.Context) {
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	article, err := services.Articles.GetArticle(articleID, uid)
+	article, comments, err := services.Articles.GetArticle(articleID, uid)
 
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting article")
@@ -36,7 +36,8 @@ func GetOneArticleHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"article": article,
+		"success":  true,
+		"article":  article,
+		"comments": comments,
 	})
 }

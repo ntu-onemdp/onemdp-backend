@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -61,6 +62,62 @@ func (r *CommentsRepository) Create(comment *models.DbComment) error {
 	utils.Logger.Info().Msgf("Comment by %s successfully inserted", comment.AuthorUID)
 
 	return nil
+}
+
+// Get comments by articleID. Returns slice of comment objects if found, nil otherwise.
+func (r *CommentsRepository) GetCommentsByArticleID(articleID string, uid string) ([]models.Comment, error) {
+	query := fmt.Sprintf(`
+	SELECT
+		C.COMMENT_ID,
+		C.AUTHOR,
+		C.ARTICLE_ID,
+		C.CONTENT,
+		C.TIME_CREATED,
+		C.LAST_EDITED,
+		C.FLAGGED,
+		C.IS_AVAILABLE,
+		U.NAME AS AUTHOR_NAME,
+		COALESCE(L.LIKE_COUNT, 0) AS NUM_LIKES,
+		COALESCE(UL.USER_LIKED, FALSE) AS IS_LIKED
+	FROM
+		%s C
+		INNER JOIN %s U ON C.AUTHOR = U.UID
+		LEFT JOIN (
+			SELECT
+				CONTENT_ID,
+				COUNT(*) AS LIKE_COUNT
+			FROM
+				LIKES
+			GROUP BY
+				CONTENT_ID
+		) L ON L.CONTENT_ID = C.COMMENT_ID
+		LEFT JOIN (
+			SELECT
+				CONTENT_ID,
+				TRUE AS USER_LIKED
+			FROM
+				LIKES
+			WHERE
+				UID = $1 -- User ID parameter
+		) UL ON UL.CONTENT_ID = C.COMMENT_ID
+	WHERE
+		C.ARTICLE_ID = $2 -- Article ID parameter
+		AND C.IS_AVAILABLE = TRUE
+	ORDER BY
+		C.TIME_CREATED ASC`, COMMENTS_TABLE, USERS_TABLE)
+
+	utils.Logger.Trace().Msgf("Retrieving comments with article_id: %s", articleID)
+
+	rows, _ := r.Db.Query(context.Background(), query, uid, articleID)
+	comments, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Comment])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error serializing rows to comment structs")
+		return nil, err
+	}
+
+	utils.Logger.Trace().Msgf("Found %d comments with article_id %s", len(comments), articleID)
+
+	return comments, nil
 }
 
 // Get comment's author
