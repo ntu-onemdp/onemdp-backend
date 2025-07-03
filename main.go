@@ -7,8 +7,10 @@ import (
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
+	"github.com/ntu-onemdp/onemdp-backend/internal/eduvisor"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	routes "github.com/ntu-onemdp/onemdp-backend/internal/api"
@@ -34,6 +36,9 @@ func main() {
 
 	// Initialize services
 	services.Init()
+
+	// Initialize eduvisor service
+	eduvisor.Eduvisor = eduvisor.NewEduvisorService()
 
 	// Register public routes
 	routes.RegisterLoginRoute(r)
@@ -65,6 +70,8 @@ func main() {
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
 	routes.RegisterAdminUserRoutes(adminRoutes)
+
+	utils.Logger.Warn().Msg("/ping routes are active. Remove them for production")
 
 	// Ping route
 	r.GET("/ping", func(c *gin.Context) {
