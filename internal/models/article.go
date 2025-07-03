@@ -5,6 +5,7 @@ import (
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type ArticleFactory struct {
@@ -49,7 +50,7 @@ func (f *ArticleFactory) New(author string, title string, content string) *DbArt
 		Views:        0,
 		Flagged:      false,
 		IsAvailable:  true,
-		Content:      content,
+		Content:      utils.SanitizeContent(content),
 	}
 }
 

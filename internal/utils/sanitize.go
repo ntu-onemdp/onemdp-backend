@@ -5,7 +5,18 @@ import (
 	"mime/multipart"
 
 	"github.com/disintegration/imaging"
+	"github.com/microcosm-cc/bluemonday"
 )
+
+// Sanitize content to prevent XSS attacks
+func SanitizeContent(content string) string {
+	policy := bluemonday.UGCPolicy()
+
+	// Allow styles on images (to allow for image resizing)
+	policy.AllowStyles("width", "height", "draggable").OnElements("img")
+
+	return policy.Sanitize(content)
+}
 
 // Sanitize image
 func SanitizeImage(f *multipart.FileHeader) ([]byte, error) {

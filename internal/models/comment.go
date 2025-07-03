@@ -4,8 +4,8 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 // Comment models how a comment is represented on the API.
@@ -38,15 +38,11 @@ func NewCommentFactory() *CommentFactory {
 }
 
 func (f *CommentFactory) New(authorUID string, articleID string, content string) *DbComment {
-	// Sanitize content to prevent XSS attacks
-	policy := bluemonday.UGCPolicy()
-	content = policy.Sanitize(content)
-
 	return &DbComment{
 		CommentID:   "c" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		AuthorUID:   authorUID,
 		ArticleID:   articleID,
-		Content:     content,
+		Content:     utils.SanitizeContent(content),
 		TimeCreated: time.Now(),
 		LastEdited:  time.Now(),
 		Flagged:     false,

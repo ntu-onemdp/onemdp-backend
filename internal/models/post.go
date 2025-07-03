@@ -4,8 +4,8 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type PostFactory struct {
@@ -41,19 +41,13 @@ type DbPost struct {
 }
 
 func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *DbPost {
-	// Sanitize content to prevent XSS attacks
-	policy := bluemonday.UGCPolicy()
-	// Allow styles on images (to allow image resizing)
-	policy.AllowStyles("width", "height", "draggable").OnElements("img")
-	content = policy.Sanitize(content)
-
 	return &DbPost{
 		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		AuthorUid:   author,
 		ThreadId:    threadId,
 		ReplyTo:     replyTo,
 		Title:       title,
-		PostContent: content,
+		PostContent: utils.SanitizeContent(content),
 		TimeCreated: time.Now(),
 		LastEdited:  time.Now(),
 		Flagged:     false,
