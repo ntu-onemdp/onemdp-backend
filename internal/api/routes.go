@@ -130,6 +130,11 @@ func RegisterArticleRoutes(router *gin.RouterGroup) {
 		articles.CreateArticleHandler(c)
 	})
 
+	// [AE-65] GET /api/v1/articles/
+	router.GET("/", func(c *gin.Context) {
+		articles.GetAllArticlesHandler(c)
+	})
+
 	// [AE-63] GET /api/v1/articles/:article_id
 	router.GET("/:article_id", func(c *gin.Context) {
 		articles.GetOneArticleHandler(c)

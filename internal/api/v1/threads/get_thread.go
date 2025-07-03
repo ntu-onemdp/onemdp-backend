@@ -2,31 +2,26 @@ package threads
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"github.com/ntu-onemdp/onemdp-backend/internal/models"
+	constants "github.com/ntu-onemdp/onemdp-backend/config"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 // Retrieve all threads in page
 func GetAllThreadsHandler(c *gin.Context) {
-	const DEFAULT_PAGE_SIZE = 25
-	const DEFAULT_SORT_COLUMN = models.TIME_CREATED_COL
-	const DEFAULT_SORT_DESCENDING = true
-
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
 	size := c.GetInt("size")
 	if size == 0 {
-		size = DEFAULT_PAGE_SIZE
+		size = constants.DEFAULT_PAGE_SIZE
 	}
-	desc := c.DefaultQuery("desc", strconv.FormatBool(DEFAULT_SORT_DESCENDING)) == "true"
-	sort := c.DefaultQuery("sort", string(DEFAULT_SORT_COLUMN)) // Defaults to time_created if column name is invalid
+	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
+	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
 	timestamp := c.GetTime("timestamp")
 	if timestamp.IsZero() {
 		timestamp = time.Now()

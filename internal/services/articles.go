@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -34,6 +36,15 @@ func (s *ArticleService) CreateNewArticle(author string, title string, content s
 	}
 
 	return article.ArticleID, nil
+}
+
+// Retrieve all articles after cursor
+func (s *ArticleService) GetArticles(sort string, size int, desc bool, cursor time.Time, uid string) ([]models.Article, error) {
+	// Convert sort string to ThreadColumn object
+	column := models.StrToThreadColumn(sort)
+
+	// Retrieve articles from db
+	return s.articleRepo.GetAll(uid, column, cursor, size, desc)
 }
 
 // Retrieve article and all related comments

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -69,8 +70,68 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 }
 
 // GetAll retrieve all articles from a certain timestamp.
-func (r *ArticleRepository) GetAll() {
-	panic("not implemented")
+func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Article, error) {
+	// Set descending string
+	desc := "DESC"
+	if !descending {
+		desc = "ASC"
+	}
+
+	query := fmt.Sprintf(`
+	SELECT
+		A.ARTICLE_ID,
+		A.AUTHOR,
+		A.TITLE,
+		A.TIME_CREATED,
+		A.LAST_ACTIVITY,
+		A.VIEWS,
+		A.FLAGGED,
+		A.IS_AVAILABLE,
+		A.CONTENT,
+		U.NAME AUTHOR_NAME,
+		(
+			SELECT
+				COUNT(1)
+			FROM
+				COMMENTS C
+			WHERE
+				C.ARTICLE_ID = A.ARTICLE_ID
+		) AS NUM_COMMENTS,
+		COUNT(L.CONTENT_ID) AS NUM_LIKES,
+		MAX(
+			CASE
+				WHEN L.UID = $1 THEN 1 	-- User UID parameter
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_LIKED
+	FROM
+		ARTICLES A
+		INNER JOIN USERS U ON A.AUTHOR = U.UID
+		LEFT JOIN LIKES L ON A.ARTICLE_ID = L.CONTENT_ID
+	WHERE
+		A.%s < $2		-- Cursor parameter
+		AND A.IS_AVAILABLE = TRUE
+	GROUP BY
+		A.ARTICLE_ID,
+		U.UID
+	ORDER BY
+		A.%s %s		-- Column, ASC/DESC
+	LIMIT
+		$3;		-- Size parameter
+	`, column, column, desc)
+
+	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descenting", descending).Msg("article query params")
+
+	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	articles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Article])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error collecting rows")
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("%d articles retrieved from database", len(articles))
+
+	return articles, nil
 }
 
 // Retrieve an article by its ID and increment its view count.
