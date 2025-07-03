@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	constants "github.com/ntu-onemdp/onemdp-backend/config"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -124,6 +125,20 @@ func (r *UsersRepository) RegisterUser(uid string, email string, name string) er
 	return nil
 }
 
+// Dangerously insert user directly into database
+// Used to insert Eduvisor bot in
+func (r *UsersRepository) DangerouslyInsertUser(user *models.User) error {
+	query := fmt.Sprintf(`INSERT INTO %s (UID, NAME, EMAIL, ROLE, SEMESTER) VALUES ($1, $2, $3, $4, $5);`, USERS_TABLE)
+
+	if _, err := r.Db.Exec(context.Background(), query, user.Uid, user.Name, user.Email, user.Role, user.Semester); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error inserting user with uid %s", user.Uid)
+		return err
+	}
+
+	utils.Logger.Info().Msgf("User with uid %s and name %s successfully inserted into %s", user.Uid, user.Name, USERS_TABLE)
+	return nil
+}
+
 // Checks if user is pending registration
 func (r *UsersRepository) IsUserPending(email string) (bool, error) {
 	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE email=$1);`, PENDING_USERS_TABLE)
@@ -135,6 +150,22 @@ func (r *UsersRepository) IsUserPending(email string) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+// Check if Eduvisor is registered. If Eduvisor is registered, return user object. Else, return nil.
+func (r *UsersRepository) GetEduvisor() *models.User {
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE NAME=$1;`, USERS_TABLE)
+
+	row, _ := r.Db.Query(context.Background(), query, constants.EDUVISOR_NAME)
+	eduvisor, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.User])
+	if err != nil {
+		utils.Logger.Debug().Err(err).Msg("")
+		utils.Logger.Warn().Msg("Eduvisor not found in the system, returning nil")
+		return nil
+	}
+
+	utils.Logger.Debug().Msg("Eduvisor found in user system")
+	return eduvisor
 }
 
 // Admin: Retrieve all users from the database, regardless of status

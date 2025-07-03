@@ -73,6 +73,7 @@ type UserRole int
 const (
 	Unknown          = 0
 	Student UserRole = iota
+	Bot
 	Staff
 	Admin
 )

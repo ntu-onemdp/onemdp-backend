@@ -12,6 +12,7 @@ require (
 
 require (
 	github.com/disintegration/imaging v1.6.2
+	github.com/google/uuid v1.6.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 )
