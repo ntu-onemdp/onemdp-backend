@@ -11,13 +11,13 @@ require (
 )
 
 require (
+	github.com/disintegration/imaging v1.6.2
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 )
 
 require (
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	golang.org/x/image v0.27.0 // indirect
 )

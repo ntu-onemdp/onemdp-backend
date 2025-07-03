@@ -80,8 +80,6 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 		desc = "ASC"
 	}
 
-	// Example SQL statement after formatting:
-	// SELECT * FROM threads WHERE time_created < cursor AND is_available = true ORDER BY time_created DESC LIMIT size;
 	query := fmt.Sprintf(`SELECT
 		T.THREAD_ID,
 		T.TITLE,
