@@ -47,6 +47,11 @@ func (s *ArticleService) GetArticles(sort string, size int, desc bool, cursor ti
 	return s.articleRepo.GetAll(uid, column, cursor, size, desc)
 }
 
+// Retrieve article metadata
+func (s *ArticleService) GetMetadata() (*models.ArticlesMetadata, error) {
+	return s.articleRepo.GetMetadata()
+}
+
 // Retrieve article and all related comments
 func (s *ArticleService) GetArticle(articleID string, uid string) (*models.Article, []models.Comment, error) {
 	// Retrieve article

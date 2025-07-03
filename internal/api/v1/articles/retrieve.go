@@ -35,7 +35,17 @@ func GetAllArticlesHandler(c *gin.Context) {
 		utils.Logger.Error().Err(err).Msg("Error getting articles")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "error retrieving articles" + err.Error(),
+		})
+		return
+	}
+
+	metadata, err := services.Articles.GetMetadata()
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error encountered retrieving metadata")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "error encountered retrieving metadata" + err.Error(),
 		})
 		return
 	}
@@ -43,6 +53,7 @@ func GetAllArticlesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
 		"articles": articles,
+		"metadata": metadata,
 	})
 }
 

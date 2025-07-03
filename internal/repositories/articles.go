@@ -222,6 +222,23 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 
 }
 
+// Get articles metadata
+func (r *ArticleRepository) GetMetadata() (*models.ArticlesMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) AS NUM_ARTICLES FROM %s WHERE IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
+
+	row, _ := r.Db.Query(context.Background(), query)
+	defer row.Close()
+	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ArticlesMetadata])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error collecting rows")
+		return nil, err
+	}
+
+	utils.Logger.Debug().Int("num articles", metadata.NumArticles).Msg("Article metadata retrieved from database")
+
+	return metadata, nil
+}
+
 // Get article author by article ID.
 // Returns the author's UID if found, otherwise empty string.
 func (r *ArticleRepository) GetAuthor(articleID string) (string, error) {
