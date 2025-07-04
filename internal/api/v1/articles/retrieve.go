@@ -50,6 +50,9 @@ func GetAllArticlesHandler(c *gin.Context) {
 		return
 	}
 
+	// Set number of pages
+	metadata.NumPages = (metadata.NumArticles + size - 1) / size
+
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
 		"articles": articles,
