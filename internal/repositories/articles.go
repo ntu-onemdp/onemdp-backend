@@ -266,6 +266,19 @@ func (r *ArticleRepository) GetAuthor(articleID string) (string, error) {
 	return author, nil
 }
 
+// Returns true if article exists in database
+func (r *ArticleRepository) IsAvailable(articleID string) bool {
+	query := fmt.Sprintf(`SELECT IS_AVAILABLE FROM %s WHERE ARTICLE_ID=$1;`, ARTICLES_TABLE)
+
+	var isAvailable bool
+	if err := r.Db.QueryRow(context.Background(), query, articleID).Scan(&isAvailable); err != nil {
+		utils.Logger.Warn().Msgf("Article of ID %s not available", articleID)
+		return false
+	}
+
+	return isAvailable
+}
+
 // Perform soft delete of an article by its ID.
 // It also updates the author's karma by subtracting the points for article creation.
 func (r *ArticleRepository) Delete(articleID string) error {
