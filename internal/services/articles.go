@@ -71,6 +71,11 @@ func (s *ArticleService) GetArticle(articleID string, uid string) (*models.Artic
 	return article, comments, nil
 }
 
+// Check if article exists/ is available
+func (s *ArticleService) ArticleExists(articleID string) bool {
+	return s.articleRepo.IsAvailable(articleID)
+}
+
 // Delete article and all associated comments
 func (s *ArticleService) DeleteArticle(articleID string, uid string) error {
 	// Check if role is admin or staff
