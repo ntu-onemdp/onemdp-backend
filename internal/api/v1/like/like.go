@@ -25,7 +25,7 @@ func LikeContentHandler(c *gin.Context) {
 		utils.Logger.Warn().Msgf("User %s has already liked content of id %s", uid, contentID)
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "User has already liked thread",
+			"message": "User has already liked content",
 		})
 		return
 	}
@@ -45,7 +45,6 @@ func LikeContentHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "content liked",
-		"error":   nil,
 	})
 }
 
@@ -62,8 +61,29 @@ func UnlikeContentHandler(c *gin.Context) {
 
 	// Check if user has liked content yet
 	if !services.Likes.HasLiked(uid, contentID) {
-		// TODO
+		utils.Logger.Warn().Msgf("uid %s has not liked content id %s yet", uid, contentID)
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "User has not liked content",
+		})
+		return
 	}
+
+	// Unlike content
+	if err := services.Likes.RemoveLike(uid, contentID); err != nil {
+		utils.Logger.Err(err).Msg("Error removing like")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Error unliking content",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "content unliked successfully",
+	})
 }
 
 // Helper function to check if content exists. If content does not exist, automatically return gin response.

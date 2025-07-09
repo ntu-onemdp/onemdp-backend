@@ -7,6 +7,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/like"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
@@ -45,6 +46,19 @@ func RegisterImageRoutes(router *gin.RouterGroup) {
 	// [AE-87] POST /api/v1/images/upload
 	router.POST("/upload", func(c *gin.Context) {
 		images.UploadImageHandler(c)
+	})
+}
+
+// Like service routes
+func RegisterLikeRoutes(router *gin.RouterGroup) {
+	// [AE-90] POST /api/v1/like/:content_id
+	router.POST("/:content_id", func(c *gin.Context) {
+		like.LikeContentHandler(c)
+	})
+
+	// [AE-91] DELETE /api/v1/like/:content_id
+	router.DELETE("/:content_id", func(c *gin.Context) {
+		like.UnlikeContentHandler(c)
 	})
 }
 

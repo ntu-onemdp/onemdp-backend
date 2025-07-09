@@ -51,6 +51,8 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 		query = `SELECT author FROM posts WHERE post_id = $1;`
 	case "t": // Thread
 		query = `SELECT author FROM threads WHERE thread_id = $1;`
+	case "a": // Article
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE ARTICLE_ID=$1;`, ARTICLES_TABLE)
 	default:
 		utils.Logger.Error().Msg("Unknown content type")
 		return fmt.Errorf("unknown content type: %s", contentType)
@@ -136,6 +138,8 @@ func (r *LikesRepository) Delete(uid string, content_id string) error {
 		query = `SELECT author FROM posts WHERE post_id = $1;`
 	case "t": // Thread
 		query = `SELECT author FROM threads WHERE thread_id = $1;`
+	case "a": // Article
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE ARTICLE_ID=$1;`, ARTICLES_TABLE)
 	default:
 		utils.Logger.Error().Msg("Unknown content type")
 		return fmt.Errorf("unknown content type: %s", contentType)
