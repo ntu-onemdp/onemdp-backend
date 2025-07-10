@@ -22,7 +22,7 @@ func GetProfileHandler(c *gin.Context) {
 
 	profile, err := services.Users.GetProfile(uid)
 	if err != nil {
-		utils.Logger.Debug().Msg("profile may be nil. returning 404 here")
+		utils.Logger.Warn().Msg("profile may be nil. returning 404 here")
 		utils.Logger.Error().Err(err).Msg("")
 		c.JSON(http.StatusNotFound, nil)
 		return
