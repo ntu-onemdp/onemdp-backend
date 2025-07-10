@@ -123,6 +123,16 @@ func isValidContentID(c *gin.Context) bool {
 			return false
 		}
 
+	case "c":
+		if !services.Comments.CommentExists(contentID) {
+			utils.Logger.Warn().Msgf("Comment of comment_id %s does not exist", contentID)
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"error":   "comment id does not exist",
+			})
+			return false
+		}
+
 	// Invalid content type
 	default:
 		utils.Logger.Error().Msg("Invalid content type")

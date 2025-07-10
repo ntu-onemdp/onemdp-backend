@@ -33,6 +33,11 @@ func (s *CommentService) Create(authorUID string, articleID string, content stri
 	return comment.CommentID, nil
 }
 
+// Check if comment exists and is available
+func (s *CommentService) CommentExists(commentID string) bool {
+	return s.repo.IsAvailable(commentID)
+}
+
 // Delete comment if uid matches author
 func (s *CommentService) Delete(commentID string, uid string) error {
 	// Check if role is admin or staff
