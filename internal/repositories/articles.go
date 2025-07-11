@@ -96,6 +96,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 				COMMENTS C
 			WHERE
 				C.ARTICLE_ID = A.ARTICLE_ID
+				AND C.IS_AVAILABLE = TRUE
 		) AS NUM_COMMENTS,
 		COUNT(L.CONTENT_ID) AS NUM_LIKES,
 		MAX(

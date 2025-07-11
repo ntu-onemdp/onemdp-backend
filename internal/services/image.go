@@ -36,14 +36,6 @@ func (s *ImageService) Insert(image *multipart.FileHeader) (string, error) {
 		return "", errors.New("unsupported image type")
 	}
 
-	// Open image file
-	file, err := image.Open()
-	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Failed to open image file")
-		return "", err
-	}
-	defer file.Close()
-
 	// Sanitize image
 	img, err := utils.SanitizeImage(image)
 	if err != nil {

@@ -69,6 +69,15 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 		users.GetProfileHandler(c)
 	})
 
+	// [AE-92] GET /api/v1/users/:uid/profile-photo
+	router.GET("/:uid/profile-photo", func(c *gin.Context) {
+		users.GetProfilePhotoHandler(c)
+	})
+
+	// [AE-10] POST /api/v1/users/:uid/profile-photo
+	router.POST("/:uid/profile-photo", func(c *gin.Context) {
+		users.UpdateProfilePhotoHandler(c)
+	})
 }
 
 // Routes starting with /threads

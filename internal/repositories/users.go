@@ -249,6 +249,21 @@ func (r *UsersRepository) GetUserProfile(uid string) (*models.UserProfile, error
 	return &profile, nil
 }
 
+// Retrieve user's profile photo from database
+// Do not filter for active users only
+func (r *UsersRepository) GetProfilePhoto(uid string) ([]byte, error) {
+	query := fmt.Sprintf(`SELECT PROFILE_PHOTO FROM %s WHERE UID=$1;`, USERS_TABLE)
+
+	var image []byte
+	if err := r.Db.QueryRow(context.Background(), query, uid).Scan(&image); err != nil {
+		utils.Logger.Warn().Err(err).Msgf("User of uid %s not found.", uid)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("Retrieved profile photo for uid %s", uid)
+	return image, nil
+}
+
 // Retrieve user's role
 func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 	query := fmt.Sprintf(`SELECT role FROM %s WHERE uid=$1;`, USERS_TABLE)
@@ -275,6 +290,19 @@ func (r *UsersRepository) UpdateUserRole(uid string, role string) error {
 	}
 
 	utils.Logger.Trace().Msgf("User %s role updated to %s", uid, role)
+	return nil
+}
+
+// Update user profile photo. Returns nil on success.
+func (r *UsersRepository) UpdateProfilePhoto(uid string, image []byte) error {
+	query := fmt.Sprintf(`UPDATE %s SET PROFILE_PHOTO=$1 WHERE UID=$2;`, USERS_TABLE)
+
+	if _, err := r.Db.Exec(context.Background(), query, image, uid); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error updating profile photo for user %s", uid)
+		return err
+	}
+
+	utils.Logger.Info().Msgf("Successfully updated profile photo for user %s", uid)
 	return nil
 }
 

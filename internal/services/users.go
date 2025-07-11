@@ -2,8 +2,11 @@ package services
 
 import (
 	"errors"
+	"fmt"
+	"mime/multipart"
 	"slices"
 
+	c "github.com/ntu-onemdp/onemdp-backend/config"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -36,6 +39,11 @@ func (s *UserService) RegisterUser(uid string, email string, name string) error 
 // Get user profile
 func (s *UserService) GetProfile(uid string) (*models.UserProfile, error) {
 	return s.UsersRepo.GetUserProfile(uid)
+}
+
+// Get user profile photo
+func (s *UserService) GetProfilePhoto(uid string) ([]byte, error) {
+	return s.UsersRepo.GetProfilePhoto(uid)
 }
 
 // Check if user is pending registration
@@ -80,6 +88,36 @@ func (s *UserService) HasStaffPermission(uid string) (bool, error) {
 	}
 
 	return role >= models.Staff, nil
+}
+
+// Update user's profile photo
+// We do not need to validate whether original user is editing the profile photo as the UID is obtained from JWT.
+func (s *UserService) UpdateProfilePhoto(uid string, file *multipart.FileHeader) error {
+	// Reject if image size is too large
+	if file.Size > c.MAX_PROFILE_IMG_SIZE {
+		// Future improvement: automatically rescale image
+		err := fmt.Sprintf("image size exceeds %d MB", c.MAX_PROFILE_IMG_SIZE/(1024*1024))
+		utils.Logger.Error().Msgf("images size of %d exceeds %d MB", file.Size, c.MAX_PROFILE_IMG_SIZE/(1024*1024))
+		return errors.New(err)
+	}
+
+	// Reject if image type is not supported (includes GIF)
+	if !isValidType(file) || file.Header.Get("Content-Type") == "image/gif" {
+		utils.Logger.Error().Msg("Unsupported image type")
+		return errors.New("unsupported image type")
+	}
+
+	// Sanitize image
+	image, err := utils.SanitizeImage(file)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Failed to sanitize image")
+		return err
+	}
+
+	utils.Logger.Debug().Msgf("Image parsing and sanitization complete for %s", uid)
+
+	// Insert into db
+	return s.UsersRepo.UpdateProfilePhoto(uid, image)
 }
 
 // Admin: update user's role

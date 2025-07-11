@@ -98,6 +98,7 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 				posts P
 			WHERE
 				P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
 		) AS NUM_REPLIES,
 		COUNT(L.CONTENT_ID) AS NUM_LIKES,
 		MAX(
