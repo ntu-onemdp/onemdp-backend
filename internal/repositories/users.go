@@ -293,6 +293,19 @@ func (r *UsersRepository) UpdateUserRole(uid string, role string) error {
 	return nil
 }
 
+// Update user profile photo. Returns nil on success.
+func (r *UsersRepository) UpdateProfilePhoto(uid string, image []byte) error {
+	query := fmt.Sprintf(`UPDATE %s SET PROFILE_PHOTO=$1 WHERE UID=$2;`, USERS_TABLE)
+
+	if _, err := r.Db.Exec(context.Background(), query, image, uid); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error updating profile photo for user %s", uid)
+		return err
+	}
+
+	utils.Logger.Info().Msgf("Successfully updated profile photo for user %s", uid)
+	return nil
+}
+
 // This method does not work for now. Explore in the future when there is time.
 // func (r *UsersRepository) InsertManyUsers(users []models.User) error {
 
