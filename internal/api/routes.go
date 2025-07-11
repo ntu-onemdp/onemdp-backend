@@ -71,7 +71,7 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 
 	// [AE-92] GET /api/v1/users/:uid/profile-photo
 	router.GET("/:uid/profile-photo", func(c *gin.Context) {
-
+		users.GetProfilePhotoHandler(c)
 	})
 
 }

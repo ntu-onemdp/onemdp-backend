@@ -249,6 +249,21 @@ func (r *UsersRepository) GetUserProfile(uid string) (*models.UserProfile, error
 	return &profile, nil
 }
 
+// Retrieve user's profile photo from database
+// Do not filter for active users only
+func (r *UsersRepository) GetProfilePhoto(uid string) ([]byte, error) {
+	query := fmt.Sprintf(`SELECT PROFILE_PHOTO FROM %s WHERE UID=$1;`, USERS_TABLE)
+
+	var image []byte
+	if err := r.Db.QueryRow(context.Background(), query, uid).Scan(&image); err != nil {
+		utils.Logger.Warn().Err(err).Msgf("User of uid %s not found.", uid)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("Retrieved profile photo for uid %s", uid)
+	return image, nil
+}
+
 // Retrieve user's role
 func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 	query := fmt.Sprintf(`SELECT role FROM %s WHERE uid=$1;`, USERS_TABLE)

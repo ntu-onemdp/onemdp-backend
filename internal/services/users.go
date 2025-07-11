@@ -38,6 +38,8 @@ func (s *UserService) GetProfile(uid string) (*models.UserProfile, error) {
 	return s.UsersRepo.GetUserProfile(uid)
 }
 
+// Get user profile photo
+
 // Check if user is pending registration
 func (s *UserService) IsUserPending(email string) (bool, error) {
 	return s.UsersRepo.IsUserPending(email)
@@ -62,6 +64,11 @@ func (s *UserService) GetRole(uid string) (models.UserRole, error) {
 	}
 
 	return models.ParseRole(role)
+}
+
+// Get user profile photo
+func (s *UserService) GetProfilePhoto(uid string) ([]byte, error) {
+	return s.UsersRepo.GetProfilePhoto(uid)
 }
 
 // Check if user has staff permission
