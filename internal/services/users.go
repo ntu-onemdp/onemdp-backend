@@ -72,6 +72,13 @@ func (s *UserService) GetRole(uid string) (models.UserRole, error) {
 	return models.ParseRole(role)
 }
 
+// Get top 10 students with highest karma for given semester
+func (s *UserService) GetTopKarma(semester string) ([]models.UserProfile, error) {
+	TOP_N := 10 // Top 10 students
+
+	return s.UsersRepo.GetTopKarma(semester, TOP_N)
+}
+
 // Check if user has staff permission
 func (s *UserService) HasStaffPermission(uid string) (bool, error) {
 	roleStr, err := s.UsersRepo.GetUserRole(uid)

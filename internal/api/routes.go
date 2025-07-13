@@ -78,6 +78,11 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 	router.POST("/:uid/profile-photo", func(c *gin.Context) {
 		users.UpdateProfilePhotoHandler(c)
 	})
+
+	// [AE-93] GET /api/v1/users/karma-rankings
+	router.GET("/karma-rankings", func(c *gin.Context) {
+		users.GetRankingsHandler(c)
+	})
 }
 
 // Routes starting with /threads

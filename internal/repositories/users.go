@@ -275,8 +275,28 @@ func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 		return "", err
 	}
 
-	utils.Logger.Trace().Msgf("User %s has role %s", uid, role)
+	utils.Logger.Debug().Msgf("User %s has role %s", uid, role)
 	return role, nil
+}
+
+// Retrieve rankings of top N users by karma and current semester.
+func (r *UsersRepository) GetTopKarma(semester string, n int) ([]models.UserProfile, error) {
+	query := fmt.Sprintf(`SELECT uid, email, name, role, profile_photo, semester, karma FROM %s WHERE ROLE='student' AND STATUS='active' AND SEMESTER=$1 ORDER BY KARMA DESC LIMIT $2;`, USERS_TABLE)
+
+	rows, _ := r.Db.Query(context.Background(), query, semester, n)
+	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.UserProfile])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error retrieving profiles for semester %s", semester)
+		return nil, err
+	}
+
+	if len(profiles) == 0 {
+		utils.Logger.Warn().Msgf("0 profiles retrieved for semester %s", semester)
+	} else {
+		utils.Logger.Debug().Msgf("%d profiles retrieved for semester %s", len(profiles), semester)
+	}
+
+	return profiles, nil
 }
 
 // Update user's role
