@@ -32,6 +32,8 @@ func GetProfileHandler(c *gin.Context) {
 // Retrieve public profile photo
 func GetProfilePhotoHandler(c *gin.Context) {
 	uid := c.Param("uid")
+	utils.Logger.Info().Msgf("Get user profile photo request received for uid %s", uid)
+
 	if uid == "" {
 		utils.Logger.Warn().Msg("UID is empty")
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -39,8 +41,6 @@ func GetProfilePhotoHandler(c *gin.Context) {
 		})
 		return
 	}
-
-	utils.Logger.Info().Msgf("Get user profile photo request received for uid %s", uid)
 
 	photo, err := services.Users.GetProfilePhoto(uid)
 	if err != nil {
@@ -64,10 +64,13 @@ func GetProfilePhotoHandler(c *gin.Context) {
 }
 
 func UpdateProfilePhotoHandler(c *gin.Context) {
-	uid := c.Param("uid")
-	if uid == "" {
-		utils.Logger.Warn().Msg("UID is empty")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "UID is required"})
+	uid := services.JwtHandler.GetUidFromJwt(c)
+
+	if uid != c.Param("uid") {
+		utils.Logger.Warn().Msgf("UID in path param does not match JWT")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "UID in path param does not match JWT",
+		})
 		return
 	}
 
