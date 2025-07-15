@@ -37,11 +37,11 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 
 	// Insert article into articles table
 	query := fmt.Sprintf(`
-		INSERT INTO %s (article_id, author, title, content)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO %s (article_id, author, title, content, preview)
+		VALUES ($1, $2, $3, $4, $5)
 	`, ARTICLES_TABLE)
 
-	if _, err := tx.Exec(ctx, query, article.ArticleID, article.Author, article.Title, article.Content); err != nil {
+	if _, err := tx.Exec(ctx, query, article.ArticleID, article.Author, article.Title, article.Content, article.Preview); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting article into database")
 		return err
 	}
@@ -88,6 +88,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		U.NAME AUTHOR_NAME,
 		(
 			SELECT
@@ -166,6 +167,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		USERS.NAME AS AUTHOR_NAME,
 		(
 			SELECT
