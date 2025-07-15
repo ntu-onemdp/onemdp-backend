@@ -25,12 +25,13 @@ func AuthGuard() gin.HandlerFunc {
 		claim, err := services.JwtHandler.ParseJwt(tokenString)
 
 		if err != nil {
+			utils.Logger.Warn().Msg("Invalid token, rejecting claim.")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		utils.Logger.Trace().Msg(fmt.Sprintf("claim verified for %s", claim.Uid))
+		utils.Logger.Trace().Msgf("Claim verified for %s", claim.Uid)
 		c.Next()
 	}
 }

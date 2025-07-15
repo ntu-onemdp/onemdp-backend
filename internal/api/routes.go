@@ -7,6 +7,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/like"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
@@ -48,6 +49,19 @@ func RegisterImageRoutes(router *gin.RouterGroup) {
 	})
 }
 
+// Like service routes
+func RegisterLikeRoutes(router *gin.RouterGroup) {
+	// [AE-90] POST /api/v1/like/:content_id
+	router.POST("/:content_id", func(c *gin.Context) {
+		like.LikeContentHandler(c)
+	})
+
+	// [AE-91] DELETE /api/v1/like/:content_id
+	router.DELETE("/:content_id", func(c *gin.Context) {
+		like.UnlikeContentHandler(c)
+	})
+}
+
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 	// [AE-6] GET /api/v1/users/:uid
@@ -55,6 +69,20 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 		users.GetProfileHandler(c)
 	})
 
+	// [AE-92] GET /api/v1/users/:uid/profile-photo
+	router.GET("/:uid/profile-photo", func(c *gin.Context) {
+		users.GetProfilePhotoHandler(c)
+	})
+
+	// [AE-10] POST /api/v1/users/:uid/profile-photo
+	router.POST("/:uid/profile-photo", func(c *gin.Context) {
+		users.UpdateProfilePhotoHandler(c)
+	})
+
+	// [AE-93] GET /api/v1/users/karma-rankings
+	router.GET("/karma-rankings", func(c *gin.Context) {
+		users.GetRankingsHandler(c)
+	})
 }
 
 // Routes starting with /threads
@@ -62,11 +90,6 @@ func RegisterThreadRoutes(router *gin.RouterGroup) {
 	// [AE-16] POST /api/v1/threads/new
 	router.POST("/new", func(c *gin.Context) {
 		threads.CreateThreadHandler(c)
-	})
-
-	// [AE-25] POST /api/v1/threads/:thread_id/like
-	router.POST("/:thread_id/like", func(c *gin.Context) {
-		threads.LikeThreadHandler(c)
 	})
 
 	// [AE-14] GET /api/v1/threads?size=25&sort=time_created&desc=true&timestamp=0
@@ -83,11 +106,6 @@ func RegisterThreadRoutes(router *gin.RouterGroup) {
 	router.DELETE("/:thread_id", func(c *gin.Context) {
 		threads.DeleteThreadHandler(c)
 	})
-
-	// [AE-86] DELETE /api/v1/threads/:thread_id/like
-	router.DELETE("/:thread_id/like", func(c *gin.Context) {
-		threads.UnlikeThreadHandler(c)
-	})
 }
 
 // Routes starting with /posts
@@ -102,11 +120,6 @@ func RegisterPostRoutes(router *gin.RouterGroup) {
 		posts.GetPostHandler(c)
 	})
 
-	// [AE-26] POST /api/v1/posts/:post_id/like
-	router.POST("/:post_id/like", func(c *gin.Context) {
-		posts.LikePostHandler(c)
-	})
-
 	// [AE-23] POST /api/v1/posts/:post_id/edit
 	router.POST("/:post_id/edit", func(c *gin.Context) {
 		posts.UpdatePostHandler(c)
@@ -115,11 +128,6 @@ func RegisterPostRoutes(router *gin.RouterGroup) {
 	// [AE-24] DELETE /api/v1/posts/:post_id
 	router.DELETE("/:post_id", func(c *gin.Context) {
 		posts.DeletePostsHandler(c)
-	})
-
-	// [AE-85] DELETE /api/v1/posts/:post_id/like
-	router.DELETE("/:post_id/like", func(c *gin.Context) {
-		posts.UnlikePostHandler(c)
 	})
 }
 

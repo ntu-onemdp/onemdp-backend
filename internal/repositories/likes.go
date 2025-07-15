@@ -48,9 +48,13 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 
 	switch contentType {
 	case "p": // Post
-		query = `SELECT author FROM posts WHERE post_id = $1;`
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE POST_ID=$1 AND IS_AVAILABLE=TRUE;`, POSTS_TABLE)
 	case "t": // Thread
-		query = `SELECT author FROM threads WHERE thread_id = $1;`
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE THREAD_ID=$1 AND IS_AVAILABLE=TRUE;`, THREADS_TABLE)
+	case "a": // Article
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE ARTICLE_ID=$1 AND IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
+	case "c": // Comment
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE COMMENT_ID=$1 AND IS_AVAILABLE=TRUE;`, COMMENTS_TABLE)
 	default:
 		utils.Logger.Error().Msg("Unknown content type")
 		return fmt.Errorf("unknown content type: %s", contentType)
@@ -133,9 +137,13 @@ func (r *LikesRepository) Delete(uid string, content_id string) error {
 	var author string                    // UID of author
 	switch contentType {
 	case "p": // Post
-		query = `SELECT author FROM posts WHERE post_id = $1;`
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE POST_ID=$1 AND IS_AVAILABLE=TRUE;`, POSTS_TABLE)
 	case "t": // Thread
-		query = `SELECT author FROM threads WHERE thread_id = $1;`
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE THREAD_ID=$1 AND IS_AVAILABLE=TRUE;`, THREADS_TABLE)
+	case "a": // Article
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE ARTICLE_ID=$1 AND IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
+	case "c": // Comment
+		query = fmt.Sprintf(`SELECT AUTHOR FROM %s WHERE COMMENT_ID=$1 AND IS_AVAILABLE=TRUE;`, COMMENTS_TABLE)
 	default:
 		utils.Logger.Error().Msg("Unknown content type")
 		return fmt.Errorf("unknown content type: %s", contentType)

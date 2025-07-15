@@ -29,6 +29,7 @@ go.work.sum
 # Secrets
 jwt-key.txt
 new_users.csv
+*-jwt.txt
 
 # Others
 .DS_STORE

@@ -67,6 +67,10 @@ func main() {
 	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard())
 	routes.RegisterImageRoutes(imageRoutes)
 
+	// Register like content routes
+	likeRoutes := r.Group("/api/v1/like", middlewares.AuthGuard())
+	routes.RegisterLikeRoutes(likeRoutes)
+
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
 	routes.RegisterAdminUserRoutes(adminRoutes)

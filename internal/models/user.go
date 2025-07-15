@@ -13,7 +13,7 @@ type User struct {
 	DateCreated  time.Time  `json:"date_created" db:"date_created"`
 	DateRemoved  *time.Time `json:"date_removed,omitempty" db:"date_removed"`
 	Semester     string     `json:"semester" db:"semester"`
-	ProfilePhoto *[]byte    `json:"profile_photo" db:"profile_photo"`
+	ProfilePhoto *[]byte    `json:"-" db:"profile_photo"`
 	Status       string     `json:"status" db:"status"`
 	Karma        int        `json:"karma" db:"karma"`
 }
@@ -61,7 +61,7 @@ type UserProfile struct {
 	Uid          string  `json:"uid"`
 	Email        string  `json:"email"`
 	Name         string  `json:"name"`
-	ProfilePhoto *[]byte `json:"profile_photo" db:"profile_photo"`
+	ProfilePhoto *[]byte `json:"-" db:"profile_photo"` // Do not return this in response
 	Semester     string  `json:"semester"`
 	Karma        int     `json:"karma"`
 	Role         string  `json:"role"`

@@ -42,17 +42,18 @@ func Init() {
 		netloc = "host.docker.internal"
 	}
 
-	// Create connection pool to db
 	pg_username := os.Getenv("PG_USERNAME")
 
 	// IMPORTANT
 	// Set the correct host for the database depending on where the application is running. Set it in .env.dev
 	connectionString := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", pg_username, string(db_pw), netloc, postgres_db)
 
+	// Create connection pool to db
 	Pool, err = pgxpool.New(context.Background(), connectionString)
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error creating connection pool")
 	}
+	utils.Logger.Debug().Msg("Postgres connection pool created")
 
 	// Initialize Goose and perform migrations
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -65,6 +66,7 @@ func Init() {
 	if err := goose.Up(db, "migrations"); err != nil {
 		utils.Logger.Panic().Err(err)
 	}
+	utils.Logger.Debug().Msg("Goose migrations applied")
 
 	// Check migration status
 	if err := goose.Status(db, "migrations"); err != nil {
@@ -74,7 +76,7 @@ func Init() {
 		utils.Logger.Panic().Err(err)
 	}
 
-	utils.Logger.Info().Msg("Database connection pool successfully created.")
+	utils.Logger.Info().Msg("Postgres database fully initialized.")
 }
 
 func Close() {

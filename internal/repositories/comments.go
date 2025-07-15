@@ -136,6 +136,19 @@ func (r *CommentsRepository) GetAuthor(commentID string) (string, error) {
 	return author, nil
 }
 
+// Returns true if comment exists in database
+func (r *CommentsRepository) IsAvailable(commentID string) bool {
+	query := fmt.Sprintf(`SELECT IS_AVAILABLE FROM %s WHERE COMMENT_ID=$1;`, COMMENTS_TABLE)
+
+	var isAvailable bool
+	if err := r.Db.QueryRow(context.Background(), query, commentID).Scan(&isAvailable); err != nil {
+		utils.Logger.Warn().Msgf("Comment of ID %s not found", commentID)
+		return false
+	}
+
+	return isAvailable
+}
+
 // Delete comment from database
 func (r *CommentsRepository) Delete(commentID string) error {
 	ctx := context.Background()

@@ -1,17 +1,29 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE IF EXISTS public.users
-    ALTER COLUMN date_created SET DEFAULT now();
+UPDATE public.users
+SET
+    date_created = now ()
+WHERE
+    date_created IS NULL;
 
 ALTER TABLE IF EXISTS public.users
-    ALTER COLUMN date_created SET NOT NULL;
+ALTER COLUMN date_created
+SET DEFAULT now ();
+
+ALTER TABLE IF EXISTS public.users
+ALTER COLUMN date_created
+SET
+    NOT NULL;
+
 -- +goose StatementEnd
-
 -- +goose Down
 -- +goose StatementBegin
 ALTER TABLE IF EXISTS public.users
-    ALTER COLUMN date_created DROP DEFAULT;
+ALTER COLUMN date_created
+DROP DEFAULT;
 
 ALTER TABLE IF EXISTS public.users
-    ALTER COLUMN date_created DROP NOT NULL;
+ALTER COLUMN date_created
+DROP NOT NULL;
+
 -- +goose StatementEnd

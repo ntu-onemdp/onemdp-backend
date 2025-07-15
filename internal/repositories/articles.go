@@ -96,6 +96,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 				COMMENTS C
 			WHERE
 				C.ARTICLE_ID = A.ARTICLE_ID
+				AND C.IS_AVAILABLE = TRUE
 		) AS NUM_COMMENTS,
 		COUNT(L.CONTENT_ID) AS NUM_LIKES,
 		MAX(
@@ -264,6 +265,19 @@ func (r *ArticleRepository) GetAuthor(articleID string) (string, error) {
 
 	utils.Logger.Info().Msgf("Successfully fetched author %s for article with ID %s", author, articleID)
 	return author, nil
+}
+
+// Returns true if article exists in database
+func (r *ArticleRepository) IsAvailable(articleID string) bool {
+	query := fmt.Sprintf(`SELECT IS_AVAILABLE FROM %s WHERE ARTICLE_ID=$1;`, ARTICLES_TABLE)
+
+	var isAvailable bool
+	if err := r.Db.QueryRow(context.Background(), query, articleID).Scan(&isAvailable); err != nil {
+		utils.Logger.Warn().Msgf("Article of ID %s not available", articleID)
+		return false
+	}
+
+	return isAvailable
 }
 
 // Perform soft delete of an article by its ID.

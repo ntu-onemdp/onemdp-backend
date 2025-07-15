@@ -249,6 +249,21 @@ func (r *UsersRepository) GetUserProfile(uid string) (*models.UserProfile, error
 	return &profile, nil
 }
 
+// Retrieve user's profile photo from database
+// Do not filter for active users only
+func (r *UsersRepository) GetProfilePhoto(uid string) ([]byte, error) {
+	query := fmt.Sprintf(`SELECT PROFILE_PHOTO FROM %s WHERE UID=$1;`, USERS_TABLE)
+
+	var image []byte
+	if err := r.Db.QueryRow(context.Background(), query, uid).Scan(&image); err != nil {
+		utils.Logger.Warn().Err(err).Msgf("User of uid %s not found.", uid)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("Retrieved profile photo for uid %s", uid)
+	return image, nil
+}
+
 // Retrieve user's role
 func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 	query := fmt.Sprintf(`SELECT role FROM %s WHERE uid=$1;`, USERS_TABLE)
@@ -260,8 +275,28 @@ func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 		return "", err
 	}
 
-	utils.Logger.Trace().Msgf("User %s has role %s", uid, role)
+	utils.Logger.Debug().Msgf("User %s has role %s", uid, role)
 	return role, nil
+}
+
+// Retrieve rankings of top N users by karma and current semester.
+func (r *UsersRepository) GetTopKarma(semester string, n int) ([]models.UserProfile, error) {
+	query := fmt.Sprintf(`SELECT uid, email, name, role, profile_photo, semester, karma FROM %s WHERE ROLE='student' AND STATUS='active' AND SEMESTER=$1 ORDER BY KARMA DESC LIMIT $2;`, USERS_TABLE)
+
+	rows, _ := r.Db.Query(context.Background(), query, semester, n)
+	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.UserProfile])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error retrieving profiles for semester %s", semester)
+		return nil, err
+	}
+
+	if len(profiles) == 0 {
+		utils.Logger.Warn().Msgf("0 profiles retrieved for semester %s", semester)
+	} else {
+		utils.Logger.Debug().Msgf("%d profiles retrieved for semester %s", len(profiles), semester)
+	}
+
+	return profiles, nil
 }
 
 // Update user's role
@@ -275,6 +310,19 @@ func (r *UsersRepository) UpdateUserRole(uid string, role string) error {
 	}
 
 	utils.Logger.Trace().Msgf("User %s role updated to %s", uid, role)
+	return nil
+}
+
+// Update user profile photo. Returns nil on success.
+func (r *UsersRepository) UpdateProfilePhoto(uid string, image []byte) error {
+	query := fmt.Sprintf(`UPDATE %s SET PROFILE_PHOTO=$1 WHERE UID=$2;`, USERS_TABLE)
+
+	if _, err := r.Db.Exec(context.Background(), query, image, uid); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error updating profile photo for user %s", uid)
+		return err
+	}
+
+	utils.Logger.Info().Msgf("Successfully updated profile photo for user %s", uid)
 	return nil
 }
 
