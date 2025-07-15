@@ -202,6 +202,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		USERS.NAME;
 	`, ARTICLES_TABLE)
 
