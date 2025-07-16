@@ -15,7 +15,7 @@ type NewPostRequest struct {
 	Content  string `json:"content" binding:"required"`
 	ReplyTo  string `json:"reply_to"`
 	ThreadId string `json:"thread_id" binding:"required"`
-	IsAnon   bool   `json:"is_anon" binding:"required"`
+	IsAnon   *bool  `json:"is_anon" binding:"required"` // https://github.com/gin-gonic/gin/issues/814
 }
 
 func NewPostHandler(c *gin.Context) {
@@ -47,7 +47,7 @@ func NewPostHandler(c *gin.Context) {
 	}
 
 	// Create new post
-	err := services.Posts.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content, newPostRequest.IsAnon)
+	err := services.Posts.CreateNewPost(author, replyTo, newPostRequest.ThreadId, newPostRequest.Title, newPostRequest.Content, *newPostRequest.IsAnon)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error creating new post")
 		c.JSON(http.StatusInternalServerError, gin.H{
