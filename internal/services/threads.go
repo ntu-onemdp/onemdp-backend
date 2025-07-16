@@ -31,16 +31,15 @@ func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repo
 
 // Create new thread and insert into the repository
 // Returns thread id on success
-func (s *ThreadService) CreateNewThread(author string, title string, content string) (string, error) {
-	thread := s.threadFactory.New(author, title, content)
+func (s *ThreadService) CreateNewThread(author string, title string, content string, isAnon bool) (string, error) {
+	thread := s.threadFactory.New(author, title, content, isAnon)
 
 	err := s.threadRepo.Insert(thread)
 	if err != nil {
 		return "", err
 	}
 
-	postFactory := models.PostFactory{}
-	post := postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true)
+	post := s.postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true, isAnon)
 
 	err = s.postRepo.Create(post)
 	return thread.ThreadID, err

@@ -4,9 +4,7 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
-	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type ThreadFactory struct {
@@ -38,10 +36,11 @@ type DbThread struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
+	IsAnon       bool      `json:"is_anon" db:"-"` // We do not need serialization for this field.
 }
 
 // Create a new thread with a unique thread ID
-func (f *ThreadFactory) New(author string, title string, content string) *DbThread {
+func (f *ThreadFactory) New(author string, title string, content string, isAnon bool) *DbThread {
 	return &DbThread{
 		ThreadID:     "t" + gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
 		AuthorUid:    author,
@@ -52,6 +51,7 @@ func (f *ThreadFactory) New(author string, title string, content string) *DbThre
 		Flagged:      false,
 		IsAvailable:  true,
 		Preview:      GetPreview(content),
+		IsAnon:       isAnon,
 	}
 }
 
@@ -78,42 +78,4 @@ func StrToThreadColumn(s string) ThreadColumn {
 	default:
 		return TIME_CREATED_COL
 	}
-}
-
-func (t *DbThread) GetID() string {
-	return t.ThreadID
-}
-
-func (t *DbThread) GetAuthor() string {
-	return t.AuthorUid
-}
-
-func (t *DbThread) GetTitle() string {
-	return t.Title
-}
-
-func (t *DbThread) GetTimeCreated() time.Time {
-	return t.TimeCreated
-}
-
-func (t *DbThread) GetLastActivity() time.Time {
-	return t.LastActivity
-}
-
-func (t *DbThread) GetFlagged() bool {
-	return t.Flagged
-}
-
-// Utility function to get preview from content
-func GetPreview(content string) string {
-	const MAX_PREVIEW_LENGTH = 100
-
-	p := bluemonday.StrictPolicy()
-	content = p.Sanitize(content)
-
-	utils.Logger.Debug().Str("content", content).Msg("Sanitized content")
-	if len(content) <= MAX_PREVIEW_LENGTH {
-		return content
-	}
-	return content[:MAX_PREVIEW_LENGTH]
 }

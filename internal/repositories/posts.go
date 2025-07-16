@@ -35,10 +35,10 @@ func (r *PostsRepository) Create(post *models.DbPost) error {
 
 	// Insert post into posts table
 	query := fmt.Sprintf(`
-	INSERT INTO %s (post_id, author, thread_id, title, content, reply_to, is_header) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7);`, POSTS_TABLE)
+	INSERT INTO %s (post_id, author, thread_id, title, content, reply_to, is_header, is_anon) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, POSTS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, post.PostID, post.AuthorUid, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader); err != nil {
+	if _, err = tx.Exec(ctx, query, post.PostID, post.AuthorUid, post.ThreadId, post.Title, post.PostContent, post.ReplyTo, post.IsHeader, post.IsAnon); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting post into database")
 		return err
 	}
@@ -90,7 +90,11 @@ func (r *PostsRepository) Get(postID string) (*models.DbPost, error) {
 func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]models.Post, error) {
 	query := fmt.Sprintf(`SELECT
 			P.POST_ID,
-			P.AUTHOR,
+			-- Conditionally return author UID or 'NA'
+			CASE 
+				WHEN P.IS_ANON THEN 'NA'
+				ELSE P.AUTHOR
+			END AS AUTHOR,
 			P.THREAD_ID,
 			P.REPLY_TO,
 			P.TITLE,
@@ -100,7 +104,11 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 			P.FLAGGED,
 			P.IS_AVAILABLE,
 			P.IS_HEADER,
-			U.NAME AS AUTHOR_NAME,
+			-- Conditionally return author name or '#ANONYMOUS#'
+			CASE 
+				WHEN P.IS_ANON THEN '#ANONYMOUS#'
+				ELSE U.NAME
+			END AS AUTHOR_NAME,
 			COALESCE(l.like_count, 0) AS num_likes,
 			COALESCE(ul.user_liked, false) AS is_liked
 		FROM %s P

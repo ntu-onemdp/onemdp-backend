@@ -38,9 +38,10 @@ type DbPost struct {
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
 	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
+	IsAnon      bool      `json:"is_anon" db:"-"` // We do not need serialization for this field.
 }
 
-func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *DbPost {
+func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool, isAnon bool) *DbPost {
 	return &DbPost{
 		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		AuthorUid:   author,
@@ -53,29 +54,6 @@ func (f *PostFactory) New(author string, threadId string, title string, content 
 		Flagged:     false,
 		IsAvailable: true,
 		IsHeader:    isHeader,
+		IsAnon:      isAnon,
 	}
-}
-
-func (p *DbPost) GetID() string {
-	return p.PostID
-}
-
-func (p *DbPost) GetAuthor() string {
-	return p.AuthorUid
-}
-
-func (p *DbPost) GetTitle() string {
-	return p.Title
-}
-
-func (p *DbPost) GetTimeCreated() time.Time {
-	return p.TimeCreated
-}
-
-func (p *DbPost) GetLastActivity() time.Time {
-	return p.LastEdited
-}
-
-func (p *DbPost) GetFlagged() bool {
-	return p.Flagged
 }
