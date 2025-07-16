@@ -22,7 +22,8 @@ type Thread struct {
 	Author     string `json:"author" db:"author_name"` // Name of the author
 	NumLikes   int    `json:"num_likes" db:"num_likes"`
 	NumReplies int    `json:"num_replies" db:"num_replies"`
-	IsLiked    bool   `json:"is_liked" db:"is_liked"` // Whether the thread is liked by the user
+	IsLiked    bool   `json:"is_liked" db:"is_liked"`   // Whether the thread is liked by the user
+	IsAuthor   bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
 }
 
 // DbThread models how a thread is stored in the database.
@@ -36,7 +37,7 @@ type DbThread struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
-	IsAnon       bool      `json:"is_anon" db:"-"` // We do not need serialization for this field.
+	IsAnon       bool      `json:"is_anon" db:"is_anon"`
 }
 
 // Create a new thread with a unique thread ID

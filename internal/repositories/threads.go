@@ -99,6 +99,7 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 			WHEN T.IS_ANON THEN '#ANONYMOUS#'
 			ELSE U.NAME
 		END AS AUTHOR_NAME,
+		T.IS_ANON,
 		(
 			SELECT
 				COUNT(1) - 1
@@ -190,6 +191,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 			WHEN T.IS_ANON THEN '#ANONYMOUS#'
 			ELSE USERS.NAME
 		END AS AUTHOR_NAME,
+		T.IS_ANON,
 		(
 			SELECT
 				COUNT(1) - 1
