@@ -100,6 +100,7 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 			ELSE U.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR, -- uid parameter
 		(
 			SELECT
 				COUNT(1) - 1
@@ -192,6 +193,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 			ELSE USERS.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR,
 		(
 			SELECT
 				COUNT(1) - 1

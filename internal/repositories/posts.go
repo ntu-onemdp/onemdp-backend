@@ -109,6 +109,8 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 				WHEN P.IS_ANON THEN '#ANONYMOUS#'
 				ELSE U.NAME
 			END AS AUTHOR_NAME,
+			P.IS_ANON,
+			P.AUTHOR=$1 AS IS_AUTHOR, 	-- UID parameter
 			COALESCE(l.like_count, 0) AS num_likes,
 			COALESCE(ul.user_liked, false) AS is_liked
 		FROM %s P
