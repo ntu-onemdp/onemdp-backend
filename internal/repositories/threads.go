@@ -37,10 +37,10 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 
 	// Insert thread into database
 	query := fmt.Sprintf(`
-	INSERT INTO %s (thread_id, author, title, preview) 
-	VALUES ($1, $2, $3, $4);`, THREADS_TABLE)
+	INSERT INTO %s (thread_id, author, title, preview, is_anon)
+	VALUES ($1, $2, $3, $4, $5);`, THREADS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview); err != nil {
+	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview, thread.IsAnon); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting into database")
 		return err
 	}
@@ -83,14 +83,24 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 	query := fmt.Sprintf(`SELECT
 		T.THREAD_ID,
 		T.TITLE,
-		T.AUTHOR,
+		-- Conditionally return author UID or 'NA'
+		CASE 
+			WHEN T.IS_ANON THEN 'NA'
+			ELSE T.AUTHOR
+		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
 		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		U.NAME AUTHOR_NAME,
+		-- Conditionally return author name or '#ANONYMOUS#'
+		CASE 
+			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			ELSE U.NAME
+		END AS AUTHOR_NAME,
+		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR, -- uid parameter
 		(
 			SELECT
 				COUNT(1) - 1
@@ -166,14 +176,24 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 	SELECT
 		T.THREAD_ID,
 		T.TITLE,
-		T.AUTHOR,
+		-- Conditionally return author UID or 'NA'
+		CASE 
+			WHEN T.IS_ANON THEN 'NA'
+			ELSE T.AUTHOR
+		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
 		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		USERS.NAME AS AUTHOR_NAME,
+		-- Conditionally return author name or '#ANONYMOUS#'
+		CASE 
+			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			ELSE USERS.NAME
+		END AS AUTHOR_NAME,
+		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR,
 		(
 			SELECT
 				COUNT(1) - 1
@@ -207,6 +227,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
+		T.IS_ANON,
 		USERS.NAME;`, THREADS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
