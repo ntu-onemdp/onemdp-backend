@@ -2,7 +2,6 @@ package threads
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -22,14 +21,16 @@ func GetAllThreadsHandler(c *gin.Context) {
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	timestamp := c.GetTime("timestamp")
-	if timestamp.IsZero() {
-		timestamp = time.Now()
+	page := c.GetInt("page")
+
+	// Page not provided: set to first page
+	if page == 0 {
+		page = 1 // First page
 	}
 
-	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
+	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all threads request received.")
 
-	threads, err := services.Threads.GetThreads(sort, size, desc, timestamp, uid)
+	threads, err := services.Threads.GetThreads(sort, size, desc, page, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{

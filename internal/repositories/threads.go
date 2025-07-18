@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -71,16 +70,24 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 // Params
 // column: column to sort by
 // uid: user ID of the user requesting the threads; used to determine if the thread is liked by the user
-// cursor: timestamp of the last thread in the previous page
-// size: page size; number of threads to return
+// page: page number - offset is automatically calculated in this function.
+// size: page size; number of items to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
 	}
 
-	query := fmt.Sprintf(`SELECT
+	// Calculate offset
+	offset := (page - 1) * size
+
+	// Query params
+	// $1: user's uid
+	// $2: limit
+	// $3: offset
+	query := fmt.Sprintf(`
+	SELECT
 		T.THREAD_ID,
 		T.TITLE,
 		-- Conditionally return author UID or 'NA'
@@ -122,24 +129,27 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 		INNER JOIN USERS U ON T.AUTHOR = U.UID
 		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
 	WHERE
-		T.%s < $2
-		AND T.IS_AVAILABLE = TRUE
+		T.IS_AVAILABLE = TRUE
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
 	ORDER BY
 		T.%s %s
-	LIMIT $3;`, column, column, desc)
+	LIMIT $2
+	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
-	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
+
+	// Perform query and collect rows into array.
+	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err
 	}
 
-	utils.Logger.Info().Msg("Threads retrieved from database")
+	utils.Logger.Debug().Msgf("%d threads retrieved from database", len(threads))
+
 	return threads, nil
 }
 
@@ -154,7 +164,7 @@ func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
 		return models.ThreadsMetadata{}, err
 	}
 
-	utils.Logger.Info().Int("num_threads", num_threads).Msg("Threads metadata retrieved")
+	utils.Logger.Debug().Int("num_threads", num_threads).Msg("Threads metadata retrieved")
 	return models.ThreadsMetadata{NumThreads: num_threads}, nil
 }
 

@@ -2,7 +2,6 @@ package articles
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -23,14 +22,16 @@ func GetAllArticlesHandler(c *gin.Context) {
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	timestamp := c.GetTime("timestamp") // Cursor
-	if timestamp.IsZero() {
-		timestamp = time.Now()
+	page := c.GetInt("page")
+
+	// Page not provided: set to first page
+	if page == 0 {
+		page = 1 // First page
 	}
 
-	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
+	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all articles request received.")
 
-	articles, err := services.Articles.GetArticles(sort, size, desc, timestamp, uid)
+	articles, err := services.Articles.GetArticles(sort, size, desc, page, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting articles")
 		c.JSON(http.StatusInternalServerError, gin.H{
