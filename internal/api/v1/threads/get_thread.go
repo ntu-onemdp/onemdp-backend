@@ -2,6 +2,7 @@ package threads
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -15,13 +16,22 @@ func GetAllThreadsHandler(c *gin.Context) {
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	size := c.GetInt("size")
-	if size == 0 {
-		size = constants.DEFAULT_PAGE_SIZE
+	size, err := strconv.Atoi(c.DefaultQuery("size", "0"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	page := c.GetInt("page")
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
 
 	// Page not provided: set to first page
 	if page == 0 {

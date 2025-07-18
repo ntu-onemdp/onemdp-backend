@@ -2,6 +2,7 @@ package articles
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -16,17 +17,21 @@ func GetAllArticlesHandler(c *gin.Context) {
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
 	// Retrieve query params
-	size := c.GetInt("size")
-	if size == 0 {
-		size = constants.DEFAULT_PAGE_SIZE
+	size, err := strconv.Atoi(c.DefaultQuery("size", "0"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	page := c.GetInt("page")
-
-	// Page not provided: set to first page
-	if page == 0 {
-		page = 1 // First page
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 
 	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all articles request received.")
