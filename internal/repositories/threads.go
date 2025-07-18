@@ -73,7 +73,7 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 // page: page number - offset is automatically calculated in this function.
 // size: page size; number of items to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -154,18 +154,20 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, page 
 }
 
 // Get threads metadata
-func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE is_available = true;`, THREADS_TABLE)
+func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
 
-	var num_threads int
-	err := r.Db.QueryRow(context.Background(), query).Scan(&num_threads)
+	row, _ := r.Db.Query(context.Background(), query)
+	defer row.Close()
+	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
-		return models.ThreadsMetadata{}, err
+		utils.Logger.Error().Err(err).Msg("Error collecting rows")
+		return nil, err
 	}
 
-	utils.Logger.Debug().Int("num_threads", num_threads).Msg("Threads metadata retrieved")
-	return models.ThreadsMetadata{NumThreads: num_threads}, nil
+	utils.Logger.Debug().Int("num threads", metadata.Total).Msg("Threads metadata retrieved from database")
+
+	return metadata, nil
 }
 
 // Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
