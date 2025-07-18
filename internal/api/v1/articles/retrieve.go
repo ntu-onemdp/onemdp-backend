@@ -17,7 +17,7 @@ func GetAllArticlesHandler(c *gin.Context) {
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
 	// Retrieve query params
-	size, err := strconv.Atoi(c.DefaultQuery("size", "0"))
+	size, err := strconv.Atoi(c.DefaultQuery("size", constants.DEFAULT_PAGE_SIZE))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
