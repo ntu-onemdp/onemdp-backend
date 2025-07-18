@@ -39,14 +39,14 @@ func (s *ArticleService) CreateNewArticle(author string, title string, content s
 // Retrieve all articles in given page.
 func (s *ArticleService) GetArticles(sort string, size int, desc bool, page int, uid string) ([]models.Article, error) {
 	// Convert sort string to ThreadColumn object
-	column := models.StrToThreadColumn(sort)
+	column := models.StrToSortColumn(sort)
 
 	// Retrieve articles from db
 	return s.articleRepo.GetAll(uid, column, page, size, desc)
 }
 
 // Retrieve article metadata
-func (s *ArticleService) GetMetadata() (*models.ArticlesMetadata, error) {
+func (s *ArticleService) GetMetadata() (*models.ContentMetadata, error) {
 	return s.articleRepo.GetMetadata()
 }
 

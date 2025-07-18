@@ -55,31 +55,3 @@ func (f *ThreadFactory) New(author string, title string, content string, isAnon 
 		IsAnon:       isAnon,
 	}
 }
-
-// Column definitions available for sorting
-type ThreadColumn string
-
-const (
-	TIME_CREATED_COL  ThreadColumn = "time_created"
-	LAST_ACTIVITY_COL ThreadColumn = "last_activity"
-	VIEWS_COL         ThreadColumn = "views"
-)
-
-// Threads metadata
-type ThreadsMetadata struct {
-	NumThreads int `json:"num_threads"`
-}
-
-// Convert string to ThreadColumn
-func StrToThreadColumn(s string) ThreadColumn {
-	switch s {
-	case "time_created":
-		return TIME_CREATED_COL
-	case "last_activity":
-		return LAST_ACTIVITY_COL
-	case "views":
-		return VIEWS_COL
-	default:
-		return TIME_CREATED_COL
-	}
-}

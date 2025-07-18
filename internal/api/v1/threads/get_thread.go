@@ -41,7 +41,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 		return
 	}
 
-	metadata, err := services.Threads.GetThreadsMetadata()
+	metadata, err := services.Threads.GetMetadata()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -52,11 +52,13 @@ func GetAllThreadsHandler(c *gin.Context) {
 		return
 	}
 
+	// Set number of pages
+	metadata.NumPages = (metadata.Total + size - 1) / size
+
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"threads":     threads,
-		"num_threads": metadata.NumThreads,
-		"num_pages":   (metadata.NumThreads + size - 1) / size,
+		"success":  true,
+		"threads":  threads,
+		"metadata": metadata,
 	})
 }
 

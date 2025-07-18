@@ -69,7 +69,7 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 }
 
 // GetAll retrieve all articles from a certain timestamp.
-func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, page int, size int, descending bool) ([]models.Article, error) {
+func (r *ArticleRepository) GetAll(uid string, column models.SortColumn, page int, size int, descending bool) ([]models.Article, error) {
 	// Set descending string
 	desc := "DESC"
 	if !descending {
@@ -232,18 +232,18 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 }
 
 // Get articles metadata
-func (r *ArticleRepository) GetMetadata() (*models.ArticlesMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) AS NUM_ARTICLES FROM %s WHERE IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
+func (r *ArticleRepository) GetMetadata() (*models.ContentMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
 
 	row, _ := r.Db.Query(context.Background(), query)
 	defer row.Close()
-	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ArticlesMetadata])
+	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err
 	}
 
-	utils.Logger.Debug().Int("num articles", metadata.NumArticles).Msg("Article metadata retrieved from database")
+	utils.Logger.Debug().Int("num articles", metadata.Total).Msg("Article metadata retrieved from database")
 
 	return metadata, nil
 }

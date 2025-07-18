@@ -55,9 +55,3 @@ func (f *ArticleFactory) New(author string, title string, content string) *DbArt
 		Preview:      GetPreview(content),
 	}
 }
-
-// Articles metadata
-type ArticlesMetadata struct {
-	NumArticles int `json:"num_articles" db:"num_articles"`
-	NumPages    int `json:"num_pages" db:"-"`
-}
