@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -70,13 +69,20 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 }
 
 // GetAll retrieve all articles from a certain timestamp.
-func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Article, error) {
+func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, page int, size int, descending bool) ([]models.Article, error) {
 	// Set descending string
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
 	}
 
+	// Calculate offset
+	offset := (page - 1) * size
+
+	// Query params
+	// $1: user's uid
+	// $2: limit/ results per page
+	// $3: offset (page number)
 	query := fmt.Sprintf(`
 	SELECT
 		A.ARTICLE_ID,
@@ -111,20 +117,19 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 		INNER JOIN USERS U ON A.AUTHOR = U.UID
 		LEFT JOIN LIKES L ON A.ARTICLE_ID = L.CONTENT_ID
 	WHERE
-		A.%s < $2		-- Cursor parameter
-		AND A.IS_AVAILABLE = TRUE
+		A.IS_AVAILABLE = TRUE
 	GROUP BY
 		A.ARTICLE_ID,
 		U.UID
 	ORDER BY
 		A.%s %s		-- Column, ASC/DESC
-	LIMIT
-		$3;		-- Size parameter
-	`, column, column, desc)
+	LIMIT $2		-- Size parameter
+	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descenting", descending).Msg("article query params")
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descenting", descending).Msg("article query params")
 
-	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	// Query database and collect rows into array
+	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
 	articles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Article])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")

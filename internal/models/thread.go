@@ -62,6 +62,7 @@ type ThreadColumn string
 const (
 	TIME_CREATED_COL  ThreadColumn = "time_created"
 	LAST_ACTIVITY_COL ThreadColumn = "last_activity"
+	VIEWS_COL         ThreadColumn = "views"
 )
 
 // Threads metadata
@@ -76,6 +77,8 @@ func StrToThreadColumn(s string) ThreadColumn {
 		return TIME_CREATED_COL
 	case "last_activity":
 		return LAST_ACTIVITY_COL
+	case "views":
+		return VIEWS_COL
 	default:
 		return TIME_CREATED_COL
 	}
