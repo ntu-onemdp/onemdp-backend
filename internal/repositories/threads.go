@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,10 +36,10 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 
 	// Insert thread into database
 	query := fmt.Sprintf(`
-	INSERT INTO %s (thread_id, author, title, preview) 
-	VALUES ($1, $2, $3, $4);`, THREADS_TABLE)
+	INSERT INTO %s (thread_id, author, title, preview, is_anon)
+	VALUES ($1, $2, $3, $4, $5);`, THREADS_TABLE)
 
-	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview); err != nil {
+	if _, err = tx.Exec(ctx, query, thread.ThreadID, thread.AuthorUid, thread.Title, thread.Preview, thread.IsAnon); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting into database")
 		return err
 	}
@@ -71,26 +70,44 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 // Params
 // column: column to sort by
 // uid: user ID of the user requesting the threads; used to determine if the thread is liked by the user
-// cursor: timestamp of the last thread in the previous page
-// size: page size; number of threads to return
+// page: page number - offset is automatically calculated in this function.
+// size: page size; number of items to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, cursor time.Time, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
 	}
 
-	query := fmt.Sprintf(`SELECT
+	// Calculate offset
+	offset := (page - 1) * size
+
+	// Query params
+	// $1: user's uid
+	// $2: limit
+	// $3: offset
+	query := fmt.Sprintf(`
+	SELECT
 		T.THREAD_ID,
 		T.TITLE,
-		T.AUTHOR,
+		-- Conditionally return author UID or 'NA'
+		CASE 
+			WHEN T.IS_ANON THEN 'NA'
+			ELSE T.AUTHOR
+		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
 		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		U.NAME AUTHOR_NAME,
+		-- Conditionally return author name or '#ANONYMOUS#'
+		CASE 
+			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			ELSE U.NAME
+		END AS AUTHOR_NAME,
+		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR, -- uid parameter
 		(
 			SELECT
 				COUNT(1) - 1
@@ -112,40 +129,45 @@ func (r *ThreadsRepository) GetAll(column models.ThreadColumn, uid string, curso
 		INNER JOIN USERS U ON T.AUTHOR = U.UID
 		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
 	WHERE
-		T.%s < $2
-		AND T.IS_AVAILABLE = TRUE
+		T.IS_AVAILABLE = TRUE
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
 	ORDER BY
 		T.%s %s
-	LIMIT $3;`, column, column, desc)
+	LIMIT $2
+	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descending", descending).Msg("")
-	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
+
+	// Perform query and collect rows into array.
+	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err
 	}
 
-	utils.Logger.Info().Msg("Threads retrieved from database")
+	utils.Logger.Debug().Msgf("%d threads retrieved from database", len(threads))
+
 	return threads, nil
 }
 
 // Get threads metadata
-func (r *ThreadsRepository) GetMetadata() (models.ThreadsMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE is_available = true;`, THREADS_TABLE)
+func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
 
-	var num_threads int
-	err := r.Db.QueryRow(context.Background(), query).Scan(&num_threads)
+	row, _ := r.Db.Query(context.Background(), query)
+	defer row.Close()
+	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
-		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
-		return models.ThreadsMetadata{}, err
+		utils.Logger.Error().Err(err).Msg("Error collecting rows")
+		return nil, err
 	}
 
-	utils.Logger.Info().Int("num_threads", num_threads).Msg("Threads metadata retrieved")
-	return models.ThreadsMetadata{NumThreads: num_threads}, nil
+	utils.Logger.Debug().Int("num threads", metadata.Total).Msg("Threads metadata retrieved from database")
+
+	return metadata, nil
 }
 
 // Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
@@ -166,14 +188,24 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 	SELECT
 		T.THREAD_ID,
 		T.TITLE,
-		T.AUTHOR,
+		-- Conditionally return author UID or 'NA'
+		CASE 
+			WHEN T.IS_ANON THEN 'NA'
+			ELSE T.AUTHOR
+		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
 		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		USERS.NAME AS AUTHOR_NAME,
+		-- Conditionally return author name or '#ANONYMOUS#'
+		CASE 
+			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			ELSE USERS.NAME
+		END AS AUTHOR_NAME,
+		T.IS_ANON,
+		T.AUTHOR=$1 AS IS_AUTHOR,
 		(
 			SELECT
 				COUNT(1) - 1
@@ -207,6 +239,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
+		T.IS_ANON,
 		USERS.NAME;`, THREADS_TABLE)
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))

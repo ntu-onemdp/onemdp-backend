@@ -20,8 +20,8 @@ func NewPostService(postRepo *repositories.PostsRepository) *PostService {
 	}
 }
 
-func (s *PostService) CreateNewPost(author string, replyTo *string, threadId string, title string, content string) error {
-	post := s.postFactory.New(author, threadId, title, content, replyTo, false)
+func (s *PostService) CreateNewPost(author string, replyTo *string, threadId string, title string, content string, isAnon bool) error {
+	post := s.postFactory.New(author, threadId, title, content, replyTo, false, isAnon)
 
 	err := s.postRepo.Create(post)
 	return err

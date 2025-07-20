@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,11 +36,11 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 
 	// Insert article into articles table
 	query := fmt.Sprintf(`
-		INSERT INTO %s (article_id, author, title, content)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO %s (article_id, author, title, content, preview)
+		VALUES ($1, $2, $3, $4, $5)
 	`, ARTICLES_TABLE)
 
-	if _, err := tx.Exec(ctx, query, article.ArticleID, article.Author, article.Title, article.Content); err != nil {
+	if _, err := tx.Exec(ctx, query, article.ArticleID, article.Author, article.Title, article.Content, article.Preview); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting article into database")
 		return err
 	}
@@ -70,13 +69,20 @@ func (r *ArticleRepository) Insert(article *models.DbArticle) error {
 }
 
 // GetAll retrieve all articles from a certain timestamp.
-func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, cursor time.Time, size int, descending bool) ([]models.Article, error) {
+func (r *ArticleRepository) GetAll(uid string, column models.SortColumn, page int, size int, descending bool) ([]models.Article, error) {
 	// Set descending string
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
 	}
 
+	// Calculate offset
+	offset := (page - 1) * size
+
+	// Query params
+	// $1: user's uid
+	// $2: limit/ results per page
+	// $3: offset (page number)
 	query := fmt.Sprintf(`
 	SELECT
 		A.ARTICLE_ID,
@@ -88,6 +94,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		U.NAME AUTHOR_NAME,
 		(
 			SELECT
@@ -110,20 +117,19 @@ func (r *ArticleRepository) GetAll(uid string, column models.ThreadColumn, curso
 		INNER JOIN USERS U ON A.AUTHOR = U.UID
 		LEFT JOIN LIKES L ON A.ARTICLE_ID = L.CONTENT_ID
 	WHERE
-		A.%s < $2		-- Cursor parameter
-		AND A.IS_AVAILABLE = TRUE
+		A.IS_AVAILABLE = TRUE
 	GROUP BY
 		A.ARTICLE_ID,
 		U.UID
 	ORDER BY
 		A.%s %s		-- Column, ASC/DESC
-	LIMIT
-		$3;		-- Size parameter
-	`, column, column, desc)
+	LIMIT $2		-- Size parameter
+	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Time("cursor", cursor).Int("size", size).Bool("descenting", descending).Msg("article query params")
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descenting", descending).Msg("article query params")
 
-	rows, _ := r.Db.Query(context.Background(), query, uid, cursor, size)
+	// Query database and collect rows into array
+	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
 	articles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Article])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
@@ -166,6 +172,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		USERS.NAME AS AUTHOR_NAME,
 		(
 			SELECT
@@ -200,6 +207,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
+		A.PREVIEW,
 		USERS.NAME;
 	`, ARTICLES_TABLE)
 
@@ -224,18 +232,18 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 }
 
 // Get articles metadata
-func (r *ArticleRepository) GetMetadata() (*models.ArticlesMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) AS NUM_ARTICLES FROM %s WHERE IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
+func (r *ArticleRepository) GetMetadata() (*models.ContentMetadata, error) {
+	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, ARTICLES_TABLE)
 
 	row, _ := r.Db.Query(context.Background(), query)
 	defer row.Close()
-	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ArticlesMetadata])
+	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
 		return nil, err
 	}
 
-	utils.Logger.Debug().Int("num articles", metadata.NumArticles).Msg("Article metadata retrieved from database")
+	utils.Logger.Debug().Int("num articles", metadata.Total).Msg("Article metadata retrieved from database")
 
 	return metadata, nil
 }

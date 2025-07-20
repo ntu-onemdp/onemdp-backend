@@ -2,7 +2,7 @@ package articles
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -17,20 +17,26 @@ func GetAllArticlesHandler(c *gin.Context) {
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
 	// Retrieve query params
-	size := c.GetInt("size")
-	if size == 0 {
-		size = constants.DEFAULT_PAGE_SIZE
+	size, err := strconv.Atoi(c.DefaultQuery("size", constants.DEFAULT_PAGE_SIZE))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	timestamp := c.GetTime("timestamp") // Cursor
-	if timestamp.IsZero() {
-		timestamp = time.Now()
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 
-	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
+	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all articles request received.")
 
-	articles, err := services.Articles.GetArticles(sort, size, desc, timestamp, uid)
+	articles, err := services.Articles.GetArticles(sort, size, desc, page, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting articles")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -51,7 +57,7 @@ func GetAllArticlesHandler(c *gin.Context) {
 	}
 
 	// Set number of pages
-	metadata.NumPages = (metadata.NumArticles + size - 1) / size
+	metadata.NumPages = (metadata.Total + size - 1) / size
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,

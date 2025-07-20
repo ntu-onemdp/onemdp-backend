@@ -2,7 +2,7 @@ package threads
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -16,20 +16,31 @@ func GetAllThreadsHandler(c *gin.Context) {
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	size := c.GetInt("size")
-	if size == 0 {
-		size = constants.DEFAULT_PAGE_SIZE
+	size, err := strconv.Atoi(c.DefaultQuery("size", constants.DEFAULT_PAGE_SIZE))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 	desc := c.DefaultQuery("desc", constants.DEFAULT_SORT_DESCENDING) == "true"
 	sort := c.DefaultQuery("sort", constants.DEFAULT_SORT_COLUMN)
-	timestamp := c.GetTime("timestamp")
-	if timestamp.IsZero() {
-		timestamp = time.Now()
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 
-	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Time("timestamp", timestamp).Msg("")
+	// Page not provided: set to first page
+	if page == 0 {
+		page = 1 // First page
+	}
 
-	threads, err := services.Threads.GetThreads(sort, size, desc, timestamp, uid)
+	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all threads request received.")
+
+	threads, err := services.Threads.GetThreads(sort, size, desc, page, uid)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -40,7 +51,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 		return
 	}
 
-	metadata, err := services.Threads.GetThreadsMetadata()
+	metadata, err := services.Threads.GetMetadata()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -51,11 +62,13 @@ func GetAllThreadsHandler(c *gin.Context) {
 		return
 	}
 
+	// Set number of pages
+	metadata.NumPages = (metadata.Total + size - 1) / size
+
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"threads":     threads,
-		"num_threads": metadata.NumThreads,
-		"num_pages":   (metadata.NumThreads + size - 1) / size,
+		"success":  true,
+		"threads":  threads,
+		"metadata": metadata,
 	})
 }
 

@@ -4,9 +4,7 @@ import (
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/microcosm-cc/bluemonday"
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
-	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type ThreadFactory struct {
@@ -24,7 +22,8 @@ type Thread struct {
 	Author     string `json:"author" db:"author_name"` // Name of the author
 	NumLikes   int    `json:"num_likes" db:"num_likes"`
 	NumReplies int    `json:"num_replies" db:"num_replies"`
-	IsLiked    bool   `json:"is_liked" db:"is_liked"` // Whether the thread is liked by the user
+	IsLiked    bool   `json:"is_liked" db:"is_liked"`   // Whether the thread is liked by the user
+	IsAuthor   bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
 }
 
 // DbThread models how a thread is stored in the database.
@@ -38,10 +37,11 @@ type DbThread struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
+	IsAnon       bool      `json:"is_anon" db:"is_anon"`
 }
 
 // Create a new thread with a unique thread ID
-func (f *ThreadFactory) New(author string, title string, content string) *DbThread {
+func (f *ThreadFactory) New(author string, title string, content string, isAnon bool) *DbThread {
 	return &DbThread{
 		ThreadID:     "t" + gonanoid.Must(constants.CONTENT_ID_LENGTH), // Note that this can cause program to panic!
 		AuthorUid:    author,
@@ -52,68 +52,6 @@ func (f *ThreadFactory) New(author string, title string, content string) *DbThre
 		Flagged:      false,
 		IsAvailable:  true,
 		Preview:      GetPreview(content),
+		IsAnon:       isAnon,
 	}
-}
-
-// Column definitions available for sorting
-type ThreadColumn string
-
-const (
-	TIME_CREATED_COL  ThreadColumn = "time_created"
-	LAST_ACTIVITY_COL ThreadColumn = "last_activity"
-)
-
-// Threads metadata
-type ThreadsMetadata struct {
-	NumThreads int `json:"num_threads"`
-}
-
-// Convert string to ThreadColumn
-func StrToThreadColumn(s string) ThreadColumn {
-	switch s {
-	case "time_created":
-		return TIME_CREATED_COL
-	case "last_activity":
-		return LAST_ACTIVITY_COL
-	default:
-		return TIME_CREATED_COL
-	}
-}
-
-func (t *DbThread) GetID() string {
-	return t.ThreadID
-}
-
-func (t *DbThread) GetAuthor() string {
-	return t.AuthorUid
-}
-
-func (t *DbThread) GetTitle() string {
-	return t.Title
-}
-
-func (t *DbThread) GetTimeCreated() time.Time {
-	return t.TimeCreated
-}
-
-func (t *DbThread) GetLastActivity() time.Time {
-	return t.LastActivity
-}
-
-func (t *DbThread) GetFlagged() bool {
-	return t.Flagged
-}
-
-// Utility function to get preview from content
-func GetPreview(content string) string {
-	const MAX_PREVIEW_LENGTH = 100
-
-	p := bluemonday.StrictPolicy()
-	content = p.Sanitize(content)
-
-	utils.Logger.Debug().Str("content", content).Msg("Sanitized content")
-	if len(content) <= MAX_PREVIEW_LENGTH {
-		return content
-	}
-	return content[:MAX_PREVIEW_LENGTH]
 }

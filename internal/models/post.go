@@ -22,7 +22,8 @@ type Post struct {
 
 	Author   string `json:"author" db:"author_name"` // Name of the author
 	NumLikes int    `json:"num_likes" db:"num_likes"`
-	IsLiked  bool   `json:"is_liked" db:"is_liked"` // Whether the post is liked by the user
+	IsLiked  bool   `json:"is_liked" db:"is_liked"`   // Whether the post is liked by the user
+	IsAuthor bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
 }
 
 // DbPost models how a post is stored in the database.
@@ -38,9 +39,10 @@ type DbPost struct {
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
 	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
+	IsAnon      bool      `json:"is_anon" db:"is_anon"`
 }
 
-func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool) *DbPost {
+func (f *PostFactory) New(author string, threadId string, title string, content string, replyTo *string, isHeader bool, isAnon bool) *DbPost {
 	return &DbPost{
 		PostID:      "p" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		AuthorUid:   author,
@@ -53,29 +55,6 @@ func (f *PostFactory) New(author string, threadId string, title string, content 
 		Flagged:     false,
 		IsAvailable: true,
 		IsHeader:    isHeader,
+		IsAnon:      isAnon,
 	}
-}
-
-func (p *DbPost) GetID() string {
-	return p.PostID
-}
-
-func (p *DbPost) GetAuthor() string {
-	return p.AuthorUid
-}
-
-func (p *DbPost) GetTitle() string {
-	return p.Title
-}
-
-func (p *DbPost) GetTimeCreated() time.Time {
-	return p.TimeCreated
-}
-
-func (p *DbPost) GetLastActivity() time.Time {
-	return p.LastEdited
-}
-
-func (p *DbPost) GetFlagged() bool {
-	return p.Flagged
 }

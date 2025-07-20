@@ -1,8 +1,6 @@
 package services
 
 import (
-	"time"
-
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -31,28 +29,27 @@ func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repo
 
 // Create new thread and insert into the repository
 // Returns thread id on success
-func (s *ThreadService) CreateNewThread(author string, title string, content string) (string, error) {
-	thread := s.threadFactory.New(author, title, content)
+func (s *ThreadService) CreateNewThread(author string, title string, content string, isAnon bool) (string, error) {
+	thread := s.threadFactory.New(author, title, content, isAnon)
 
 	err := s.threadRepo.Insert(thread)
 	if err != nil {
 		return "", err
 	}
 
-	postFactory := models.PostFactory{}
-	post := postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true)
+	post := s.postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true, isAnon)
 
 	err = s.postRepo.Create(post)
 	return thread.ThreadID, err
 }
 
-// Retrieve all threads after cursor
-func (s *ThreadService) GetThreads(sort string, size int, descending bool, cursor time.Time, uid string) ([]models.Thread, error) {
+// Retrieve all threads in given page
+func (s *ThreadService) GetThreads(sort string, size int, descending bool, page int, uid string) ([]models.Thread, error) {
 	// Convert sort string to ThreadColumn
-	column := models.StrToThreadColumn(sort)
+	column := models.StrToSortColumn(sort)
 
 	// Retrieve threads from db
-	threads, err := s.threadRepo.GetAll(column, uid, cursor, size, descending)
+	threads, err := s.threadRepo.GetAll(column, uid, page, size, descending)
 	if err != nil {
 		utils.Logger.Trace().Msg("Error getting threads from db")
 		return nil, err
@@ -62,7 +59,7 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, curso
 }
 
 // Retrieve threads metadata
-func (s *ThreadService) GetThreadsMetadata() (models.ThreadsMetadata, error) {
+func (s *ThreadService) GetMetadata() (*models.ContentMetadata, error) {
 	return s.threadRepo.GetMetadata()
 }
 

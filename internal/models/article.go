@@ -37,6 +37,7 @@ type DbArticle struct {
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Content      string    `json:"content" db:"content"`
+	Preview      string    `json:"preview" db:"preview"`
 }
 
 // Create a new article with a unique article ID
@@ -51,11 +52,6 @@ func (f *ArticleFactory) New(author string, title string, content string) *DbArt
 		Flagged:      false,
 		IsAvailable:  true,
 		Content:      utils.SanitizeContent(content),
+		Preview:      GetPreview(content),
 	}
-}
-
-// Articles metadata
-type ArticlesMetadata struct {
-	NumArticles int `json:"num_articles" db:"num_articles"`
-	NumPages    int `json:"num_pages" db:"-"`
 }
