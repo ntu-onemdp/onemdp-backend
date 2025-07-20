@@ -29,14 +29,6 @@ CREATE TABLE IF NOT EXISTS public.posts
         ON DELETE CASCADE
 );
 
-ALTER TABLE IF EXISTS public.posts
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.posts FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.posts TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.posts TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down

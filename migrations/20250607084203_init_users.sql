@@ -15,8 +15,6 @@ CREATE TABLE IF NOT EXISTS public.users
     PRIMARY KEY (uid)
 );
 
-ALTER TABLE IF EXISTS public.users
-    OWNER to onemdp_db_admin_dev;
 -- +goose StatementEnd
 
 -- +goose Down

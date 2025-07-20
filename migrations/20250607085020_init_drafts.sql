@@ -16,14 +16,6 @@ CREATE TABLE IF NOT EXISTS public.drafts
         ON DELETE CASCADE
 );
 
-ALTER TABLE IF EXISTS public.drafts
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.drafts FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.drafts TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.drafts TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down

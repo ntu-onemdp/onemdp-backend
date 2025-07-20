@@ -28,14 +28,6 @@ CREATE TABLE IF NOT EXISTS public.comments
         ON DELETE SET NULL
 );
 
-ALTER TABLE IF EXISTS public.comments
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.comments FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.comments TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.comments TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down

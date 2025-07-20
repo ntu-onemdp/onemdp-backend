@@ -19,14 +19,6 @@ CREATE TABLE IF NOT EXISTS public.threads
         ON DELETE SET NULL
 );
 
-ALTER TABLE IF EXISTS public.threads
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.threads FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.threads TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.threads TO onemdp_db_rw_dev;
 
 -- +goose StatementEnd
 

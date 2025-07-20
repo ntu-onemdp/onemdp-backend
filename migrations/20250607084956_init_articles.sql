@@ -19,15 +19,6 @@ CREATE TABLE IF NOT EXISTS public.articles
         ON UPDATE CASCADE
         ON DELETE SET NULL
 );
-
-ALTER TABLE IF EXISTS public.articles
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.articles FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.articles TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.articles TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down

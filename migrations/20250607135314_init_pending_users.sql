@@ -9,8 +9,6 @@ CREATE TABLE public.pending_users
     PRIMARY KEY (email)
 );
 
-ALTER TABLE IF EXISTS public.pending_users
-    OWNER to onemdp_db_admin_dev;
 -- +goose StatementEnd
 
 -- +goose Down

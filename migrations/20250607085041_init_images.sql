@@ -7,8 +7,6 @@ CREATE TABLE IF NOT EXISTS public.images
     PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS public.images
-    OWNER to onemdp_db_admin_dev;
 -- +goose StatementEnd
 
 -- +goose Down
