@@ -21,7 +21,7 @@ func VerifyAdminHanlder(c *gin.Context) {
 		return
 	}
 
-	utils.Logger.Info().Bool("has admin permission", hasAdminPermission).Msgf("Request received from user %s to verify admin status.")
+	utils.Logger.Info().Bool("has admin permission", hasAdminPermission).Msgf("Request received from user %s to verify admin status.", uid)
 	c.JSON(http.StatusOK, gin.H{
 		"hasAdminPermission": hasAdminPermission,
 	})
