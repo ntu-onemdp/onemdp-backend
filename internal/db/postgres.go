@@ -32,19 +32,19 @@ func Init() {
 		switch env {
 		case "PROD":
 			if err := godotenv.Load("config/.env"); err != nil {
-				utils.Logger.Panic().Err(err).Msg("Error reading from .env")
+				utils.Logger.Warn().Err(err).Msg("Error reading from .env")
 			}
 		case "QA":
 			if err := godotenv.Load("config/.env.qa"); err != nil {
-				utils.Logger.Panic().Err(err).Msg("Error reading from .env.qa")
+				utils.Logger.Warn().Err(err).Msg("Error reading from .env.qa")
 			}
 		case "DEV":
 			if err := godotenv.Load("config/.env.dev"); err != nil {
-				utils.Logger.Panic().Err(err).Msg("Error reading from .env.dev")
+				utils.Logger.Warn().Err(err).Msg("Error reading from .env.dev")
 			}
 		default:
 			if err := godotenv.Load("config/.env"); err != nil {
-				utils.Logger.Panic().Err(err).Msg("Error reading from .env")
+				utils.Logger.Warn().Err(err).Msg("Error reading from .env")
 			}
 		}
 		db_pw = []byte(os.Getenv("POSTGRES_PW"))
