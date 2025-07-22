@@ -1,9 +1,8 @@
-FROM golang:1.24.5-alpine3.22 AS builder
+FROM golang:1.24.5-alpine3.22 AS build
 
-WORKDIR /app
+WORKDIR /go/src/app
 
 ENV PORT=8080
-ENV ENV=QA
 ENV GOCACHE=/root/.cache/go-build
 
 # Copy config files
@@ -25,6 +24,11 @@ COPY ./migrations ./migrations
 # Copy source code
 COPY ./internal ./internal
 
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go build -o /go/bin/app
 
-CMD ["/app/main"]
+FROM gcr.io/distroless/static-debian11
+COPY --from=build /go/src/app /
+COPY --from=build /go/bin/app /
+ENV ENV=QA
+
+CMD ["/app"]
