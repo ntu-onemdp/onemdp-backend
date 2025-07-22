@@ -70,7 +70,7 @@ func Init() {
 
 	// IMPORTANT
 	// Set the correct host for the database depending on where the application is running. Set it in .env
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", pg_username, string(db_pw), netloc, pg_port, postgres_db)
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require", pg_username, string(db_pw), netloc, pg_port, postgres_db)
 	utils.Logger.Debug().Str("connection string", connectionString).Msg("")
 
 	// Create connection pool to db
