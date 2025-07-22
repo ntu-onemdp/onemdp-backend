@@ -22,15 +22,25 @@ var JwtHandler *Jwt
 
 // Load secret key from file. Panics if secret key cannot be found.
 func InitJwt() {
-	key, err := os.ReadFile("/run/secrets/jwt-key")
-	if err != nil {
-		// Read from local file
-		utils.Logger.Warn().Msg("Error reading secret from /run/secrets/jwt-key, attempting to load from /config/jwt-key.txt")
+	// Get app env
+	env, found := os.LookupEnv("ENV")
+	if !found {
+		// Default environment: PROD
+		env = "PROD"
+	}
 
-		key, err = os.ReadFile("config/jwt-key.txt")
-		if err != nil {
-			utils.Logger.Panic().Err(err).Msg("Error reading JWT secret key. Make sure the secret key is configured correctly.")
-		}
+	var path string
+	switch env {
+	case "PROD", "QA":
+		path = "/mnt/secrets/jwt-key"
+	case "DEV":
+		path = "/config/jwt-key.txt"
+	default:
+		path = "/run/secrets/jwt-key" // only used when running from docker compose, can be removed.
+	}
+	key, err := os.ReadFile(path)
+	if err != nil {
+		utils.Logger.Warn().Msgf("Error reading secret from %s", path)
 	}
 
 	// Check if secret key was read correctly
