@@ -2,8 +2,10 @@ package admin
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -17,7 +19,7 @@ type CreateNewUsersRequest struct {
 // Model user
 type NewUser struct {
 	Email string `json:"email" binding:"required"`
-	Role  string `json:"role" binding:"required"`
+	// Role  string `json:"role" binding:"required"` // 21 July: all new users are granted student roles by default.
 }
 
 // Response sent to frontend
@@ -44,6 +46,7 @@ func CreateUsersHandler(c *gin.Context) {
 	if err := c.BindJSON(&createNewUsersRequest); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error binding request to NewUsers")
 		c.JSON(http.StatusBadRequest, nil)
+		return
 	}
 
 	for _, newUser := range createNewUsersRequest.Users {
@@ -53,7 +56,7 @@ func CreateUsersHandler(c *gin.Context) {
 		}
 
 		// Call service to create new user
-		if err := services.Users.CreateNewUser(newUser.Email, newUser.Role, createNewUsersRequest.Semester); err != nil {
+		if err := services.Users.CreateNewUser(strings.ToUpper(newUser.Email), models.STUDENT_ROLE, createNewUsersRequest.Semester); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error encountered when inserting new user")
 			singleUserResult.Result = "failed"
 		} else {

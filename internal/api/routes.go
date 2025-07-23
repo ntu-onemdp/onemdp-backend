@@ -83,6 +83,11 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 	router.GET("/karma-rankings", func(c *gin.Context) {
 		users.GetRankingsHandler(c)
 	})
+
+	// [AE-94] GET /api/v1/users/verify-admin
+	router.GET("/verify-admin", func(c *gin.Context) {
+		users.VerifyAdminHanlder(c)
+	})
 }
 
 // Routes starting with /threads

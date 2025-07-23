@@ -47,7 +47,7 @@ var Users *UsersRepository
 func (r *UsersRepository) InsertOneUser(user *models.PendingUser) error {
 	query := `
 	INSERT INTO pending_users (email, role, semester) 
-	VALUES ($1, $2, $3)
+	SELECT $1, $2, $3
 	WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE email = $1);` // Ensure that the user does not already exist in the users table
 

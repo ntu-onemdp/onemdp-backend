@@ -97,6 +97,25 @@ func (s *UserService) HasStaffPermission(uid string) (bool, error) {
 	return role >= models.Staff, nil
 }
 
+// Check if user has admin permission
+func (s *UserService) HasAdminPermission(uid string) (bool, error) {
+	roleStr, err := s.UsersRepo.GetUserRole(uid)
+
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting user role")
+		return false, err
+	}
+
+	role, err := models.ParseRole(roleStr)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error parsing user role")
+		return false, err
+	}
+
+	return role >= models.Admin, nil
+
+}
+
 // Update user's profile photo
 // We do not need to validate whether original user is editing the profile photo as the UID is obtained from JWT.
 func (s *UserService) UpdateProfilePhoto(uid string, file *multipart.FileHeader) error {
