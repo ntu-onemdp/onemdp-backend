@@ -44,6 +44,8 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	utils.Logger.Debug().Str("uid", user.Uid).Interface("user metadata", user.UserMetadata).Msg("Login request binded")
+
 	// Check if user is pending registration
 	isPending, err := services.Users.IsUserPending(user.UserMetadata.Email)
 	if err != nil {
