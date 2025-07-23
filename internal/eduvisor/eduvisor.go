@@ -56,6 +56,9 @@ func NewEduvisorService() *EduvisorService {
 		utils.Logger.Warn().Msg("Error writing jwt key to file")
 	}
 
+	// Show eduvisor jwt token
+	utils.Logger.Info().Str("eduvisor token", jwt).Msg("")
+
 	return &EduvisorService{
 		EduvisorModel: eduvisor,
 	}

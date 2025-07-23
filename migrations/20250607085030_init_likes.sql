@@ -12,15 +12,6 @@ CREATE TABLE IF NOT EXISTS public.likes
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
-
-ALTER TABLE IF EXISTS public.likes
-    OWNER to onemdp_db_admin_dev;
-
-REVOKE ALL ON TABLE public.likes FROM onemdp_db_rw_dev;
-
-GRANT ALL ON TABLE public.likes TO onemdp_db_admin_dev;
-
-GRANT DELETE, SELECT, INSERT ON TABLE public.likes TO onemdp_db_rw_dev;
 -- +goose StatementEnd
 
 -- +goose Down
