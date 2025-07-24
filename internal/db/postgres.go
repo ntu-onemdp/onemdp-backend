@@ -67,10 +67,11 @@ func Init() {
 
 	pg_username := os.Getenv("PG_USERNAME")
 	pg_port := os.Getenv("PG_PORT")
+	pg_ssl_mode := os.Getenv("PG_SSL_MODE")
 
 	// IMPORTANT
 	// Set the correct host for the database depending on where the application is running. Set it in .env
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require", pg_username, string(db_pw), netloc, pg_port, postgres_db)
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", pg_username, string(db_pw), netloc, pg_port, postgres_db, pg_ssl_mode)
 	// utils.Logger.Debug().Str("connection string", connectionString).Msg("")
 
 	// Create connection pool to db

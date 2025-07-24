@@ -1,4 +1,4 @@
-FROM golang:1.23.3-alpine3.20 AS builder
+FROM golang:1.24.5-alpine3.22 AS build
 
 WORKDIR /app
 
@@ -25,5 +25,6 @@ COPY ./migrations ./migrations
 COPY ./internal ./internal
 
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go build -o main .
+ENV ENV=DEV
 
 CMD ["/app/main"]
