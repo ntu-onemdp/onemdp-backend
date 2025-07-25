@@ -14,7 +14,8 @@ type Comment struct {
 
 	Author   string `json:"author" db:"author_name"` // Name of the author
 	NumLikes int    `json:"num_likes" db:"num_likes"`
-	IsLiked  bool   `json:"is_liked" db:"is_liked"` // Whether the post has been liked by user
+	IsLiked  bool   `json:"is_liked" db:"is_liked"`   // Whether the post has been liked by user
+	IsAuthor bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
 }
 
 // DbComment models how a comment is stored in the database

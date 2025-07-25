@@ -22,8 +22,9 @@ type Article struct {
 
 	Author      string `json:"author" db:"author_name"` // Name of the author
 	NumLikes    int    `json:"num_likes" db:"num_likes"`
-	IsLiked     bool   `json:"is_liked" db:"is_liked"` // Whether the article is liked by the user
 	NumComments int    `json:"num_comments" db:"num_comments"`
+	IsLiked     bool   `json:"is_liked" db:"is_liked"`   // Whether the article is liked by the user
+	IsAuthor    bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
 }
 
 // DbArticle models how an article is stored in the database.

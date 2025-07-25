@@ -76,6 +76,7 @@ func (r *CommentsRepository) GetCommentsByArticleID(articleID string, uid string
 		C.LAST_EDITED,
 		C.FLAGGED,
 		C.IS_AVAILABLE,
+		C.AUTHOR=$1 AS IS_AUTHOR,
 		U.NAME AS AUTHOR_NAME,
 		COALESCE(L.LIKE_COUNT, 0) AS NUM_LIKES,
 		COALESCE(UL.USER_LIKED, FALSE) AS IS_LIKED

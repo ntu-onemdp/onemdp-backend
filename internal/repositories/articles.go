@@ -95,6 +95,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.SortColumn, page in
 		A.IS_AVAILABLE,
 		A.CONTENT,
 		A.PREVIEW,
+		A.AUTHOR=$1 AS IS_AUTHOR, -- uid parameter
 		U.NAME AUTHOR_NAME,
 		(
 			SELECT
@@ -173,6 +174,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.IS_AVAILABLE,
 		A.CONTENT,
 		A.PREVIEW,
+		A.AUTHOR=$2 AS IS_AUTHOR, -- uid parameter
 		USERS.NAME AS AUTHOR_NAME,
 		(
 			SELECT
