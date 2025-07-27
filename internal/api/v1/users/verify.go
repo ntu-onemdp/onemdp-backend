@@ -8,7 +8,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
-func VerifyAdminHanlder(c *gin.Context) {
+func VerifyAdminHandler(c *gin.Context) {
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 

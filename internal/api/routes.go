@@ -64,8 +64,8 @@ func RegisterLikeRoutes(router *gin.RouterGroup) {
 
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
-	// [AE-6] GET /api/v1/users/:uid
-	router.GET("/:uid", func(c *gin.Context) {
+	// [AE-6] GET /api/v1/users/:uid/profile
+	router.GET("/:uid/profile", func(c *gin.Context) {
 		users.GetProfileHandler(c)
 	})
 
@@ -86,7 +86,7 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 
 	// [AE-94] GET /api/v1/users/verify-admin
 	router.GET("/verify-admin", func(c *gin.Context) {
-		users.VerifyAdminHanlder(c)
+		users.VerifyAdminHandler(c)
 	})
 }
 
