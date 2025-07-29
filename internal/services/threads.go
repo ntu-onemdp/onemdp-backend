@@ -40,6 +40,9 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	post := s.postFactory.New(thread.AuthorUid, thread.ThreadID, thread.Title, content, nil, true, isAnon)
 
 	err = s.postRepo.Create(post)
+
+	Eduvisor.SendThread(post)
+
 	return thread.ThreadID, err
 }
 

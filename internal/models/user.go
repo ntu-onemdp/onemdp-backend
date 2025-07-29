@@ -86,6 +86,8 @@ func ParseRole(role string) (UserRole, error) {
 		return Staff, nil
 	case "admin":
 		return Admin, nil
+	case "bot":
+		return Bot, nil
 	default:
 		return Student, fmt.Errorf("unknown role: %s", role)
 	}
