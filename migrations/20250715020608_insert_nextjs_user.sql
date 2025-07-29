@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 INSERT INTO public.users (uid, name, email, role, semester)
-SELECT uuid_generate_v4(), 'NEXTJS_PROXY', 'NEXTJS@NEXTJS.ADMIN', 'student', 'NA'
+SELECT uuid_generate_v4(), 'NEXTJS_PROXY', 'NEXTJS@NEXTJS.ADMIN', 'bot', 'N.A.'
 WHERE NOT EXISTS (
     SELECT 1 FROM public.users WHERE name = 'NEXTJS_PROXY'
 );
