@@ -175,7 +175,14 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.TITLE,
 		A.TIME_CREATED,
 		A.LAST_ACTIVITY,
-		A.VIEWS,
+		(
+			SELECT 
+				COUNT(1) + 1
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=A.ARTICLE_ID
+		) AS VIEWS,
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
