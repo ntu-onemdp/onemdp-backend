@@ -97,7 +97,14 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
+		(
+			SELECT 
+				COUNT(1)
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=T.THREAD_ID
+		) AS VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
@@ -172,19 +179,19 @@ func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
 
 // Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
 func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Thread, error) {
-	// This function is called only when a thread is requested by its ID, so views are incremented here
+	ctx := context.Background()
+
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return nil, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	// Retrieve the thread
 	query := fmt.Sprintf(`
-	WITH
-		T AS (
-			UPDATE %s
-			SET
-				VIEWS = VIEWS + 1
-			WHERE
-				THREAD_ID = $1
-				AND IS_AVAILABLE = TRUE
-			RETURNING
-				*
-		)
 	SELECT
 		T.THREAD_ID,
 		T.TITLE,
@@ -195,7 +202,14 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
+		(
+			SELECT 
+				COUNT(1) + 1
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=T.THREAD_ID
+		) AS VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
@@ -223,7 +237,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 			END
 		)::BOOLEAN AS IS_LIKED
 	FROM
-		T
+		%s T
 		INNER JOIN USERS ON T.AUTHOR = USERS.UID
 		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
 	WHERE
@@ -235,7 +249,6 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
@@ -244,14 +257,28 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
-	row, _ := r.Db.Query(context.Background(), query, thread_id, uid)
+	row, _ := tx.Query(context.Background(), query, thread_id, uid)
 	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread by ID")
 		return nil, err
 	}
+	defer row.Close()
 
-	utils.Logger.Info().Msg(fmt.Sprintf("Thread with id %v found", thread_id))
+	// Insert view into views table
+	query = "INSERT INTO VIEWS VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+	if _, err = tx.Exec(ctx, query, uid, thread_id); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error inserting into views for thread id %s", thread_id)
+		return nil, err
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Str("thread_id", thread_id).Msgf("Error committing transaction for thread id %s", thread_id)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Thread with id %v found", thread_id))
 	return &thread, nil
 }
 
@@ -344,7 +371,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 		WHERE thread_id = $1 AND is_available = true
 		RETURNING author;`, THREADS_TABLE)
 
-	if err = tx.QueryRow(context.Background(), query, threadID).Scan(&author); err != nil {
+	if err = tx.QueryRow(ctx, query, threadID).Scan(&author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting thread")
 		return errors.New("thread is not available or does not exist")
 	} else if author == "" {
