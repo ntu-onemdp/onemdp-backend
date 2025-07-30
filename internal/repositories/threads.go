@@ -141,7 +141,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		T.THREAD_ID,
 		U.UID
 	ORDER BY
-		T.%s %s
+		%s %s
 	LIMIT $2
 	OFFSET $3;`, column, desc)
 

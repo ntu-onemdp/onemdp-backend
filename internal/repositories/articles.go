@@ -130,7 +130,7 @@ func (r *ArticleRepository) GetAll(uid string, column models.SortColumn, page in
 		A.ARTICLE_ID,
 		U.UID
 	ORDER BY
-		A.%s %s		-- Column, ASC/DESC
+		%s %s		-- Column, ASC/DESC
 	LIMIT $2		-- Size parameter
 	OFFSET $3;`, column, desc)
 

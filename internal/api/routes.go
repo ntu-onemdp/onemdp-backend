@@ -102,6 +102,10 @@ func RegisterThreadRoutes(router *gin.RouterGroup) {
 		threads.GetAllThreadsHandler(c)
 	})
 
+	router.GET("/search", func(c *gin.Context) {
+		threads.SearchThreadsHandler(c)
+	})
+
 	// [AE-20] GET /api/v1/threads/:thread_id
 	router.GET("/:thread_id", func(c *gin.Context) {
 		threads.GetOneThreadHandler(c)
