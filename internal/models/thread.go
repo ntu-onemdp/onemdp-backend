@@ -20,6 +20,7 @@ type Thread struct {
 	DbThread
 
 	Author     string `json:"author" db:"author_name"` // Name of the author
+	NumViews   int    `json:"views" db:"views"`
 	NumLikes   int    `json:"num_likes" db:"num_likes"`
 	NumReplies int    `json:"num_replies" db:"num_replies"`
 	IsLiked    bool   `json:"is_liked" db:"is_liked"`   // Whether the thread is liked by the user
@@ -33,7 +34,6 @@ type DbThread struct {
 	Title        string    `json:"title" db:"title"`
 	TimeCreated  time.Time `json:"time_created" db:"time_created"`
 	LastActivity time.Time `json:"last_activity" db:"last_activity"`
-	Views        int       `json:"views" db:"views"`
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Preview      string    `json:"preview" db:"preview"`
@@ -48,7 +48,6 @@ func (f *ThreadFactory) New(author string, title string, content string, isAnon 
 		Title:        title,
 		TimeCreated:  time.Now(),
 		LastActivity: time.Now(),
-		Views:        0,
 		Flagged:      false,
 		IsAvailable:  true,
 		Preview:      GetPreview(content),

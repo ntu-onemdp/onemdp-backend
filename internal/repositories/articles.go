@@ -90,7 +90,14 @@ func (r *ArticleRepository) GetAll(uid string, column models.SortColumn, page in
 		A.TITLE,
 		A.TIME_CREATED,
 		A.LAST_ACTIVITY,
-		A.VIEWS,
+		(
+			SELECT 
+				COUNT(1)
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=A.ARTICLE_ID
+		) AS VIEWS,
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
@@ -151,18 +158,17 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 
 	utils.Logger.Trace().Msgf("Fetching article with ID %s for user %s", articleID, uid)
 
+	// Begin transaction
+	tx, err := r.Db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return nil, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	// Retrieve the article
 	query := fmt.Sprintf(`
-	WITH
-	A AS (
-		UPDATE %s
-		SET
-			VIEWS = VIEWS + 1
-		WHERE
-			ARTICLE_ID = $1
-			AND IS_AVAILABLE = TRUE
-		RETURNING
-			*
-	)
 	SELECT
 		A.ARTICLE_ID,
 		A.AUTHOR,
@@ -193,7 +199,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 			END
 		)::BOOLEAN AS IS_LIKED
 	FROM
-		A
+		%s A
 		INNER JOIN USERS ON A.AUTHOR = USERS.UID
 		LEFT JOIN LIKES L ON A.ARTICLE_ID = L.CONTENT_ID
 	WHERE
@@ -205,7 +211,6 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.TITLE,
 		A.TIME_CREATED,
 		A.LAST_ACTIVITY,
-		A.VIEWS,
 		A.FLAGGED,
 		A.IS_AVAILABLE,
 		A.CONTENT,
@@ -215,7 +220,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 
 	utils.Logger.Trace().Msgf("Getting article with id: %s", articleID)
 
-	row, _ := r.Db.Query(ctx, query, articleID, uid)
+	row, _ := tx.Query(ctx, query, articleID, uid)
 	defer row.Close()
 	article, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.Article])
 	if err != nil {
@@ -225,6 +230,19 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 
 		utils.Logger.Error().Err(err).Msgf("Error fetching article with ID %s",
 			articleID)
+		return nil, err
+	}
+
+	// Insert view into views table
+	query = "INSERT INTO VIEWS VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+	if _, err = tx.Exec(ctx, query, uid, articleID); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error inserting into views for article id %s", articleID)
+		return nil, err
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Str("articleID", articleID).Msgf("Error committing transaction for thread id %s", articleID)
 		return nil, err
 	}
 
