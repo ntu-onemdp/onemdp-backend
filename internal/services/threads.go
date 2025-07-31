@@ -41,7 +41,9 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 
 	err = s.postRepo.Create(post)
 
-	Eduvisor.SendThread(post)
+	go func() {
+		Eduvisor.SendThread(post)
+	}()
 
 	return thread.ThreadID, err
 }
