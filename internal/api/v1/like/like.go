@@ -13,12 +13,8 @@ func LikeContentHandler(c *gin.Context) {
 	// Get user uid from JWT token
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	// Check if content id is valid
-	if !isValidContentID(c) {
-		return
-	}
-
-	contentID := c.Param("content_id")
+	// Check if content id is valid and get content ID.
+	contentID := services.GetContentID(c)
 
 	// Check if user has already liked content
 	if services.Likes.HasLiked(uid, contentID) {
@@ -52,12 +48,8 @@ func LikeContentHandler(c *gin.Context) {
 func UnlikeContentHandler(c *gin.Context) {
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
-	contentID := c.Param("content_id")
-
-	// Check content exists
-	if !isValidContentID(c) {
-		return
-	}
+	// Check content exists and get content ID
+	contentID := services.GetContentID(c)
 
 	// Check if user has liked content yet
 	if !services.Likes.HasLiked(uid, contentID) {
@@ -84,64 +76,4 @@ func UnlikeContentHandler(c *gin.Context) {
 		"success": true,
 		"message": "content unliked successfully",
 	})
-}
-
-// Helper function to check if content exists. If content does not exist, automatically return gin response.
-func isValidContentID(c *gin.Context) bool {
-	contentID := c.Param("content_id")
-	contentType := string(contentID[0]) // first char of content id is the content type
-
-	// Check content exist
-	switch contentType {
-	case "t":
-		if !services.Threads.ThreadExists(contentID) {
-			utils.Logger.Warn().Msgf("Thread of thread_id %s does not exist", contentID)
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"error":   "thread id does not exist",
-			})
-			return false
-		}
-
-	case "p":
-		if !services.Posts.PostExists(contentID) {
-			utils.Logger.Warn().Msgf("Post of post_id %s does not exist", contentID)
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"error":   "post id does not exist",
-			})
-			return false
-		}
-
-	case "a":
-		if !services.Articles.ArticleExists(contentID) {
-			utils.Logger.Warn().Msgf("Article of article_id %s does not exist", contentID)
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"error":   "article id does not exist",
-			})
-			return false
-		}
-
-	case "c":
-		if !services.Comments.CommentExists(contentID) {
-			utils.Logger.Warn().Msgf("Comment of comment_id %s does not exist", contentID)
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"error":   "comment id does not exist",
-			})
-			return false
-		}
-
-	// Invalid content type
-	default:
-		utils.Logger.Error().Msg("Invalid content type")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "invalid content id",
-		})
-		return false
-	}
-
-	return true
 }

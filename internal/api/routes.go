@@ -6,6 +6,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/favorite"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/like"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
@@ -59,6 +60,19 @@ func RegisterLikeRoutes(router *gin.RouterGroup) {
 	// [AE-91] DELETE /api/v1/like/:content_id
 	router.DELETE("/:content_id", func(c *gin.Context) {
 		like.UnlikeContentHandler(c)
+	})
+}
+
+// Favorite service routes
+func RegisterFavoriteRoutes(router *gin.RouterGroup) {
+	// [AE-96] POST /api/v1/favorite/:content_id
+	router.POST("/:content_id", func(c *gin.Context) {
+		favorite.FavoriteContentHandler(c)
+	})
+
+	// [AE-97] DELETE /api/v1/favorite/:content_id
+	router.DELETE("/:content_id", func(c *gin.Context) {
+		favorite.RemoveFavoriteHandler(c)
 	})
 }
 
