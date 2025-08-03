@@ -129,4 +129,17 @@ func (s *EduvisorService) SendThread(post *models.DbPost) {
 	}
 
 	utils.Logger.Info().Bytes("raw response body", rawBody).Interface("response", response).Msg("Response received from eduvisor")
+
+	// No valid response from eduvisor
+	if response.Response == "I don't know." {
+		return
+	}
+
+	title := "Eduvisor response"
+	if err = Posts.CreateNewPost(Eduvisor.EduvisorModel.Uid, nil, post.ThreadId, title, response.Response, false); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error inserting eduvisor's response to posts db")
+		return
+	}
+
+	utils.Logger.Info().Msg("Eduvisor's response created")
 }
