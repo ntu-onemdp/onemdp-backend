@@ -24,8 +24,9 @@ type Article struct {
 	NumViews    int    `json:"views" db:"views"`
 	NumLikes    int    `json:"num_likes" db:"num_likes"`
 	NumComments int    `json:"num_comments" db:"num_comments"`
-	IsLiked     bool   `json:"is_liked" db:"is_liked"`   // Whether the article is liked by the user
-	IsAuthor    bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
+	IsLiked     bool   `json:"is_liked" db:"is_liked"`         // Whether the article is liked by the user
+	IsAuthor    bool   `json:"is_author" db:"is_author"`       // Whether user sending request is the author
+	IsFavorited bool   `json:"is_favorited" db:"is_favorited"` // Whether user sending request has added article to favorites
 }
 
 // DbArticle models how an article is stored in the database.

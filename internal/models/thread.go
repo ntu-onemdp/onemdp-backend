@@ -19,12 +19,13 @@ func NewThreadFactory() *ThreadFactory {
 type Thread struct {
 	DbThread
 
-	Author     string `json:"author" db:"author_name"` // Name of the author
-	NumViews   int    `json:"views" db:"views"`
-	NumLikes   int    `json:"num_likes" db:"num_likes"`
-	NumReplies int    `json:"num_replies" db:"num_replies"`
-	IsLiked    bool   `json:"is_liked" db:"is_liked"`   // Whether the thread is liked by the user
-	IsAuthor   bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
+	Author      string `json:"author" db:"author_name"` // Name of the author
+	NumViews    int    `json:"views" db:"views"`
+	NumLikes    int    `json:"num_likes" db:"num_likes"`
+	NumReplies  int    `json:"num_replies" db:"num_replies"`
+	IsLiked     bool   `json:"is_liked" db:"is_liked"`         // Whether the thread is liked by the user
+	IsAuthor    bool   `json:"is_author" db:"is_author"`       // Whether user sending request is the author
+	IsFavorited bool   `json:"is_favorited" db:"is_favorited"` // Whether user sending request has added threads to favorites
 }
 
 // DbThread models how a thread is stored in the database.
