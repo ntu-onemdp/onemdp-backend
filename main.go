@@ -107,8 +107,8 @@ func main() {
 	routes.RegisterLikeRoutes(likeRoutes)
 
 	// Register favorite content routes
-	favoriteRotues := r.Group("/api/v1/favorite", middlewares.AuthGuard())
-	routes.RegisterFavoriteRoutes(favoriteRotues)
+	favoriteRotues := r.Group("/api/v1/saved", middlewares.AuthGuard())
+	routes.RegisterSavedRoutes(favoriteRotues)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
