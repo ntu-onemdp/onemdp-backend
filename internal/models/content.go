@@ -33,12 +33,12 @@ type ContentFactory interface {
 
 // Utility function to get preview from content
 func GetPreview(content string) string {
-	const MAX_PREVIEW_LENGTH = 100
+	const MAX_PREVIEW_LENGTH = 250
 
 	p := bluemonday.StrictPolicy()
 	content = p.Sanitize(content)
 
-	utils.Logger.Debug().Str("content", content).Msg("Sanitized content")
+	utils.Logger.Trace().Str("content", content).Msg("Sanitized content")
 	if len(content) <= MAX_PREVIEW_LENGTH {
 		return content
 	}
