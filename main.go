@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
@@ -17,40 +15,6 @@ import (
 	routes "github.com/ntu-onemdp/onemdp-backend/internal/api"
 	cors "github.com/rs/cors/wrapper/gin"
 )
-
-func init() {
-	utils.Logger.Trace().Msg("Loading environment variables")
-
-	// Get app env
-	env, found := os.LookupEnv("ENV")
-	if !found {
-		// Default environment: PROD
-		env = "PROD"
-	}
-	utils.Logger.Info().Str("environment", env).Msgf("App environment loaded: %s", env)
-
-	// Try reading from .env
-	switch env {
-	case "PROD":
-		if err := godotenv.Load("config/.env"); err != nil {
-			utils.Logger.Warn().Err(err).Msg("Error reading from .env")
-		}
-	case "QA":
-		if err := godotenv.Load("config/.env.qa"); err != nil {
-			utils.Logger.Warn().Err(err).Msg("Error reading from .env.qa")
-		}
-	case "DEV":
-		if err := godotenv.Load("config/.env.dev"); err != nil {
-			utils.Logger.Warn().Err(err).Msg("Error reading from .env.dev")
-		}
-	default:
-		if err := godotenv.Load("config/.env"); err != nil {
-			utils.Logger.Warn().Err(err).Msg("Error reading from .env")
-		}
-	}
-
-	utils.Logger.Info().Str("env", env).Msg("Environment variables initialized.")
-}
 
 func main() {
 	db.Init()
