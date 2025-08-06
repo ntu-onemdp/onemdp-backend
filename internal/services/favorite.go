@@ -27,6 +27,14 @@ func (s *FavoriteService) Exists(uid string, contentID string) bool {
 	return s.repo.Exists(uid, contentID)
 }
 
+func (s *FavoriteService) GetThreads(uid string) ([]models.Thread, error) {
+	return s.repo.GetThreads(uid)
+}
+
+func (s *FavoriteService) GetArticles(uid string) ([]models.Article, error) {
+	return s.repo.GetArticles(uid)
+}
+
 // Remove favorite
 func (s *FavoriteService) RemoveFavorite(uid string, contentID string) error {
 	return s.repo.Delete(uid, contentID)

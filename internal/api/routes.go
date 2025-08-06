@@ -63,14 +63,20 @@ func RegisterLikeRoutes(router *gin.RouterGroup) {
 	})
 }
 
-// Favorite service routes
-func RegisterFavoriteRoutes(router *gin.RouterGroup) {
-	// [AE-96] POST /api/v1/favorite/:content_id
+// Saved service routes
+// README: on the frontend this function is referred to 'saved'. I named it favorites intially but realized saved is more intuitive.
+func RegisterSavedRoutes(router *gin.RouterGroup) {
+	// [AE-96] POST /api/v1/saved/:content_id
 	router.POST("/:content_id", func(c *gin.Context) {
 		favorite.FavoriteContentHandler(c)
 	})
 
-	// [AE-97] DELETE /api/v1/favorite/:content_id
+	// [AE-76] GET /api/v1/saved?content-type=threads
+	router.GET("/", func(c *gin.Context) {
+		favorite.GetSavedHandler(c)
+	})
+
+	// [AE-97] DELETE /api/v1/saved/:content_id
 	router.DELETE("/:content_id", func(c *gin.Context) {
 		favorite.RemoveFavoriteHandler(c)
 	})
