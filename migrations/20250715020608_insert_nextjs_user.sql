@@ -1,15 +1,20 @@
--- +goose Up
--- +goose StatementBegin
-INSERT INTO public.users (uid, name, email, role, semester)
-SELECT uuid_generate_v4(), 'NEXTJS_PROXY', 'NEXTJS@NEXTJS.ADMIN', 'bot', 'N.A.'
-WHERE NOT EXISTS (
-    SELECT 1 FROM public.users WHERE name = 'NEXTJS_PROXY'
-);
--- +goose StatementEnd
+-- NOTE:
+-- REMOVED, use API key to access backend instead.
+-- This migration will be removed in the future.
+-- 
+-- 
+-- -- +goose Up
+-- -- +goose StatementBegin
+-- INSERT INTO public.users (uid, name, email, role, semester)
+-- SELECT uuid_generate_v4(), 'NEXTJS_PROXY', 'NEXTJS@NEXTJS.ADMIN', 'bot', 'N.A.'
+-- WHERE NOT EXISTS (
+--     SELECT 1 FROM public.users WHERE name = 'NEXTJS_PROXY'
+-- );
+-- -- +goose StatementEnd
 
--- +goose Down
--- +goose StatementBegin
-DELETE FROM public.users
-WHERE name = 'NEXTJS_PROXY'
-  AND email = 'NEXTJS@NEXTJS.ADMIN';
--- +goose StatementEnd
+-- -- +goose Down
+-- -- +goose StatementBegin
+-- DELETE FROM public.users
+-- WHERE name = 'NEXTJS_PROXY'
+--   AND email = 'NEXTJS@NEXTJS.ADMIN';
+-- -- +goose StatementEnd
