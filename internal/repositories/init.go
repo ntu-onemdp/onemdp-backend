@@ -7,7 +7,7 @@ func Init(db *pgxpool.Pool) {
 	Likes = &LikesRepository{Db: db}
 	Favorites = &FavoritesRepository{Db: db}
 	Posts = &PostsRepository{Db: db}
-	Threads = &ThreadsRepository{Db: db}
+	Threads = &ThreadsRepository{db: db}
 	Users = &UsersRepository{Db: db}
 	Images = &ImagesRepository{Db: db}
 	Articles = &ArticleRepository{Db: db}

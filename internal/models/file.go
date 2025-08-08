@@ -40,7 +40,7 @@ func (f *FileFactory) New(author string, filename string, filegroup *string) *Db
 		FileId:      "f" + gonanoid.Must(constants.CONTENT_ID_LENGTH),
 		AuthorUid:   author,
 		Filename:    filename,
-		GCSFilename: time.Now().Format("060102150405") + filename,
+		GCSFilename: time.Now().Format("060102150405") + "_" + filename,
 		Status:      "available",
 		TimeCreated: time.Now(),
 		FileGroup:   filegroup,

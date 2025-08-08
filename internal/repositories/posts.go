@@ -104,9 +104,9 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 			P.FLAGGED,
 			P.IS_AVAILABLE,
 			P.IS_HEADER,
-			-- Conditionally return author name or '#ANONYMOUS#'
+			-- Conditionally return author name or 'ANONYMOUS'
 			CASE 
-				WHEN P.IS_ANON THEN '#ANONYMOUS#'
+				WHEN P.IS_ANON THEN 'ANONYMOUS'
 				ELSE U.NAME
 			END AS AUTHOR_NAME,
 			P.IS_ANON,

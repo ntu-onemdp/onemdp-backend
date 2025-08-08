@@ -56,7 +56,7 @@ func CreateUsersHandler(c *gin.Context) {
 		}
 
 		// Call service to create new user
-		if err := services.Users.CreateNewUser(strings.ToUpper(newUser.Email), models.STUDENT_ROLE, createNewUsersRequest.Semester); err != nil {
+		if err := services.Users.CreateNewUser(strings.ToUpper(newUser.Email), models.Student.String(), createNewUsersRequest.Semester); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error encountered when inserting new user")
 			singleUserResult.Result = "failed"
 		} else {

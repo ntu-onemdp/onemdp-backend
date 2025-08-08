@@ -16,7 +16,7 @@ const THREADS_TABLE = "threads"
 
 type ThreadsRepository struct {
 	_  ContentRepository
-	Db *pgxpool.Pool
+	db *pgxpool.Pool
 }
 
 var Threads *ThreadsRepository
@@ -27,7 +27,7 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 	ctx := context.Background()
 
 	// Begin transaction
-	tx, err := r.Db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error starting transaction")
 		return err
@@ -108,9 +108,9 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		-- Conditionally return author name or '#ANONYMOUS#'
+		-- Conditionally return author name or 'ANONYMOUS'
 		CASE 
-			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			WHEN T.IS_ANON THEN 'ANONYMOUS'
 			ELSE U.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
@@ -155,7 +155,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
 
 	// Perform query and collect rows into array.
-	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
+	rows, _ := r.db.Query(context.Background(), query, uid, size, offset)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
@@ -171,7 +171,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
 	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
 
-	row, _ := r.Db.Query(context.Background(), query)
+	row, _ := r.db.Query(context.Background(), query)
 	defer row.Close()
 	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
@@ -189,7 +189,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 	ctx := context.Background()
 
 	// Begin transaction
-	tx, err := r.Db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error starting transaction")
 		return nil, err
@@ -220,9 +220,9 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		-- Conditionally return author name or '#ANONYMOUS#'
+		-- Conditionally return author name or 'ANONYMOUS'
 		CASE 
-			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			WHEN T.IS_ANON THEN 'ANONYMOUS'
 			ELSE USERS.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
@@ -303,7 +303,7 @@ func (r *ThreadsRepository) GetAuthor(thread_id string) (string, error) {
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting author of thread with id: %v", thread_id))
 
 	var author string
-	err := r.Db.QueryRow(context.Background(), query, thread_id).Scan(&author)
+	err := r.db.QueryRow(context.Background(), query, thread_id).Scan(&author)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return "", err
@@ -318,7 +318,7 @@ func (r *ThreadsRepository) IsAvailable(thread_id string) bool {
 	query := fmt.Sprintf(`SELECT is_available FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
 
 	var is_available bool
-	err := r.Db.QueryRow(context.Background(), query, thread_id).Scan(&is_available)
+	err := r.db.QueryRow(context.Background(), query, thread_id).Scan(&is_available)
 	if err != nil {
 		return false
 	}
@@ -333,7 +333,7 @@ func (r *ThreadsRepository) UpdateActivity(thread_id string) error {
 	SET last_activity = NOW()
 	WHERE thread_id = $1;`, THREADS_TABLE)
 
-	_, err := r.Db.Exec(context.Background(), query, thread_id)
+	_, err := r.db.Exec(context.Background(), query, thread_id)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating last activity")
 		return err
@@ -351,7 +351,7 @@ func (r *ThreadsRepository) Update(threadID string, title string, preview string
 	SET title = $1, preview = $2, last_activity = NOW()
 	WHERE thread_id = $3 AND is_available = true;`, THREADS_TABLE)
 
-	_, err := r.Db.Exec(context.Background(), query, title, preview, threadID)
+	_, err := r.db.Exec(context.Background(), query, title, preview, threadID)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating preview")
 		return err
@@ -371,7 +371,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 	ctx := context.Background()
 
 	// Begin transaction
-	tx, err := r.Db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error starting transaction")
 		return err

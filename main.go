@@ -72,10 +72,12 @@ func main() {
 	routes.RegisterLikeRoutes(likeRoutes)
 
 	// Register favorite content routes
-	favoriteRotues := r.Group("/api/v1/saved", middlewares.AuthGuard(models.Student))
-	routes.RegisterSavedRoutes(favoriteRotues)
+	favoriteRoutes := r.Group("/api/v1/saved", middlewares.AuthGuard(models.Student))
+	routes.RegisterSavedRoutes(favoriteRoutes)
 
-	// Register staff routes
+	// Register staff file routes
+	staffFileRoutes := r.Group("/api/v1/files", middlewares.AuthGuard(models.Staff))
+	routes.RegisterFileMgmtRoutes(staffFileRoutes)
 
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AuthGuard(models.Admin))
