@@ -12,4 +12,5 @@ func Init(db *pgxpool.Pool) {
 	Images = &ImagesRepository{Db: db}
 	Articles = &ArticleRepository{Db: db}
 	Comments = &CommentsRepository{Db: db}
+	Files = &FilesRepository{db: db}
 }
