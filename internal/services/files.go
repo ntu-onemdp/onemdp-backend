@@ -20,8 +20,8 @@ func NewFileService(fileRepo *repositories.FilesRepository) *FileService {
 
 var Files *FileService
 
-func (s *FileService) Create(author string, filename string, filegroup *string) error {
+func (s *FileService) Create(author string, filename string, filegroup *string) (*models.DbFile, error) {
 	dbFile := s.fileFactory.New(author, filename, filegroup)
 
-	return s.fileRepo.Insert(*dbFile)
+	return dbFile, s.fileRepo.Insert(*dbFile)
 }

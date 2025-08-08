@@ -23,11 +23,22 @@ func UploadFileHandler(c *gin.Context) {
 	filegroup := c.PostForm("filegroup")
 
 	// Save file metadata to database
-	if err := services.Files.Create(author, file.Filename, &filegroup); err != nil {
+	dbFile, err := services.Files.Create(author, file.Filename, &filegroup)
+	if err != nil {
 		utils.Logger.Error().Err(err).Str("filename", file.Filename).Msg("Failed to save file to database")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Error encountered when saving file metadata to database",
+			"error":   err,
+		})
+		return
+	}
+
+	if err := services.GCSFileServiceInstance.Upload(file, dbFile.GCSFilename); err != nil {
+		utils.Logger.Error().Err(err).Msg("Error uploading file to GCS")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Error encountered when uploading file to GCS",
 			"error":   err,
 		})
 		return
