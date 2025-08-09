@@ -5,6 +5,9 @@ WORKDIR /app
 ENV PORT=8080
 ENV GOCACHE=/root/.cache/go-build
 
+# Copy GCS secret (do not use this for QA and PROD)
+COPY ./secrets ./secrets
+
 # Copy config files
 COPY ./config ./config
 

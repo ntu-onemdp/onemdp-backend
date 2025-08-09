@@ -7,6 +7,7 @@ import (
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
+	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -43,39 +44,43 @@ func main() {
 	routes.RegisterLoginRoute(r)
 
 	// Register student routes
-	studentRoutes := r.Group("/api/v1/users", middlewares.AuthGuard())
+	studentRoutes := r.Group("/api/v1/users", middlewares.AuthGuard(models.Student))
 	routes.RegisterStudentUserRoutes(studentRoutes)
 
 	// Register thread routes
-	threadRoutes := r.Group("/api/v1/threads", middlewares.AuthGuard())
+	threadRoutes := r.Group("/api/v1/threads", middlewares.AuthGuard(models.Student))
 	routes.RegisterThreadRoutes(threadRoutes)
 
 	// Register post routes
-	postRoutes := r.Group("/api/v1/posts", middlewares.AuthGuard())
+	postRoutes := r.Group("/api/v1/posts", middlewares.AuthGuard(models.Student))
 	routes.RegisterPostRoutes(postRoutes)
 
 	// Register article routes
-	articleRoutes := r.Group("/api/v1/articles", middlewares.AuthGuard())
+	articleRoutes := r.Group("/api/v1/articles", middlewares.AuthGuard(models.Student))
 	routes.RegisterArticleRoutes(articleRoutes)
 
 	// Register comment routes
-	commentRoutes := r.Group("/api/v1/comments", middlewares.AuthGuard())
+	commentRoutes := r.Group("/api/v1/comments", middlewares.AuthGuard(models.Student))
 	routes.RegisterCommentRoutes(commentRoutes)
 
 	// Register image routes
-	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard())
+	imageRoutes := r.Group("/api/v1/images", middlewares.AuthGuard(models.Student))
 	routes.RegisterImageRoutes(imageRoutes)
 
 	// Register like content routes
-	likeRoutes := r.Group("/api/v1/like", middlewares.AuthGuard())
+	likeRoutes := r.Group("/api/v1/like", middlewares.AuthGuard(models.Student))
 	routes.RegisterLikeRoutes(likeRoutes)
 
 	// Register favorite content routes
-	favoriteRotues := r.Group("/api/v1/saved", middlewares.AuthGuard())
-	routes.RegisterSavedRoutes(favoriteRotues)
+	favoriteRoutes := r.Group("/api/v1/saved", middlewares.AuthGuard(models.Student))
+	routes.RegisterSavedRoutes(favoriteRoutes)
+
+	// Register staff file routes
+	staffFileRoutes := r.Group("/api/v1/files", middlewares.AuthGuard(models.Staff))
+	routes.RegisterFileMgmtRoutes(staffFileRoutes)
 
 	// Register admin routes
-	adminRoutes := r.Group("/api/v1/admin", middlewares.AdminGuard())
+	adminRoutes := r.Group("/api/v1/admin", middlewares.AuthGuard(models.Admin))
 	routes.RegisterAdminUserRoutes(adminRoutes)
 
 	utils.Logger.Warn().Msg("/ping routes are active. Remove them for production")

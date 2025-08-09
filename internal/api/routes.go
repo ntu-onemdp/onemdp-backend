@@ -7,6 +7,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/favorite"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/files"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/like"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
@@ -193,6 +194,21 @@ func RegisterCommentRoutes(router *gin.RouterGroup) {
 	// [AE-53] DELETE /api/v1/comments/:comment_id
 	router.DELETE("/:comment_id", func(c *gin.Context) {
 		comments.DeleteCommentHandler(c)
+	})
+}
+
+/*
+################################
+||                            ||
+||        STAFF ROUTES        ||
+||                            ||
+################################
+*/
+// Staff routes for file management
+func RegisterFileMgmtRoutes(router *gin.RouterGroup) {
+	// [AE-98] POST /api/v1/files
+	router.POST("/", func(c *gin.Context) {
+		files.UploadFileHandler(c)
 	})
 }
 

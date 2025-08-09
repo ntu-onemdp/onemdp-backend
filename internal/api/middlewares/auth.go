@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	utils "github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -22,8 +23,10 @@ func init() {
 	API_KEY = &key
 }
 
-// Verification middleware for non-public routes. Reject if invalid auth token
-func AuthGuard() gin.HandlerFunc {
+// Verification middleware for non-public routes. Reject if invalid auth token.
+// User role is the mininmum level of authorization.
+// If the user role is student, it does not perform any database query.
+func AuthGuard(role models.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		utils.Logger.Trace().Msg("AuthGuard triggered")
 
@@ -61,6 +64,38 @@ func AuthGuard() gin.HandlerFunc {
 		}
 
 		utils.Logger.Trace().Msgf("Claim verified for %s", claim.Uid)
+
+		// Pass request if min role is student
+		if role <= models.Student {
+			c.Next()
+			return
+		}
+
+		utils.Logger.Trace().Str("min role", role.String()).Msg("AdminGuard triggered")
+
+		userRole, err := services.Users.GetRole(claim.Uid)
+		if err != nil {
+			utils.Logger.Error().Err(err).Msg("Error fetching user role")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+			c.Abort()
+			return
+		}
+
+		utils.Logger.Trace().Str("user role", userRole.String()).Msg("User's role fetched from database")
+
+		// Insufficient permission
+		if userRole < role {
+			utils.Logger.Warn().Str("uid", claim.Uid).Str("user role", userRole.String()).Str("min role", role.String()).Msg("Request rejected, user does not have sufficient permissions")
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "You do not have permissions to access this resource",
+			})
+			c.Abort()
+			return
+		}
+
+		utils.Logger.Trace().Msgf("AdminGuard approved for user %s", claim.Uid)
 		c.Next()
 	}
 }

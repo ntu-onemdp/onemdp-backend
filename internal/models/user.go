@@ -92,3 +92,18 @@ func ParseRole(role string) (UserRole, error) {
 		return Student, fmt.Errorf("unknown role: %s", role)
 	}
 }
+
+func (r UserRole) String() string {
+	switch r {
+	case Student:
+		return "Student"
+	case Bot:
+		return "Bot"
+	case Staff:
+		return "Staff"
+	case Admin:
+		return "Admin"
+	default:
+		return "Unknown"
+	}
+}

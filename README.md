@@ -76,5 +76,5 @@ docker rm -f onemdp-dev-1 || true && DOCKER_BUILDKIT=1 docker build -f Dockerfil
 OR
 
 ```sh
-sh docker.sh
+sh run.sh
 ```
