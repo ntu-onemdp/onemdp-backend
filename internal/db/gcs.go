@@ -16,6 +16,7 @@ func init() {
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error connecting to Google Cloud Storage.")
 	}
+	defer client.Close()
 
 	name, found := os.LookupEnv("GCS_BUCKET_NAME")
 	if !found {

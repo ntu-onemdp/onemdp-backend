@@ -64,3 +64,28 @@ func (s *GCSFileService) Upload(file *multipart.FileHeader, filename string) err
 	utils.Logger.Info().Str("gcs filename", filename).Msg("File successfully uploaded to GCS")
 	return nil
 }
+
+// Retrieve file from GCS
+// Provide actual filename as specified on GCS
+// This function returns a reader, a string containing the content type (should be application/pdf), and nil on success.
+func (s *GCSFileService) Retrieve(filename string) (*storage.Reader, string, error) {
+	ctx := context.Background()
+
+	handler := s.bucket.Object(s.dir + filename)
+	utils.Logger.Trace().Msgf("Handler to file %s created", filename)
+
+	reader, err := handler.NewReader(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error creating reader")
+		return nil, "", err
+	}
+	defer reader.Close()
+
+	attr, err := handler.Attrs(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error reading attributes")
+		return nil, "", err
+	}
+
+	return reader, attr.ContentType, nil
+}
