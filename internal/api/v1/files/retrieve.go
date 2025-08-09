@@ -53,3 +53,26 @@ func GetFileHandler(c *gin.Context) {
 	// Stream the file (helpful for large files)
 	io.Copy(c.Writer, reader)
 }
+
+// Retrieve a list of all files and their grouping.
+func GetFileListHandler(c *gin.Context) {
+	utils.Logger.Info().Msg("Get file list request received")
+
+	list, err := services.Files.GetFileList()
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting file list")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Error getting file list from server",
+			"error":   err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "File list successfully retrieved from server",
+		"error":   nil,
+		"data":    list,
+	})
+}

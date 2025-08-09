@@ -16,7 +16,11 @@ func NewFileFactory() *FileFactory {
 
 // FileMetadata models information that is returned to the frontend.
 type FileMetadata struct {
-	DbFile
+	FileId      string    `json:"file_id" db:"file_id"`
+	AuthorUid   string    `json:"author_uid" db:"author"` // UID of author
+	Filename    string    `json:"filename" db:"filename"`
+	TimeCreated time.Time `json:"time_created" db:"time_created"`
+	FileGroup   *string   `json:"file_group" db:"file_group"` // Arbitary user defined group. (e.g. Week 1, Week 2, etc.)
 
 	Author string `json:"author" db:"author_name"` // Name of the author after performing join with users table
 }

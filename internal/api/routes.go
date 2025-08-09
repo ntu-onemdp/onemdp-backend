@@ -203,6 +203,11 @@ func RegisterFileRoutes(router *gin.RouterGroup) {
 	router.GET("/:file_id", func(c *gin.Context) {
 		files.GetFileHandler(c)
 	})
+
+	// [AE-99] GET /api/v1/files
+	router.GET("/", func(c *gin.Context) {
+		files.GetFileListHandler(c)
+	})
 }
 
 /*

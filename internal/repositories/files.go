@@ -77,6 +77,28 @@ func (r *FilesRepository) GetFilename(id string) (*models.DbFile, error) {
 	return &models.DbFile{Filename: *filename, GCSFilename: *GCSFilename}, nil
 }
 
+// Get list of files available
+func (r *FilesRepository) GetFileList() ([]models.FileMetadata, error) {
+	query := fmt.Sprintf(`
+	SELECT 
+		F.FILE_ID, F.AUTHOR, F.FILENAME, F.TIME_CREATED, F.FILE_GROUP, U.NAME AS AUTHOR_NAME
+	FROM 
+		%s F-- Files table
+		INNER JOIN %s U ON F.AUTHOR=U.UID -- Users table
+	WHERE 
+		F.STATUS='available';`, FILES_TABLE, USERS_TABLE)
+
+	rows, _ := r.db.Query(context.Background(), query)
+	files, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.FileMetadata])
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error collecting rows into struct")
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msgf("%d files retrieved from postgres", len(files))
+	return files, nil
+}
+
 // Revert change if upload to GCS bucket is unsuccessful
 // Params: fileID of file to remove from database
 func (r *FilesRepository) Revert(id string) error {

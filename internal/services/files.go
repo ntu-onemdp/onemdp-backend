@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
+	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 type FileService struct {
@@ -30,6 +31,23 @@ func (s *FileService) Create(author string, filename string, filegroup *string) 
 // Note that other fields are not retrieved. Accessing them will net default values.
 func (s *FileService) GetFilename(id string) (*models.DbFile, error) {
 	return s.fileRepo.GetFilename(id)
+}
+
+// Get list of files available and group them
+func (s *FileService) GetFileList() (map[string][]models.FileMetadata, error) {
+	filelist, err := s.fileRepo.GetFileList()
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error retrieving list from database")
+		return nil, err
+	}
+
+	// Group it by file group
+	list := make(map[string][]models.FileMetadata, len(filelist))
+	for _, f := range filelist {
+		list[*f.FileGroup] = append(list[*f.FileGroup], f)
+	}
+
+	return list, nil
 }
 
 // Revert change if upload to GCS bucket is unsuccessful
