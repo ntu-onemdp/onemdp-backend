@@ -36,6 +36,10 @@ func UploadFileHandler(c *gin.Context) {
 
 	if err := services.GCSFileServiceInstance.Upload(file, dbFile.GCSFilename); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error uploading file to GCS")
+
+		// Revert change in db
+		services.Files.Revert(dbFile.FileId)
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Error encountered when uploading file to GCS",

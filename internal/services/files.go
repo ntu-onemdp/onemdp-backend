@@ -25,3 +25,8 @@ func (s *FileService) Create(author string, filename string, filegroup *string) 
 
 	return dbFile, s.fileRepo.Insert(*dbFile)
 }
+
+// Revert change if upload to GCS bucket is unsuccessful
+func (s *FileService) Revert(id string) error {
+	return s.fileRepo.Revert(id)
+}
