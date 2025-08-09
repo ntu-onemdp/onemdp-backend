@@ -34,6 +34,7 @@ func UploadFileHandler(c *gin.Context) {
 		return
 	}
 
+	// Upload file to GCS
 	if err := services.GCSFileServiceInstance.Upload(file, dbFile.GCSFilename); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error uploading file to GCS")
 
@@ -48,5 +49,15 @@ func UploadFileHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "File uploaded successfully"})
+	// Asynchronously upload file to Eduvisor
+	go func() {
+		if err := services.Eduvisor.Upload(file); err != nil {
+			utils.Logger.Warn().Msg("Error uploading file to Eduvisor")
+		}
+	}()
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": "File uploaded successfully",
+	})
 }
