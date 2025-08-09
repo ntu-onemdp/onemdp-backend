@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -53,6 +54,25 @@ func (r *FilesRepository) Insert(file models.DbFile) error {
 
 	utils.Logger.Info().Interface("file", file).Msg("Successfully inserted file into database")
 	return nil
+}
+
+// Get GCS filename from id
+func (r *FilesRepository) GetGCSFilename(id string) (string, error) {
+	query := fmt.Sprintf(`SELECT GCS_FILENAME FROM %s WHERE FILE_ID=$1 AND STATUS='available';`, FILES_TABLE)
+
+	var filename *string
+	if err := r.db.QueryRow(context.Background(), query, id).Scan(&filename); err != nil {
+		if err == pgx.ErrNoRows {
+			utils.Logger.Error().Err(err).Str("file id", id).Msgf("File with %s does not exist", id)
+			return "", err
+		}
+
+		utils.Logger.Error().Err(err).Str("file id", id).Msgf("Error fetching GCS filename for id %s", id)
+		return "", err
+	}
+
+	utils.Logger.Debug().Str("file id", id).Str("GCS filename", *filename).Msgf("GCS filename for file %s found", id)
+	return *filename, nil
 }
 
 // Revert change if upload to GCS bucket is unsuccessful

@@ -64,3 +64,5 @@ func (s *GCSFileService) Upload(file *multipart.FileHeader, filename string) err
 	utils.Logger.Info().Str("gcs filename", filename).Msg("File successfully uploaded to GCS")
 	return nil
 }
+
+// Retrieve file from GCS

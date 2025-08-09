@@ -75,8 +75,12 @@ func main() {
 	favoriteRoutes := r.Group("/api/v1/saved", middlewares.AuthGuard(models.Student))
 	routes.RegisterSavedRoutes(favoriteRoutes)
 
+	// Register student file routes
+	fileRoutes := r.Group("/api/v1/files", middlewares.AuthGuard(models.Student))
+	routes.RegisterFileRoutes(fileRoutes)
+
 	// Register staff file routes
-	staffFileRoutes := r.Group("/api/v1/files", middlewares.AuthGuard(models.Staff))
+	staffFileRoutes := r.Group("/api/v1/staff/files", middlewares.AuthGuard(models.Staff))
 	routes.RegisterFileMgmtRoutes(staffFileRoutes)
 
 	// Register admin routes

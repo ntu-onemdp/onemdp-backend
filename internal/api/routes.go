@@ -197,6 +197,14 @@ func RegisterCommentRoutes(router *gin.RouterGroup) {
 	})
 }
 
+// Routes starting with /files
+func RegisterFileRoutes(router *gin.RouterGroup) {
+	// [AE-100] GET /api/v1/files/:file_id
+	router.GET("/:file_id", func(c *gin.Context) {
+		files.GetFileHandler(c)
+	})
+}
+
 /*
 ################################
 ||                            ||
@@ -206,12 +214,12 @@ func RegisterCommentRoutes(router *gin.RouterGroup) {
 */
 // Staff routes for file management
 func RegisterFileMgmtRoutes(router *gin.RouterGroup) {
-	// [AE-98] POST /api/v1/files
+	// [AE-98] POST /api/v1/staff/files
 	router.POST("/", func(c *gin.Context) {
 		files.UploadFileHandler(c)
 	})
 
-	// [AE-101] DELETE /api/v1/files/:file_id
+	// [AE-101] DELETE /api/v1/staff/files/:file_id
 	router.DELETE("/:file_id", func(c *gin.Context) {
 		files.DeleteFileHandler(c)
 	})
