@@ -49,7 +49,7 @@ func Init() {
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error creating connection pool")
 	}
-	utils.Logger.Debug().Msg("Postgres connection pool created")
+	utils.Logger.Info().Msg("Postgres connection pool created")
 
 	// Initialize Goose and perform migrations
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -62,14 +62,15 @@ func Init() {
 	if err := goose.Up(db, "migrations"); err != nil {
 		utils.Logger.Panic().Err(err)
 	}
-	utils.Logger.Debug().Msg("Goose migrations applied")
+	utils.Logger.Info().Msg("Goose migrations applied")
 
 	// Check migration status
 	if err := goose.Status(db, "migrations"); err != nil {
-		utils.Logger.Panic().Err(err).Msg("Error checking migration status")
+		utils.Logger.Warn().Err(err).Msg("Error checking migration status")
 	}
+
 	if err := db.Close(); err != nil {
-		utils.Logger.Panic().Err(err)
+		utils.Logger.Error().Err(err)
 	}
 
 	utils.Logger.Info().Msg("Postgres database fully initialized.")
