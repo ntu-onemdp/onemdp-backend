@@ -2,6 +2,7 @@ package files
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,8 +16,8 @@ func GetFileHandler(c *gin.Context) {
 
 	utils.Logger.Info().Str("file id", id).Msg("Get file request received.")
 
-	// Get GCS filename
-	filename, err := services.Files.GetGCSFilename(id)
+	// Get file metadata
+	metadata, err := services.Files.GetFilename(id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -34,7 +35,7 @@ func GetFileHandler(c *gin.Context) {
 	}
 
 	// Retrieve file from GCS
-	file, err := services.GCSFileServiceInstance.Retrieve(filename)
+	reader, contentType, err := services.GCSFileServiceInstance.Retrieve(metadata.GCSFilename)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msgf("Error retrieving %s from GCS", id)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -45,6 +46,10 @@ func GetFileHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
-	c.Data(http.StatusOK, "application/pdf", file)
+	c.Header("Content-Disposition", "attachment; filename=\""+metadata.Filename+"\"")
+	c.Status(http.StatusOK)
+	c.Header("Content-Type", contentType)
+
+	// Stream the file (helpful for large files)
+	io.Copy(c.Writer, reader)
 }

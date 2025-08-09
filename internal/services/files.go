@@ -26,9 +26,10 @@ func (s *FileService) Create(author string, filename string, filegroup *string) 
 	return dbFile, s.fileRepo.Insert(*dbFile)
 }
 
-// Retrieve GCS filename from DB
-func (s *FileService) GetGCSFilename(id string) (string, error) {
-	return s.fileRepo.GetGCSFilename(id)
+// Retrieve GCS filename and original filename from DB
+// Note that other fields are not retrieved. Accessing them will net default values.
+func (s *FileService) GetFilename(id string) (*models.DbFile, error) {
+	return s.fileRepo.GetFilename(id)
 }
 
 // Revert change if upload to GCS bucket is unsuccessful
