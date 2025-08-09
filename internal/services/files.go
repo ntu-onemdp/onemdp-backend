@@ -30,3 +30,8 @@ func (s *FileService) Create(author string, filename string, filegroup *string) 
 func (s *FileService) Revert(id string) error {
 	return s.fileRepo.Revert(id)
 }
+
+// Delete file from postgres
+func (s *FileService) Remove(id string, uid string) error {
+	return s.fileRepo.Delete(id, uid)
+}

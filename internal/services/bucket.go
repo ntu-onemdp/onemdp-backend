@@ -35,6 +35,7 @@ func init() {
 	GCSFileServiceInstance = NewGCSFileService()
 }
 
+// Upload file to pdfstore in GCS
 func (s *GCSFileService) Upload(file *multipart.FileHeader, filename string) error {
 	handler := s.bucket.Object(s.dir + filename)
 	utils.Logger.Trace().Msg("handle to bucket object created")

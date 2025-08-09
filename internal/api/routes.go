@@ -210,6 +210,11 @@ func RegisterFileMgmtRoutes(router *gin.RouterGroup) {
 	router.POST("/", func(c *gin.Context) {
 		files.UploadFileHandler(c)
 	})
+
+	// [AE-101] DELETE /api/v1/files/:file_id
+	router.DELETE("/:file_id", func(c *gin.Context) {
+		files.DeleteFileHandler(c)
+	})
 }
 
 /*
