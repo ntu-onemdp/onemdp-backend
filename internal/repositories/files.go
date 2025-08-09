@@ -30,7 +30,7 @@ func (r *FilesRepository) Insert(file models.DbFile) error {
 	defer tx.Rollback(ctx)
 
 	// Replace old files.
-	query := fmt.Sprintf(`UPDATE %s SET STATUS='available', TIME_DELETED=NOW(), DELETED_BY=$1 WHERE FILENAME=$2 AND FILE_GROUP=$3;`, FILES_TABLE)
+	query := fmt.Sprintf(`UPDATE %s SET STATUS='deleted', TIME_DELETED=NOW(), DELETED_BY=$1 WHERE FILENAME=$2 AND FILE_GROUP=$3;`, FILES_TABLE)
 	if _, err := tx.Exec(ctx, query, file.AuthorUid, file.Filename, file.FileGroup); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating metadata for old files")
 		return err
@@ -66,5 +66,21 @@ func (r *FilesRepository) Revert(id string) error {
 	}
 
 	utils.Logger.Info().Str("File ID", id).Msgf("File ID %s removed from databse", id)
+	return nil
+}
+
+// Perform soft delete of file in database
+func (r *FilesRepository) Delete(id string, uid string) error {
+	query := fmt.Sprintf(`
+	UPDATE %s 
+	SET STATUS='deleted', DELETED_BY=$1, TIME_DELETED=NOW()
+	WHERE FILE_ID=$2;`, FILES_TABLE)
+
+	if _, err := r.db.Exec(context.Background(), query, uid, id); err != nil {
+		utils.Logger.Error().Err(err).Str("uid", uid).Str("file id", id).Msg("Error deleting file from database")
+		return err
+	}
+
+	utils.Logger.Info().Str("uid", uid).Str("file id", id).Msg("File metadata successfully removed from database")
 	return nil
 }
