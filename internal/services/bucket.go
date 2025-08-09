@@ -66,3 +66,24 @@ func (s *GCSFileService) Upload(file *multipart.FileHeader, filename string) err
 }
 
 // Retrieve file from GCS
+// Provide actual filename as specified on GCS
+func (s *GCSFileService) Retrieve(filename string) ([]byte, error) {
+	handler := s.bucket.Object(s.dir + filename)
+	utils.Logger.Trace().Msgf("Handler to file %s created", filename)
+
+	reader, err := handler.NewReader(context.Background())
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error creating reader")
+		return nil, err
+	}
+	defer reader.Close()
+
+	// Read contents into memory
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error reading contents into memory")
+		return nil, err
+	}
+
+	return data, nil
+}

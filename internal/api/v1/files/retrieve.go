@@ -33,8 +33,18 @@ func GetFileHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"filename": filename,
-	})
+	// Retrieve file from GCS
+	file, err := services.GCSFileServiceInstance.Retrieve(filename)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error retrieving %s from GCS", id)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Error retrieving file from Google Cloud Storage bucket",
+			"error":   err,
+		})
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
+	c.Data(http.StatusOK, "application/pdf", file)
 }
