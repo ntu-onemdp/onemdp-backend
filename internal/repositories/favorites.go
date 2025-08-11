@@ -73,9 +73,9 @@ func (r *FavoritesRepository) GetThreads(uid string) ([]models.Thread, error) {
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		-- Conditionally return author name or '#ANONYMOUS#'
+		-- Conditionally return author name or 'ANONYMOUS'
 		CASE 
-			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			WHEN T.IS_ANON THEN 'ANONYMOUS'
 			ELSE U.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
