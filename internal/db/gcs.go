@@ -12,7 +12,15 @@ import (
 var Bucket *storage.BucketHandle
 
 func init() {
-	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile("secrets/service-account-key.json"))
+	env := os.Getenv("ENV")
+	var path string
+	if env == "DEV" {
+		path = "secrets/service-account-key.json"
+	} else {
+		path = "mnt/secrets/service-account-key.json"
+	}
+
+	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(path))
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error connecting to Google Cloud Storage.")
 	}
