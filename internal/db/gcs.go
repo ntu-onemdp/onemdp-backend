@@ -17,7 +17,7 @@ func init() {
 	if env == "DEV" {
 		path = "secrets/service-account-key.json"
 	} else {
-		path = "mnt/secrets/service-account-key"
+		path = "/mnt/secrets/service-account-key"
 	}
 
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(path))
