@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
@@ -18,6 +19,22 @@ import (
 )
 
 func main() {
+	// Path where your secrets are mounted (update if your mount path differs)
+	dir := "mnt/secrets"
+
+	// List all files in the directory
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		utils.Logger.Info().Msg("Error reading secrets directory:" + err.Error())
+		return
+	}
+
+	utils.Logger.Info().Msg("Secrets found in " + dir + ":")
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			utils.Logger.Info().Msg(entry.Name())
+		}
+	}
 	db.Init()
 	defer db.Close()
 
