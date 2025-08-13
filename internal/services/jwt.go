@@ -32,7 +32,7 @@ func InitJwt() {
 	var path string
 	switch env {
 	case "PROD", "QA":
-		path = "mnt/secrets/jwt-key"
+		path = "secrets/jwt-key"
 	case "DEV":
 		path = "config/jwt-key.txt"
 	default:
