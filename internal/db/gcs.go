@@ -15,7 +15,7 @@ func init() {
 	env := os.Getenv("ENV")
 	var path string
 	if env == "DEV" {
-		path = "secrets/service-account-key.json"
+		path = "secrets/service-account-key"
 	} else {
 		path = "mnt/secrets/service-account-key"
 	}
