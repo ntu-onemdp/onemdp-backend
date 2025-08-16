@@ -9,6 +9,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
+	"github.com/ntu-onemdp/onemdp-backend/internal/semester"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 
@@ -36,12 +37,14 @@ func main() {
 
 	// Initialize services
 	services.Init()
+	semester.Init(db.Pool)
 
 	// Initialize eduvisor service
 	services.Eduvisor = services.NewEduvisorService()
 
-	// Register public routes
-	routes.RegisterLoginRoute(r)
+	// Register auth routes
+	authRoutes := r.Group("/api/v1/auth")
+	routes.RegisterAuthRoutes(authRoutes)
 
 	// Register student routes
 	studentRoutes := r.Group("/api/v1/users", middlewares.AuthGuard(models.Student))

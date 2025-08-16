@@ -22,10 +22,15 @@ import (
 ||                            ||
 ################################
 */
-// Register unprotected login route
-func RegisterLoginRoute(router *gin.Engine) {
-	router.POST("/api/v1/auth/login", func(c *gin.Context) {
+func RegisterAuthRoutes(router *gin.RouterGroup) {
+	// [AE-3] POST /api/v1/auth/login
+	router.POST("/login", func(c *gin.Context) {
 		auth.LoginHandler(c)
+	})
+
+	// [AE-104] POST /api/v1/auth/register
+	router.POST("/register", func(c *gin.Context) {
+		auth.RegisterUserHandler(c)
 	})
 }
 

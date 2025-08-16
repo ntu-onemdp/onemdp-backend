@@ -39,10 +39,10 @@ func NewEduvisorService() *EduvisorService {
 		}
 
 		// Create eduvisor user
-		eduvisor = models.CreateUser(uid.String(), constants.EDUVISOR_NAME, constants.EDUVISOR_EMAIL, "N.A.", "bot")
+		eduvisor = models.CreateSpecialUser(uid.String(), constants.EDUVISOR_NAME, constants.EDUVISOR_EMAIL, models.Bot.String())
 
 		// Insert into users table directly. (Do not use services as this is not a normal student user.)
-		if err = repositories.Users.DangerouslyInsertUser(eduvisor); err != nil {
+		if err = repositories.Users.RegisterUser(eduvisor); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error inserting eduvisor into users")
 			utils.Logger.Warn().Msg("Eduvisor is not initialized")
 			return nil

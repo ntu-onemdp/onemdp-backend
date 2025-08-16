@@ -21,7 +21,7 @@ type UsersRepository struct {
 
 var Users *UsersRepository
 
-// InsertOneUser inserts a new pending user into the database after verifying email uniqueness.
+// AddPendingUser inserts a new pending user into the database after verifying email uniqueness.
 //
 // This repository method performs an idempotent insert into the pending_users table,
 // ensuring the email doesn't already exist in the main users table. Designed for use
@@ -43,8 +43,8 @@ var Users *UsersRepository
 //	    Role: "student",
 //	    Semester: 2,
 //	}
-//	err := usersRepo.InsertOneUser(newUser)
-func (r *UsersRepository) InsertOneUser(user *models.PendingUser) error {
+//	err := usersRepo.AddPendingUser(newUser)
+func (r *UsersRepository) AddPendingUser(user *models.PendingUser) error {
 	query := `
 	INSERT INTO pending_users (email, role, semester) 
 	SELECT $1, $2, $3
@@ -61,7 +61,7 @@ func (r *UsersRepository) InsertOneUser(user *models.PendingUser) error {
 	return nil
 }
 
-// RegisterUser finalizes a user's registration by moving them from the pending_users table to the users table.
+// RegisterUserFromPending finalizes a user's registration by moving them from the pending_users table to the users table.
 //
 // Parameters:
 //   - uid:   The unique identifier for the user (e.g., from authentication provider).
@@ -70,7 +70,7 @@ func (r *UsersRepository) InsertOneUser(user *models.PendingUser) error {
 //
 // Returns:
 //   - error: Returns an error if any step fails (e.g., transaction errors, user not found in pending_users, database issues).
-func (r *UsersRepository) RegisterUser(uid string, email string, name string) error {
+func (r *UsersRepository) RegisterUserFromPending(uid string, email string, name string) error {
 	ctx := context.Background()
 
 	tx, err := r.Db.Begin(ctx)
@@ -93,7 +93,7 @@ func (r *UsersRepository) RegisterUser(uid string, email string, name string) er
 	utils.Logger.Trace().Msgf("Retrieved pending user: %s", pending_user.Email)
 
 	// Create new user from pending user
-	user := models.CreateUser(uid, name, pending_user.Email, pending_user.Semester, pending_user.Role)
+	user := models.CreateUser(uid, name, pending_user.Email, pending_user.Role)
 
 	// Insert user into users table
 	query = fmt.Sprintf(`
@@ -125,9 +125,8 @@ func (r *UsersRepository) RegisterUser(uid string, email string, name string) er
 	return nil
 }
 
-// Dangerously insert user directly into database
-// Used to insert Eduvisor bot in
-func (r *UsersRepository) DangerouslyInsertUser(user *models.User) error {
+// Register user by adding them into users table.
+func (r *UsersRepository) RegisterUser(user *models.User) error {
 	query := fmt.Sprintf(`INSERT INTO %s (UID, NAME, EMAIL, ROLE, SEMESTER) VALUES ($1, $2, $3, $4, $5);`, USERS_TABLE)
 
 	if _, err := r.Db.Exec(context.Background(), query, user.Uid, user.Name, user.Email, user.Role, user.Semester); err != nil {
