@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 -- 1. Add special deleted user (e.g., UID = 0)
-INSERT INTO public.users (uid, name, email, role) VALUES ('[deleted]', '[deleted user]', 'N.A.', 'deleted') ON CONFLICT (uid) DO NOTHING;;
+INSERT INTO public.users (uid, name, email, role) VALUES ('(deleted)', '[deleted user]', 'N.A.', 'deleted') ON CONFLICT (uid) DO NOTHING;;
 
 -- 2. Set default for 'author' column in files
 ALTER TABLE public.files ALTER COLUMN author SET DEFAULT 'deleted';
