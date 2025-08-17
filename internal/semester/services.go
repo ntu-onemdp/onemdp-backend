@@ -29,8 +29,8 @@ func NewSemesterService(semRepo *SemesterRepository) *SemesterService {
 }
 
 // Get the current sem
-func (s *SemesterService) GetCurrentSem() string {
-	return *s.currentSemester
+func (s *SemesterService) GetCurrentSem() *string {
+	return s.currentSemester
 }
 
 // Get the enrolment code for the current sem

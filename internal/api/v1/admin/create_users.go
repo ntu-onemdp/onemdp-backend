@@ -12,8 +12,8 @@ import (
 
 // Raw request from frontend
 type CreateNewUsersRequest struct {
-	Semester string    `json:"semester" binding:"required"`
-	Users    []NewUser `json:"users" binding:"required"`
+	// Semester string    `json:"semester" binding:"required"`
+	Users []NewUser `json:"users" binding:"required"`
 }
 
 // Model user
