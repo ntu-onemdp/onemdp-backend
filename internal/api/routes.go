@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
@@ -13,6 +14,7 @@ import (
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
+	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 )
 
 /*
@@ -22,10 +24,25 @@ import (
 ||                            ||
 ################################
 */
-// Register unprotected login route
-func RegisterLoginRoute(router *gin.Engine) {
-	router.POST("/api/v1/auth/login", func(c *gin.Context) {
+func RegisterAuthRoutes(router *gin.RouterGroup) {
+	// [AE-3] POST /api/v1/auth/login
+	router.POST("/login", func(c *gin.Context) {
 		auth.LoginHandler(c)
+	})
+
+	// [AE-104] POST /api/v1/auth/register
+	router.POST("/register", func(c *gin.Context) {
+		auth.RegisterUserHandler(c)
+	})
+
+	// [AE-105] GET /api/v1/auth/enrolment-code (Staff and above)
+	router.GET("/enrolment-code", middlewares.AuthGuard(models.Staff), func(c *gin.Context) {
+		auth.GetCodeHandler(c)
+	})
+
+	// [AE-106] POST /api/v1/auth/enrolment-code/refresh (Admin)
+	router.POST("/enrolment-code/refresh", middlewares.AuthGuard(models.Admin), func(c *gin.Context) {
+		auth.RefreshCodeHandler(c)
 	})
 }
 

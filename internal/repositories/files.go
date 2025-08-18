@@ -118,11 +118,17 @@ func (r *FilesRepository) Delete(id string, uid string) error {
 	query := fmt.Sprintf(`
 	UPDATE %s 
 	SET STATUS='deleted', DELETED_BY=$1, TIME_DELETED=NOW()
-	WHERE FILE_ID=$2;`, FILES_TABLE)
+	WHERE FILE_ID=$2 AND STATUS='available';`, FILES_TABLE)
 
-	if _, err := r.db.Exec(context.Background(), query, uid, id); err != nil {
+	res, err := r.db.Exec(context.Background(), query, uid, id)
+	if err != nil {
 		utils.Logger.Error().Err(err).Str("uid", uid).Str("file id", id).Msg("Error deleting file from database")
 		return err
+	}
+
+	if res.RowsAffected() == 0 {
+		utils.Logger.Warn().Msg("File has already been deleted/ File does not exist.")
+		return pgx.ErrNoRows
 	}
 
 	utils.Logger.Info().Str("uid", uid).Str("file id", id).Msg("File metadata successfully removed from database")

@@ -19,10 +19,10 @@ type UserService struct {
 var Users *UserService
 
 // Create new user and insert into the repository
-func (s *UserService) CreateNewUser(email string, semester string, role string) error {
-	user := models.CreatePendingUser(email, semester, role)
+func (s *UserService) CreateNewUser(email string, role string) error {
+	user := models.CreatePendingUser(email, role)
 
-	err := s.UsersRepo.InsertOneUser(user)
+	err := s.UsersRepo.AddPendingUser(user)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("User not inserted into database")
 		return err
@@ -32,8 +32,15 @@ func (s *UserService) CreateNewUser(email string, semester string, role string) 
 }
 
 // Register user by moving them from pending_users to users table
+func (s *UserService) RegisterUserFromPending(uid string, email string, name string) error {
+	return s.UsersRepo.RegisterUserFromPending(uid, email, name)
+}
+
+// Register user from scratch. Default role of student is given.
 func (s *UserService) RegisterUser(uid string, email string, name string) error {
-	return s.UsersRepo.RegisterUser(uid, email, name)
+	user := models.CreateUser(uid, name, email, models.Student.String())
+
+	return s.UsersRepo.RegisterUser(user)
 }
 
 // Get user profile

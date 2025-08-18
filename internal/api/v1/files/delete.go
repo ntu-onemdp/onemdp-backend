@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/ntu-onemdp/onemdp-backend/internal/services"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
@@ -18,6 +19,17 @@ func DeleteFileHandler(c *gin.Context) {
 
 	// Mark file as deleted
 	if err := services.Files.Remove(fileID, uid); err != nil {
+		// No rows affected, file has likely to been deleted/ does not exist
+		if err == pgx.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": fmt.Sprintf("File with file id %s not found", fileID),
+				"error":   err,
+			})
+			return
+		}
+
+		// Internal server error
 		utils.Logger.Error().Err(err).Msg("Error deleting file")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
