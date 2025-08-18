@@ -3,6 +3,8 @@ package models
 import (
 	"fmt"
 	"time"
+
+	"github.com/ntu-onemdp/onemdp-backend/internal/semester"
 )
 
 type User struct {
@@ -12,7 +14,7 @@ type User struct {
 	Role         string     `json:"role" db:"role"`
 	DateCreated  time.Time  `json:"date_created" db:"date_created"`
 	DateRemoved  *time.Time `json:"date_removed,omitempty" db:"date_removed"`
-	Semester     string     `json:"semester" db:"semester"`
+	Semester     *string    `json:"semester" db:"semester"`
 	ProfilePhoto *[]byte    `json:"-" db:"profile_photo"`
 	Status       string     `json:"status" db:"status"`
 	Karma        int        `json:"karma" db:"karma"`
@@ -22,19 +24,51 @@ type User struct {
 type PendingUser struct {
 	Email       string    `json:"email" db:"email"`
 	Role        string    `json:"role" db:"role"`
-	Semester    string    `json:"semester" db:"semester"`
+	Semester    *string   `json:"semester" db:"semester"`
 	TimeCreated time.Time `json:"time_created" db:"time_created"`
 }
 
 // Initialize a new user for insertion into user table after registration
-func CreateUser(uid string, name string, email string, semester string, role string) *User {
+func CreateUser(uid string, name string, email string, role string) *User {
 	return &User{
 		Uid:          uid,
 		Name:         name,
 		Email:        email,
 		Role:         role,
 		DateCreated:  time.Now(),
-		Semester:     semester,
+		Semester:     semester.Service.GetCurrentSem(),
+		ProfilePhoto: nil,
+		Status:       "active",
+		Karma:        0,
+	}
+}
+
+// Initialize a new user from pending users
+func CreateUserFromPending(user *PendingUser, uid string, name string) *User {
+	return &User{
+		Uid:          uid,
+		Name:         name,
+		Email:        user.Email,
+		Role:         user.Role,
+		DateCreated:  time.Now(),
+		Semester:     user.Semester,
+		ProfilePhoto: nil,
+		Status:       "active",
+		Karma:        0,
+	}
+}
+
+// Initialize a bot (no semesters)
+func CreateSpecialUser(uid string, name string, email string, role string) *User {
+	semester := "N.A."
+
+	return &User{
+		Uid:          uid,
+		Name:         name,
+		Email:        email,
+		Role:         role,
+		DateCreated:  time.Now(),
+		Semester:     &semester,
 		ProfilePhoto: nil,
 		Status:       "active",
 		Karma:        0,
@@ -42,7 +76,7 @@ func CreateUser(uid string, name string, email string, semester string, role str
 }
 
 // Create a pending user for registration
-func CreatePendingUser(email string, semester string, role string) *PendingUser {
+func CreatePendingUser(email string, role string) *PendingUser {
 	// Defaults to student if not provided
 	if role == "" {
 		role = "student"
@@ -51,7 +85,7 @@ func CreatePendingUser(email string, semester string, role string) *PendingUser 
 	return &PendingUser{
 		Email:       email,
 		Role:        role,
-		Semester:    semester,
+		Semester:    semester.Service.GetCurrentSem(),
 		TimeCreated: time.Now(),
 	}
 }
@@ -80,6 +114,8 @@ const (
 
 func ParseRole(role string) (UserRole, error) {
 	switch role {
+	case "unknown", "deleted":
+		return Unknown, nil
 	case "student":
 		return Student, nil
 	case "staff":
@@ -96,14 +132,14 @@ func ParseRole(role string) (UserRole, error) {
 func (r UserRole) String() string {
 	switch r {
 	case Student:
-		return "Student"
+		return "student"
 	case Bot:
-		return "Bot"
+		return "bot"
 	case Staff:
 		return "Staff"
 	case Admin:
-		return "Admin"
+		return "admin"
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
