@@ -43,7 +43,7 @@ func main() {
 	services.Eduvisor = services.NewEduvisorService()
 
 	// Register auth routes
-	authRoutes := r.Group("/api/v1/auth")
+	authRoutes := r.Group("/auth")
 	routes.RegisterAuthRoutes(authRoutes)
 
 	// Register student routes
