@@ -21,10 +21,12 @@ type Article struct {
 	DbArticle
 
 	Author      string `json:"author" db:"author_name"` // Name of the author
+	NumViews    int    `json:"views" db:"views"`
 	NumLikes    int    `json:"num_likes" db:"num_likes"`
 	NumComments int    `json:"num_comments" db:"num_comments"`
-	IsLiked     bool   `json:"is_liked" db:"is_liked"`   // Whether the article is liked by the user
-	IsAuthor    bool   `json:"is_author" db:"is_author"` // Whether user sending request is the author
+	IsLiked     bool   `json:"is_liked" db:"is_liked"`         // Whether the article is liked by the user
+	IsAuthor    bool   `json:"is_author" db:"is_author"`       // Whether user sending request is the author
+	IsFavorited bool   `json:"is_favorited" db:"is_favorited"` // Whether user sending request has added article to favorites
 }
 
 // DbArticle models how an article is stored in the database.
@@ -34,7 +36,6 @@ type DbArticle struct {
 	Title        string    `json:"title" db:"title"`
 	TimeCreated  time.Time `json:"time_created" db:"time_created"`
 	LastActivity time.Time `json:"last_activity" db:"last_activity"`
-	Views        int       `json:"views" db:"views"`
 	Flagged      bool      `json:"flagged" db:"flagged"`
 	IsAvailable  bool      `json:"is_available" db:"is_available"`
 	Content      string    `json:"content" db:"content"`
@@ -49,7 +50,6 @@ func (f *ArticleFactory) New(author string, title string, content string) *DbArt
 		Title:        title,
 		TimeCreated:  time.Now(),
 		LastActivity: time.Now(),
-		Views:        0,
 		Flagged:      false,
 		IsAvailable:  true,
 		Content:      utils.SanitizeContent(content),

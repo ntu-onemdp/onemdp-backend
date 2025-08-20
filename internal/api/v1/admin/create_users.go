@@ -12,14 +12,13 @@ import (
 
 // Raw request from frontend
 type CreateNewUsersRequest struct {
-	Semester string    `json:"semester" binding:"required"`
-	Users    []NewUser `json:"users" binding:"required"`
+	// Semester string    `json:"semester" binding:"required"`
+	Users []NewUser `json:"users" binding:"required"`
 }
 
 // Model user
 type NewUser struct {
 	Email string `json:"email" binding:"required"`
-	// Role  string `json:"role" binding:"required"` // 21 July: all new users are granted student roles by default.
 }
 
 // Response sent to frontend
@@ -56,7 +55,7 @@ func CreateUsersHandler(c *gin.Context) {
 		}
 
 		// Call service to create new user
-		if err := services.Users.CreateNewUser(strings.ToUpper(newUser.Email), models.STUDENT_ROLE, createNewUsersRequest.Semester); err != nil {
+		if err := services.Users.CreateNewUser(strings.ToUpper(newUser.Email), models.Student.String()); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error encountered when inserting new user")
 			singleUserResult.Result = "failed"
 		} else {

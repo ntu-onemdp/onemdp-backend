@@ -7,7 +7,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 	"github.com/pressly/goose/v3"
 )
@@ -15,38 +14,9 @@ import (
 var Pool *pgxpool.Pool
 
 func Init() {
-	// Get app env
-	env, found := os.LookupEnv("ENV")
-	if !found {
-		// Default environment: PROD
-		env = "PROD"
-	}
-	utils.Logger.Info().Str("environment", env).Msgf("App environment loaded: %s", env)
-
 	// Retrieve DB password from secrets
 	db_pw, err := os.ReadFile("/run/secrets/db-password")
 	if err != nil {
-		utils.Logger.Warn().Msg("Error reading secret, attempting to load from .env")
-
-		// Try reading from .env
-		switch env {
-		case "PROD":
-			if err := godotenv.Load("config/.env"); err != nil {
-				utils.Logger.Warn().Err(err).Msg("Error reading from .env")
-			}
-		case "QA":
-			if err := godotenv.Load("config/.env.qa"); err != nil {
-				utils.Logger.Warn().Err(err).Msg("Error reading from .env.qa")
-			}
-		case "DEV":
-			if err := godotenv.Load("config/.env.dev"); err != nil {
-				utils.Logger.Warn().Err(err).Msg("Error reading from .env.dev")
-			}
-		default:
-			if err := godotenv.Load("config/.env"); err != nil {
-				utils.Logger.Warn().Err(err).Msg("Error reading from .env")
-			}
-		}
 		db_pw = []byte(os.Getenv("POSTGRES_PW"))
 	}
 
@@ -79,7 +49,7 @@ func Init() {
 	if err != nil {
 		utils.Logger.Panic().Err(err).Msg("Error creating connection pool")
 	}
-	utils.Logger.Debug().Msg("Postgres connection pool created")
+	utils.Logger.Info().Msg("Postgres connection pool created")
 
 	// Initialize Goose and perform migrations
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -92,14 +62,15 @@ func Init() {
 	if err := goose.Up(db, "migrations"); err != nil {
 		utils.Logger.Panic().Err(err)
 	}
-	utils.Logger.Debug().Msg("Goose migrations applied")
+	utils.Logger.Info().Msg("Goose migrations applied")
 
 	// Check migration status
 	if err := goose.Status(db, "migrations"); err != nil {
-		utils.Logger.Panic().Err(err).Msg("Error checking migration status")
+		utils.Logger.Warn().Err(err).Msg("Error checking migration status")
 	}
+
 	if err := db.Close(); err != nil {
-		utils.Logger.Panic().Err(err)
+		utils.Logger.Error().Err(err)
 	}
 
 	utils.Logger.Info().Msg("Postgres database fully initialized.")

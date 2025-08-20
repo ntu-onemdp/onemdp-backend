@@ -32,15 +32,15 @@ func InitJwt() {
 	var path string
 	switch env {
 	case "PROD", "QA":
-		path = "/mnt/secrets/jwt-key"
+		path = "secrets/jwt-key"
 	case "DEV":
-		path = "/config/jwt-key.txt"
+		path = "config/jwt-key.txt"
 	default:
-		path = "/run/secrets/jwt-key" // only used when running from docker compose, can be removed.
+		path = "run/secrets/jwt-key" // only used when running from docker compose, can be removed.
 	}
 	key, err := os.ReadFile(path)
 	if err != nil {
-		utils.Logger.Warn().Msgf("Error reading secret from %s", path)
+		utils.Logger.Warn().Err(err).Msgf("Error reading secret from %s", path)
 	}
 
 	// Check if secret key was read correctly

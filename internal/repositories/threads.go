@@ -16,7 +16,7 @@ const THREADS_TABLE = "threads"
 
 type ThreadsRepository struct {
 	_  ContentRepository
-	Db *pgxpool.Pool
+	db *pgxpool.Pool
 }
 
 var Threads *ThreadsRepository
@@ -27,7 +27,7 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 	ctx := context.Background()
 
 	// Begin transaction
-	tx, err := r.Db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error starting transaction")
 		return err
@@ -97,13 +97,20 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
+		(
+			SELECT 
+				COUNT(1)
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=T.THREAD_ID
+		) AS VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		-- Conditionally return author name or '#ANONYMOUS#'
+		-- Conditionally return author name or 'ANONYMOUS'
 		CASE 
-			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			WHEN T.IS_ANON THEN 'ANONYMOUS'
 			ELSE U.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
@@ -123,25 +130,32 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 				WHEN L.UID = $1 THEN 1
 				ELSE 0
 			END
-		)::BOOLEAN AS IS_LIKED
+		)::BOOLEAN AS IS_LIKED,
+		MAX(
+			CASE
+				WHEN F.UID = $1 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_FAVORITED
 	FROM
 		THREADS T
 		INNER JOIN USERS U ON T.AUTHOR = U.UID
 		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
 	ORDER BY
-		T.%s %s
+		%s %s
 	LIMIT $2
 	OFFSET $3;`, column, desc)
 
 	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
 
 	// Perform query and collect rows into array.
-	rows, _ := r.Db.Query(context.Background(), query, uid, size, offset)
+	rows, _ := r.db.Query(context.Background(), query, uid, size, offset)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
@@ -157,7 +171,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
 	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
 
-	row, _ := r.Db.Query(context.Background(), query)
+	row, _ := r.db.Query(context.Background(), query)
 	defer row.Close()
 	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
@@ -172,19 +186,19 @@ func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
 
 // Get thread and corresponding posts by thread_id. Returns thread object if found, nil otherwise.
 func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Thread, error) {
-	// This function is called only when a thread is requested by its ID, so views are incremented here
+	ctx := context.Background()
+
+	// Begin transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error starting transaction")
+		return nil, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	// Retrieve the thread
 	query := fmt.Sprintf(`
-	WITH
-		T AS (
-			UPDATE %s
-			SET
-				VIEWS = VIEWS + 1
-			WHERE
-				THREAD_ID = $1
-				AND IS_AVAILABLE = TRUE
-			RETURNING
-				*
-		)
 	SELECT
 		T.THREAD_ID,
 		T.TITLE,
@@ -195,13 +209,20 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		END AS AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
+		(
+			SELECT 
+				COUNT(1) + 1
+			FROM
+				views V
+			WHERE
+				V.CONTENT_ID=T.THREAD_ID
+		) AS VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
-		-- Conditionally return author name or '#ANONYMOUS#'
+		-- Conditionally return author name or 'ANONYMOUS'
 		CASE 
-			WHEN T.IS_ANON THEN '#ANONYMOUS#'
+			WHEN T.IS_ANON THEN 'ANONYMOUS'
 			ELSE USERS.NAME
 		END AS AUTHOR_NAME,
 		T.IS_ANON,
@@ -221,11 +242,18 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 				WHEN L.UID = $2 THEN 1
 				ELSE 0
 			END
-		)::BOOLEAN AS IS_LIKED
+		)::BOOLEAN AS IS_LIKED,
+		MAX(
+			CASE
+				WHEN F.UID = $2 THEN 1
+				ELSE 0
+			END
+		)::BOOLEAN AS IS_FAVORITED
 	FROM
-		T
+		%s T
 		INNER JOIN USERS ON T.AUTHOR = USERS.UID
 		LEFT JOIN LIKES L ON T.THREAD_ID = L.CONTENT_ID
+		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
 		AND T.THREAD_ID = $1
@@ -235,7 +263,6 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.AUTHOR,
 		T.TIME_CREATED,
 		T.LAST_ACTIVITY,
-		T.VIEWS,
 		T.FLAGGED,
 		T.PREVIEW,
 		T.IS_AVAILABLE,
@@ -244,14 +271,28 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 
 	utils.Logger.Trace().Msg(fmt.Sprintf("Getting thread with id: %v", thread_id))
 
-	row, _ := r.Db.Query(context.Background(), query, thread_id, uid)
+	row, _ := tx.Query(context.Background(), query, thread_id, uid)
 	thread, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting thread by ID")
 		return nil, err
 	}
+	defer row.Close()
 
-	utils.Logger.Info().Msg(fmt.Sprintf("Thread with id %v found", thread_id))
+	// Insert view into views table
+	query = "INSERT INTO VIEWS VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+	if _, err = tx.Exec(ctx, query, uid, thread_id); err != nil {
+		utils.Logger.Error().Err(err).Msgf("Error inserting into views for thread id %s", thread_id)
+		return nil, err
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		utils.Logger.Error().Err(err).Str("thread_id", thread_id).Msgf("Error committing transaction for thread id %s", thread_id)
+		return nil, err
+	}
+
+	utils.Logger.Debug().Msg(fmt.Sprintf("Thread with id %v found", thread_id))
 	return &thread, nil
 }
 
@@ -262,7 +303,7 @@ func (r *ThreadsRepository) GetAuthor(thread_id string) (string, error) {
 	utils.Logger.Debug().Msg(fmt.Sprintf("Getting author of thread with id: %v", thread_id))
 
 	var author string
-	err := r.Db.QueryRow(context.Background(), query, thread_id).Scan(&author)
+	err := r.db.QueryRow(context.Background(), query, thread_id).Scan(&author)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("")
 		return "", err
@@ -277,7 +318,7 @@ func (r *ThreadsRepository) IsAvailable(thread_id string) bool {
 	query := fmt.Sprintf(`SELECT is_available FROM %s WHERE thread_id = $1;`, THREADS_TABLE)
 
 	var is_available bool
-	err := r.Db.QueryRow(context.Background(), query, thread_id).Scan(&is_available)
+	err := r.db.QueryRow(context.Background(), query, thread_id).Scan(&is_available)
 	if err != nil {
 		return false
 	}
@@ -292,7 +333,7 @@ func (r *ThreadsRepository) UpdateActivity(thread_id string) error {
 	SET last_activity = NOW()
 	WHERE thread_id = $1;`, THREADS_TABLE)
 
-	_, err := r.Db.Exec(context.Background(), query, thread_id)
+	_, err := r.db.Exec(context.Background(), query, thread_id)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating last activity")
 		return err
@@ -310,7 +351,7 @@ func (r *ThreadsRepository) Update(threadID string, title string, preview string
 	SET title = $1, preview = $2, last_activity = NOW()
 	WHERE thread_id = $3 AND is_available = true;`, THREADS_TABLE)
 
-	_, err := r.Db.Exec(context.Background(), query, title, preview, threadID)
+	_, err := r.db.Exec(context.Background(), query, title, preview, threadID)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error updating preview")
 		return err
@@ -330,7 +371,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 	ctx := context.Background()
 
 	// Begin transaction
-	tx, err := r.Db.Begin(ctx)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error starting transaction")
 		return err
@@ -344,7 +385,7 @@ func (r *ThreadsRepository) Delete(threadID string) error {
 		WHERE thread_id = $1 AND is_available = true
 		RETURNING author;`, THREADS_TABLE)
 
-	if err = tx.QueryRow(context.Background(), query, threadID).Scan(&author); err != nil {
+	if err = tx.QueryRow(ctx, query, threadID).Scan(&author); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error deleting thread")
 		return errors.New("thread is not available or does not exist")
 	} else if author == "" {

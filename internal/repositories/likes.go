@@ -37,7 +37,7 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 	ON CONFLICT (uid, content_id) DO NOTHING;
 	`, LIKES_TABLE)
 
-	if _, err = tx.Exec(context.Background(), query, like.Uid, like.ContentId); err != nil {
+	if _, err = tx.Exec(ctx, query, like.Uid, like.ContentId); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting like into database")
 		return err
 	}
@@ -85,9 +85,9 @@ func (r *LikesRepository) Insert(like *models.Like) error {
 func (r *LikesRepository) GetByUidAndContentId(uid string, content_id string) bool {
 	query := fmt.Sprintf(`SELECT 1 FROM %s WHERE uid = $1 AND content_id = $2;`, LIKES_TABLE)
 
-	var num_likes int
-	err := r.Db.QueryRow(context.Background(), query, uid, content_id).Scan(&num_likes)
-	if num_likes == 0 || err != nil {
+	var numLikes int
+	err := r.Db.QueryRow(context.Background(), query, uid, content_id).Scan(&numLikes)
+	if numLikes == 0 || err != nil {
 		utils.Logger.Trace().Str("uid", uid).Str("content_id", content_id).Msg("Like not found")
 		return false
 	}

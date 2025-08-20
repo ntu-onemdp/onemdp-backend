@@ -57,7 +57,7 @@ func LoginHandler(c *gin.Context) {
 	if isPending {
 		utils.Logger.Debug().Msg("User is pending registration")
 
-		if err := services.Users.RegisterUser(user.Uid, user.UserMetadata.Email, user.UserMetadata.Name); err != nil {
+		if err := services.Users.RegisterUserFromPending(user.Uid, user.UserMetadata.Email, user.UserMetadata.Name); err != nil {
 			utils.Logger.Error().Err(err).Msg("Error registering user")
 			response := LoginResponse{
 				Success: false,
@@ -74,9 +74,9 @@ func LoginHandler(c *gin.Context) {
 		utils.Logger.Debug().Msg("User profile not found")
 		response := LoginResponse{
 			Success: false,
-			Error:   "Unauthorized: User not registered",
+			Error:   "User not registered",
 		}
-		c.JSON(http.StatusUnauthorized, &response)
+		c.JSON(http.StatusNotFound, &response) // 16/08/2025: Changed from StatusUnauthorized to StatusNotFound.
 		return
 	}
 

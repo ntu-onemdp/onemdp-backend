@@ -38,7 +38,7 @@ type DbPost struct {
 	LastEdited  time.Time `json:"last_edited" db:"last_edited"`
 	Flagged     bool      `json:"flagged" db:"flagged"`
 	IsAvailable bool      `json:"is_available" db:"is_available"`
-	IsHeader    bool      `json:"is_header" db:"is_header" binding:"required"`
+	IsHeader    bool      `json:"is_header" db:"is_header"`
 	IsAnon      bool      `json:"is_anon" db:"is_anon"`
 }
 

@@ -2,15 +2,19 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/favorite"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/files"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/images"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/like"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/posts"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/threads"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/users"
+	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 )
 
 /*
@@ -20,10 +24,25 @@ import (
 ||                            ||
 ################################
 */
-// Register unprotected login route
-func RegisterLoginRoute(router *gin.Engine) {
-	router.POST("/api/v1/auth/login", func(c *gin.Context) {
+func RegisterAuthRoutes(router *gin.RouterGroup) {
+	// [AE-3] POST /api/v1/auth/login
+	router.POST("/login", func(c *gin.Context) {
 		auth.LoginHandler(c)
+	})
+
+	// [AE-104] POST /api/v1/auth/register
+	router.POST("/register", func(c *gin.Context) {
+		auth.RegisterUserHandler(c)
+	})
+
+	// [AE-105] GET /api/v1/auth/enrolment-code (Staff and above)
+	router.GET("/enrolment-code", middlewares.AuthGuard(models.Staff), func(c *gin.Context) {
+		auth.GetCodeHandler(c)
+	})
+
+	// [AE-106] POST /api/v1/auth/enrolment-code/refresh (Admin)
+	router.POST("/enrolment-code/refresh", middlewares.AuthGuard(models.Admin), func(c *gin.Context) {
+		auth.RefreshCodeHandler(c)
 	})
 }
 
@@ -62,10 +81,29 @@ func RegisterLikeRoutes(router *gin.RouterGroup) {
 	})
 }
 
+// Saved service routes
+// README: on the frontend this function is referred to 'saved'. I named it favorites intially but realized saved is more intuitive.
+func RegisterSavedRoutes(router *gin.RouterGroup) {
+	// [AE-96] POST /api/v1/saved/:content_id
+	router.POST("/:content_id", func(c *gin.Context) {
+		favorite.FavoriteContentHandler(c)
+	})
+
+	// [AE-76] GET /api/v1/saved?content-type=threads
+	router.GET("/", func(c *gin.Context) {
+		favorite.GetSavedHandler(c)
+	})
+
+	// [AE-97] DELETE /api/v1/saved/:content_id
+	router.DELETE("/:content_id", func(c *gin.Context) {
+		favorite.RemoveFavoriteHandler(c)
+	})
+}
+
 // Student routes. Current implementation: jwt verification performed inside handler.
 func RegisterStudentUserRoutes(router *gin.RouterGroup) {
-	// [AE-6] GET /api/v1/users/:uid
-	router.GET("/:uid", func(c *gin.Context) {
+	// [AE-6] GET /api/v1/users/:uid/profile
+	router.GET("/:uid/profile", func(c *gin.Context) {
 		users.GetProfileHandler(c)
 	})
 
@@ -86,7 +124,7 @@ func RegisterStudentUserRoutes(router *gin.RouterGroup) {
 
 	// [AE-94] GET /api/v1/users/verify-admin
 	router.GET("/verify-admin", func(c *gin.Context) {
-		users.VerifyAdminHanlder(c)
+		users.VerifyAdminHandler(c)
 	})
 }
 
@@ -100,6 +138,10 @@ func RegisterThreadRoutes(router *gin.RouterGroup) {
 	// [AE-14] GET /api/v1/threads?size=25&sort=time_created&desc=true&timestamp=0
 	router.GET("/", func(c *gin.Context) {
 		threads.GetAllThreadsHandler(c)
+	})
+
+	router.GET("/search", func(c *gin.Context) {
+		threads.SearchThreadsHandler(c)
 	})
 
 	// [AE-20] GET /api/v1/threads/:thread_id
@@ -169,6 +211,39 @@ func RegisterCommentRoutes(router *gin.RouterGroup) {
 	// [AE-53] DELETE /api/v1/comments/:comment_id
 	router.DELETE("/:comment_id", func(c *gin.Context) {
 		comments.DeleteCommentHandler(c)
+	})
+}
+
+// Routes starting with /files
+func RegisterFileRoutes(router *gin.RouterGroup) {
+	// [AE-100] GET /api/v1/files/:file_id
+	router.GET("/:file_id", func(c *gin.Context) {
+		files.GetFileHandler(c)
+	})
+
+	// [AE-99] GET /api/v1/files
+	router.GET("/", func(c *gin.Context) {
+		files.GetFileListHandler(c)
+	})
+}
+
+/*
+################################
+||                            ||
+||        STAFF ROUTES        ||
+||                            ||
+################################
+*/
+// Staff routes for file management
+func RegisterFileMgmtRoutes(router *gin.RouterGroup) {
+	// [AE-98] POST /api/v1/staff/files
+	router.POST("/", func(c *gin.Context) {
+		files.UploadFileHandler(c)
+	})
+
+	// [AE-101] DELETE /api/v1/staff/files/:file_id
+	router.DELETE("/:file_id", func(c *gin.Context) {
+		files.DeleteFileHandler(c)
 	})
 }
 

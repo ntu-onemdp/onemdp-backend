@@ -24,6 +24,7 @@ func (s *LikeService) HasLiked(uid string, contentID string) bool {
 }
 
 // Get number of likes for a content
+// TO BE REMOVED
 func (s *LikeService) GetNumLikes(contentID string) int {
 	return s.likesRepository.GetNumLikes(contentID)
 }

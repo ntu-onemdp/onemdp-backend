@@ -15,10 +15,3 @@ func NewLike(uid string, contentId string) *Like {
 		Timestamp: time.Now(),
 	}
 }
-
-// Content types
-// Currently unused, remove in the future
-const THREAD_CONTENT_TYPE = "thread"
-const ARTICLE_CONTENT_TYPE = "article"
-const POST_CONTENT_TYPE = "post"
-const COMMENT_CONTENT_TYPE = "comment"
