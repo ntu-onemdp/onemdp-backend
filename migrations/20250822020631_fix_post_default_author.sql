@@ -1,0 +1,12 @@
+-- +goose Up
+-- +goose StatementBegin
+ALTER TABLE public.posts
+ALTER COLUMN author
+SET DEFAULT '(deleted)';
+-- +goose StatementEnd
+-- +goose Down
+-- +goose StatementBegin
+ALTER TABLE public.posts
+ALTER COLUMN author
+SET DEFAULT '[deleted]';
+-- +goose StatementEnd
