@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"mime/multipart"
+	"strings"
 
 	"github.com/disintegration/imaging"
 	"github.com/microcosm-cc/bluemonday"
@@ -15,6 +16,8 @@ func SanitizeContent(content string) string {
 	// Allow styles on images (to allow for image resizing)
 	policy.AllowStyles("width", "height", "draggable").OnElements("img")
 
+	// Add breakspace to newlines
+	content = strings.ReplaceAll(content, "<p></p>", "<p>&nbsp;</p>")
 	return policy.Sanitize(content)
 }
 
