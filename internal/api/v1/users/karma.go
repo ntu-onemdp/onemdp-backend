@@ -8,9 +8,7 @@ import (
 )
 
 func GetRankingsHandler(c *gin.Context) {
-	semester := c.Query("semester")
-
-	users, err := services.Users.GetTopKarma(semester)
+	users, err := services.Users.GetTopKarma()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
