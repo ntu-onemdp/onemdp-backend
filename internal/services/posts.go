@@ -1,6 +1,9 @@
 package services
 
 import (
+	"strings"
+
+	constants "github.com/ntu-onemdp/onemdp-backend/config"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
@@ -24,6 +27,21 @@ func (s *PostService) CreateNewPost(author string, replyTo *string, threadId str
 	post := s.postFactory.New(author, threadId, title, content, replyTo, false, isAnon)
 
 	err := s.postRepo.Create(post)
+	if err != nil {
+		utils.Logger.Warn().Msg("Error encountered inserting post to DB. Eduvisor will not be triggered.")
+		return err
+	}
+
+	// Check if eduvisor bot is mentioned
+	if strings.Contains(post.PostContent, constants.EDUVISOR_TAG) {
+		utils.Logger.Debug().Msg("Eduvisor has been tagged, sending post to Eduvisor")
+
+		go func() {
+			Eduvisor.SendThread(post.ThreadId)
+		}()
+	}
+
+	// Error should be nil here already.
 	return err
 }
 

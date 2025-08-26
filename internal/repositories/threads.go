@@ -211,7 +211,7 @@ func (r *ThreadsRepository) GetByID(thread_id string, uid string) (*models.Threa
 		T.LAST_ACTIVITY,
 		(
 			SELECT 
-				COUNT(1) + 1
+				COUNT(1)
 			FROM
 				views V
 			WHERE

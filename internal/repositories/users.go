@@ -279,20 +279,20 @@ func (r *UsersRepository) GetUserRole(uid string) (string, error) {
 }
 
 // Retrieve rankings of top N users by karma and current semester.
-func (r *UsersRepository) GetTopKarma(semester string, n int) ([]models.UserProfile, error) {
-	query := fmt.Sprintf(`SELECT uid, email, name, role, profile_photo, semester, karma FROM %s WHERE ROLE='student' AND STATUS='active' AND SEMESTER=$1 ORDER BY KARMA DESC LIMIT $2;`, USERS_TABLE)
+func (r *UsersRepository) GetTopKarma(n int) ([]models.UserProfile, error) {
+	query := fmt.Sprintf(`SELECT uid, email, name, role, profile_photo, semester, karma FROM %s WHERE ROLE='student' AND STATUS='active' AND SEMESTER=(SELECT SEMESTER FROM SEMESTERS WHERE IS_CURRENT) ORDER BY KARMA DESC LIMIT $1;`, USERS_TABLE)
 
-	rows, _ := r.Db.Query(context.Background(), query, semester, n)
+	rows, _ := r.Db.Query(context.Background(), query, n)
 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.UserProfile])
 	if err != nil {
-		utils.Logger.Error().Err(err).Msgf("Error retrieving profiles for semester %s", semester)
+		utils.Logger.Error().Err(err).Msgf("Error retrieving profiles for current semester")
 		return nil, err
 	}
 
 	if len(profiles) == 0 {
-		utils.Logger.Warn().Msgf("0 profiles retrieved for semester %s", semester)
+		utils.Logger.Warn().Msgf("0 profiles retrieved for current semester")
 	} else {
-		utils.Logger.Debug().Msgf("%d profiles retrieved for semester %s", len(profiles), semester)
+		utils.Logger.Debug().Msgf("%d profiles retrieved for semester", len(profiles))
 	}
 
 	return profiles, nil

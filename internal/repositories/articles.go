@@ -184,7 +184,7 @@ func (r *ArticleRepository) GetByID(articleID string, uid string) (*models.Artic
 		A.LAST_ACTIVITY,
 		(
 			SELECT 
-				COUNT(1) + 1
+				COUNT(1)
 			FROM
 				views V
 			WHERE

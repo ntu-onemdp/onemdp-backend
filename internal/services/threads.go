@@ -30,6 +30,7 @@ func NewThreadService(threadRepo *repositories.ThreadsRepository, postRepo *repo
 // Create new thread and insert into the repository
 // Returns thread id on success
 func (s *ThreadService) CreateNewThread(author string, title string, content string, isAnon bool) (string, error) {
+	utils.Logger.Trace().Str("raw content", content).Msg("Content before sanitization")
 	thread := s.threadFactory.New(author, title, content, isAnon)
 
 	err := s.threadRepo.Insert(thread)
@@ -42,7 +43,7 @@ func (s *ThreadService) CreateNewThread(author string, title string, content str
 	err = s.postRepo.Create(post)
 
 	go func() {
-		Eduvisor.SendThread(post)
+		Eduvisor.SendThread(thread.ThreadID)
 	}()
 
 	return thread.ThreadID, err
