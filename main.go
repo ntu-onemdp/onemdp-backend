@@ -7,6 +7,7 @@ import (
 
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/db"
+	"github.com/ntu-onemdp/onemdp-backend/internal/karma"
 	"github.com/ntu-onemdp/onemdp-backend/internal/models"
 	"github.com/ntu-onemdp/onemdp-backend/internal/repositories"
 	"github.com/ntu-onemdp/onemdp-backend/internal/semester"
@@ -38,6 +39,7 @@ func main() {
 	// Initialize services
 	services.Init()
 	semester.Init(db.Pool)
+	karma.Init(db.Pool)
 
 	// Initialize eduvisor service
 	services.Eduvisor = services.NewEduvisorService()
