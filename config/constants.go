@@ -11,3 +11,4 @@ const DEFAULT_SORT_DESCENDING = "true"
 // Eduvisor settings
 const EDUVISOR_NAME = "EDUVISOR BOT"
 const EDUVISOR_EMAIL = "onemdp.ntu@gmail.com"
+const EDUVISOR_TAG = `<span class="mention" data-type="mention" data-id="EDUVISOR BOT">@EDUVISOR BOT</span>` // HTML generated when @EDUVISOR BOT is mentioned. Update this if the sanitation process changes.
