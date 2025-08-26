@@ -16,6 +16,10 @@ func SanitizeContent(content string) string {
 	// Allow styles on images (to allow for image resizing)
 	policy.AllowStyles("width", "height", "draggable").OnElements("img")
 
+	// Preserve data in @mentions.
+	// Original data looks something like this (if we tag Eduvisor): <span class=\"mention\" data-type=\"mention\" data-id=\"Eduvisor\" data-mention-suggestion-char=\"@\">@Eduvisor</span>
+	policy.AllowAttrs("class", "data-type", "data-id").OnElements("span")
+
 	// Add breakspace to newlines
 	content = strings.ReplaceAll(content, "<p></p>", "<p>&nbsp;</p>")
 	return policy.Sanitize(content)

@@ -85,6 +85,7 @@ func (s *EduvisorService) req(method, path string, body io.Reader) (*http.Reques
 type postSummary struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
+	Author  string `json:"author"`
 }
 
 type sendThreadResponse struct {
@@ -93,14 +94,26 @@ type sendThreadResponse struct {
 	Response string `json:"response"`
 }
 
-func (s *EduvisorService) SendThread(post *models.DbPost) {
-	postSummary := postSummary{
-		Title:   post.Title,
-		Content: post.PostContent,
+func (s *EduvisorService) SendThread(threadID string) {
+	// The UID provided doesnt matter here, it is jusst so we can reuse GetPostsByThreadId which uses the UID to determine if the requester is the author.
+	posts, err := repositories.Posts.GetPostsByThreadId(threadID, "")
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error retrieving posts from repository")
+		return
+	}
+
+	var postSummaries []postSummary
+
+	for _, post := range posts {
+		postSummaries = append(postSummaries, postSummary{
+			Title:   post.Title,
+			Content: post.PostContent,
+			Author:  post.Author,
+		})
 	}
 
 	// Serialize post content and title.
-	data, err := json.Marshal(postSummary)
+	data, err := json.Marshal(postSummaries)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error encountered when serializing post")
 		return
@@ -136,7 +149,7 @@ func (s *EduvisorService) SendThread(post *models.DbPost) {
 	}
 
 	title := "Eduvisor response"
-	if err = Posts.CreateNewPost(Eduvisor.EduvisorModel.Uid, nil, post.ThreadId, title, response.Response, false); err != nil {
+	if err = Posts.CreateNewPost(Eduvisor.EduvisorModel.Uid, nil, posts[0].ThreadId, title, response.Response, false); err != nil {
 		utils.Logger.Error().Err(err).Msg("Error inserting eduvisor's response to posts db")
 		return
 	}
