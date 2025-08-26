@@ -26,8 +26,21 @@ func GetPostHandler(c *gin.Context) {
 		return
 	}
 
+	// Get author
+	author, err := services.Users.GetProfile(post.AuthorUid)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("Error getting post author")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err,
+			"message": "Error fetching post author",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"post":    post,
+		"author":  author.Name,
 	})
 }
