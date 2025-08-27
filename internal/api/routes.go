@@ -283,4 +283,9 @@ func RegisterAdminKarmaRoutes(router *gin.RouterGroup) {
 	router.POST("/configure", func(c *gin.Context) {
 		karma.UpdateKarmaHandler(c)
 	})
+
+	// [AE-109] GET /api/v1/admin/karma
+	router.GET("/", func(c *gin.Context) {
+		karma.RetrieveKarmaHandler(c)
+	})
 }
