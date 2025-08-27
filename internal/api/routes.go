@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/middlewares"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin"
+	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/admin/karma"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/articles"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/auth"
 	"github.com/ntu-onemdp/onemdp-backend/internal/api/v1/comments"
@@ -274,5 +275,12 @@ func RegisterAdminUserRoutes(router *gin.RouterGroup) {
 	// [AE-12] /api/v1/admin/users/update-role
 	router.POST("/users/update-role", func(c *gin.Context) {
 		admin.UpdateRoleHandler(c)
+	})
+}
+
+func RegisterAdminKarmaRoutes(router *gin.RouterGroup) {
+	// [AE-108] /api/v1/admin/karma/configure
+	router.POST("/configure", func(c *gin.Context) {
+		karma.UpdateKarmaHandler(c)
 	})
 }
