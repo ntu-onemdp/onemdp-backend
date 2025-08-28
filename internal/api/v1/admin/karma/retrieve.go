@@ -23,7 +23,8 @@ func RetrieveKarmaHandler(c *gin.Context) {
 	utils.Logger.Debug().Interface("settings", settings).Msg("Retrieved karma settings")
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    settings,
+		"success":  true,
+		"settings": settings,
+		"semester": settings.Semester,
 	})
 }
