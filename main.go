@@ -91,6 +91,8 @@ func main() {
 	// Register admin routes
 	adminRoutes := r.Group("/api/v1/admin", middlewares.AuthGuard(models.Admin))
 	routes.RegisterAdminUserRoutes(adminRoutes)
+	karmaRoutes := adminRoutes.Group("/karma")
+	routes.RegisterAdminKarmaRoutes(karmaRoutes)
 
 	utils.Logger.Warn().Msg("/ping routes are active. Remove them for production")
 
