@@ -1,10 +1,11 @@
 package models
 
 import (
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/ntu-onemdp/onemdp-backend/internal/utils"
 )
 
 // The content interface defines the methods that must be implemented by the following:
@@ -35,14 +36,48 @@ type ContentFactory interface {
 func GetPreview(content string) string {
 	const MAX_PREVIEW_LENGTH = 250
 
-	p := bluemonday.StrictPolicy()
-	content = p.Sanitize(content)
+	// Define line break tags to look for (lowercase for case-insensitive)
+	lineBreakTags := []string{"</p>", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "<br>", "<br/>", "<br />"}
 
-	utils.Logger.Trace().Str("content", content).Msg("Sanitized content")
-	if len(content) <= MAX_PREVIEW_LENGTH {
-		return content
+	lowerContent := strings.ToLower(content)
+
+	// Find the earliest occurrence of any line break tag
+	earliestIdx := -1
+	for _, tag := range lineBreakTags {
+		idx := strings.Index(lowerContent, tag)
+		if idx != -1 && (earliestIdx == -1 || idx < earliestIdx) {
+			earliestIdx = idx + len(tag) // cut after the tag
+		}
 	}
-	return content[:MAX_PREVIEW_LENGTH]
+
+	if earliestIdx != -1 {
+		// Cut content abruptly at earliest line break tag
+		cutContent := content[:earliestIdx]
+
+		// Sanitize truncated content
+		p := bluemonday.StrictPolicy()
+		sanitized := p.Sanitize(cutContent)
+		return strings.TrimSpace(sanitized)
+	}
+
+	// No line break found: sanitize full content and truncate nicely
+	p := bluemonday.StrictPolicy()
+	sanitized := p.Sanitize(content)
+	sanitized = strings.TrimSpace(sanitized)
+
+	if utf8.RuneCountInString(sanitized) <= MAX_PREVIEW_LENGTH {
+		return sanitized
+	}
+
+	truncated := []rune(sanitized)[:MAX_PREVIEW_LENGTH]
+	preview := string(truncated)
+
+	lastSpace := strings.LastIndex(preview, " ")
+	if lastSpace > 0 {
+		preview = preview[:lastSpace]
+	}
+
+	return preview + "…"
 }
 
 // Column definitions available for sorting

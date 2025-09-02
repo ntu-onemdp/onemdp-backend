@@ -18,7 +18,8 @@ func NewSemester(semester string) *Semester {
 }
 
 func generateEnrolmentCode() string {
-	const alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	// Alphabets should not contain ambigious characters i.e. iIlLoO0
+	const alphabets = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
 	const codelen = 6
 
 	return gonanoid.MustGenerate(alphabets, codelen)
