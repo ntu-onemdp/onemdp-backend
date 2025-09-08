@@ -189,9 +189,31 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 
 // Get threads metadata
 func (r *ThreadsRepository) GetMetadata(searchKeyword string) (*models.ContentMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
+	query := fmt.Sprintf(`
+	SELECT COUNT(*) AS COUNT 
+	FROM %s T 
+	WHERE IS_AVAILABLE=TRUE 
+		AND (NULLIF(trim($1), '') IS NULL -- skip if blank
+			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $1)
+			OR EXISTS (
+				SELECT 1 FROM POSTS P 
+				WHERE P.THREAD_ID = T.THREAD_ID 
+					AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $1)
+					AND P.IS_AVAILABLE = TRUE
+			)
+			-- Trigram-backed partial matches
+			OR T.TITLE   ILIKE '%%' || $1 || '%%'
+			OR T.PREVIEW ILIKE '%%' || $1 || '%%'
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND P.CONTENT ILIKE '%%' || $1 || '%%'
+			)
+		);`, THREADS_TABLE)
 
-	row, _ := r.db.Query(context.Background(), query)
+	row, _ := r.db.Query(context.Background(), query, searchKeyword)
 	defer row.Close()
 	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
