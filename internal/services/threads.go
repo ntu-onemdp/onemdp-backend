@@ -65,8 +65,8 @@ func (s *ThreadService) GetThreads(sort string, size int, descending bool, page 
 }
 
 // Retrieve threads metadata
-func (s *ThreadService) GetMetadata() (*models.ContentMetadata, error) {
-	return s.threadRepo.GetMetadata()
+func (s *ThreadService) GetMetadata(searchKeyword string) (*models.ContentMetadata, error) {
+	return s.threadRepo.GetMetadata(searchKeyword)
 }
 
 // Retrieve thread and all associated posts

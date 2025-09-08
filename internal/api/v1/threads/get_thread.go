@@ -54,7 +54,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 		return
 	}
 
-	metadata, err := services.Threads.GetMetadata()
+	metadata, err := services.Threads.GetMetadata(searchKeyword)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads metadata")
 		c.JSON(http.StatusInternalServerError, gin.H{

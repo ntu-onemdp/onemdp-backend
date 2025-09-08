@@ -145,12 +145,25 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
-		AND (T.TITLE ILIKE '%%' || $4 || '%%' OR EXISTS (
-      SELECT 1 FROM POSTS P 
-      WHERE P.THREAD_ID = T.THREAD_ID 
-        AND P.CONTENT ILIKE '%%' || $4 || '%%'
-        AND P.IS_AVAILABLE = TRUE
-    ))
+		AND (NULLIF(trim($4), '') IS NULL -- skip if blank
+			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $4)
+			OR EXISTS (
+				SELECT 1 FROM POSTS P 
+				WHERE P.THREAD_ID = T.THREAD_ID 
+					AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $4)
+					AND P.IS_AVAILABLE = TRUE
+			)
+			-- Trigram-backed partial matches
+			OR T.TITLE   ILIKE '%%' || $4 || '%%'
+			OR T.PREVIEW ILIKE '%%' || $4 || '%%'
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND P.CONTENT ILIKE '%%' || $4 || '%%'
+			)
+		)
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
@@ -175,7 +188,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 }
 
 // Get threads metadata
-func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
+func (r *ThreadsRepository) GetMetadata(searchKeyword string) (*models.ContentMetadata, error) {
 	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
 
 	row, _ := r.db.Query(context.Background(), query)
