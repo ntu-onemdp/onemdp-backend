@@ -16,6 +16,9 @@ func GetAllThreadsHandler(c *gin.Context) {
 	// Get uid from jwt
 	uid := services.JwtHandler.GetUidFromJwt(c)
 
+	// Retrieve keyword arguments (if any)
+	searchKeyword := c.DefaultQuery("search", "")
+
 	size, err := strconv.Atoi(c.DefaultQuery("size", constants.DEFAULT_PAGE_SIZE))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -40,7 +43,7 @@ func GetAllThreadsHandler(c *gin.Context) {
 
 	utils.Logger.Debug().Int("size", size).Bool("desc", desc).Str("sort", sort).Int("page", page).Msg("Get all threads request received.")
 
-	threads, err := services.Threads.GetThreads(sort, size, desc, page, uid)
+	threads, err := services.Threads.GetThreads(sort, size, desc, page, uid, searchKeyword)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error getting threads")
 		c.JSON(http.StatusInternalServerError, gin.H{

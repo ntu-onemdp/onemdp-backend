@@ -73,7 +73,7 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 // page: page number - offset is automatically calculated in this function.
 // size: page size; number of items to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool, searchKeyword string) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -86,6 +86,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 	// $1: user's uid
 	// $2: limit
 	// $3: offset
+	// $4: search keyword
 	query := fmt.Sprintf(`
 	SELECT
 		T.THREAD_ID,
@@ -144,6 +145,12 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
+		AND (T.TITLE ILIKE '%%' || $4 || '%%' OR EXISTS (
+      SELECT 1 FROM POSTS P 
+      WHERE P.THREAD_ID = T.THREAD_ID 
+        AND P.CONTENT ILIKE '%%' || $4 || '%%'
+        AND P.IS_AVAILABLE = TRUE
+    ))
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
@@ -152,10 +159,10 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 	LIMIT $2
 	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Str("searchKeyword", searchKeyword).Msg("")
 
 	// Perform query and collect rows into array.
-	rows, _ := r.db.Query(context.Background(), query, uid, size, offset)
+	rows, _ := r.db.Query(context.Background(), query, uid, size, offset, searchKeyword)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
