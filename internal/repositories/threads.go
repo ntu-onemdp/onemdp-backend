@@ -73,7 +73,7 @@ func (r *ThreadsRepository) Insert(thread *models.DbThread) error {
 // page: page number - offset is automatically calculated in this function.
 // size: page size; number of items to return
 // descending: true if sorting is descending, false if ascending
-func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool) ([]models.Thread, error) {
+func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page int, size int, descending bool, searchKeyword string) ([]models.Thread, error) {
 	desc := "DESC"
 	if !descending {
 		desc = "ASC"
@@ -86,6 +86,7 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 	// $1: user's uid
 	// $2: limit
 	// $3: offset
+	// $4: search keyword
 	query := fmt.Sprintf(`
 	SELECT
 		T.THREAD_ID,
@@ -144,6 +145,34 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
+		AND (
+			-- 1) Empty keyword returns all
+			NULLIF(trim($4), '') IS NULL
+
+			-- 2) Full-text matches
+			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $4)
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $4)
+			)
+
+			-- 3) Trigram-accelerated substring matches on thread and posts
+			OR T.TITLE   ILIKE '%%' || $4 || '%%'
+			OR T.PREVIEW ILIKE '%%' || $4 || '%%'
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND P.CONTENT ILIKE '%%' || $4 || '%%'
+			)
+
+			-- 4) Author name match (non-anonymous only)
+			OR (NOT T.IS_ANON AND U.NAME ILIKE '%%' || $4 || '%%')
+		)
 	GROUP BY
 		T.THREAD_ID,
 		U.UID
@@ -152,10 +181,10 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 	LIMIT $2
 	OFFSET $3;`, column, desc)
 
-	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Msg("")
+	utils.Logger.Debug().Str("column", string(column)).Int("page", page).Int("offset", offset).Int("size", size).Bool("descending", descending).Str("searchKeyword", searchKeyword).Msg("")
 
 	// Perform query and collect rows into array.
-	rows, _ := r.db.Query(context.Background(), query, uid, size, offset)
+	rows, _ := r.db.Query(context.Background(), query, uid, size, offset, searchKeyword)
 	threads, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Thread])
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("Error collecting rows")
@@ -168,10 +197,42 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 }
 
 // Get threads metadata
-func (r *ThreadsRepository) GetMetadata() (*models.ContentMetadata, error) {
-	query := fmt.Sprintf(`SELECT COUNT(*) AS COUNT FROM %s WHERE IS_AVAILABLE=TRUE;`, THREADS_TABLE)
+func (r *ThreadsRepository) GetMetadata(searchKeyword string) (*models.ContentMetadata, error) {
+	query := fmt.Sprintf(`
+	SELECT COUNT(*) AS COUNT 
+	FROM %s T 
+	JOIN %s U ON T.AUTHOR = U.UID
+	WHERE IS_AVAILABLE=TRUE 
+		AND (
+			-- 1) Empty keyword returns all
+			NULLIF(trim($1), '') IS NULL
 
-	row, _ := r.db.Query(context.Background(), query)
+			-- 2) Full-text matches
+			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $1)
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $1)
+			)
+
+			-- 3) Trigram-accelerated substring matches on thread and posts
+			OR T.TITLE   ILIKE '%%' || $1 || '%%'
+			OR T.PREVIEW ILIKE '%%' || $1 || '%%'
+			OR EXISTS (
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND P.CONTENT ILIKE '%%' || $1 || '%%'
+			)
+
+			-- 4) Author name match (non-anonymous only)
+			OR (NOT T.IS_ANON AND U.NAME ILIKE '%%' || $1 || '%%')
+		);`, THREADS_TABLE, USERS_TABLE)
+
+	row, _ := r.db.Query(context.Background(), query, searchKeyword)
 	defer row.Close()
 	metadata, err := pgx.CollectOneRow(row, pgx.RowToAddrOfStructByName[models.ContentMetadata])
 	if err != nil {
