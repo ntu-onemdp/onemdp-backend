@@ -145,15 +145,21 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 		LEFT JOIN FAVORITES F ON T.THREAD_ID = F.CONTENT_ID
 	WHERE
 		T.IS_AVAILABLE = TRUE
-		AND (NULLIF(trim($4), '') IS NULL -- skip if blank
+		AND (
+			-- 1) Empty keyword returns all
+			NULLIF(trim($4), '') IS NULL
+
+			-- 2) Full-text matches
 			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $4)
 			OR EXISTS (
-				SELECT 1 FROM POSTS P 
-				WHERE P.THREAD_ID = T.THREAD_ID 
-					AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $4)
-					AND P.IS_AVAILABLE = TRUE
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $4)
 			)
-			-- Trigram-backed partial matches
+
+			-- 3) Trigram-accelerated substring matches on thread and posts
 			OR T.TITLE   ILIKE '%%' || $4 || '%%'
 			OR T.PREVIEW ILIKE '%%' || $4 || '%%'
 			OR EXISTS (
@@ -163,6 +169,9 @@ func (r *ThreadsRepository) GetAll(column models.SortColumn, uid string, page in
 				AND P.IS_AVAILABLE = TRUE
 				AND P.CONTENT ILIKE '%%' || $4 || '%%'
 			)
+
+			-- 4) Author name match (non-anonymous only)
+			OR (NOT T.IS_ANON AND U.NAME ILIKE '%%' || $4 || '%%')
 		)
 	GROUP BY
 		T.THREAD_ID,
@@ -192,16 +201,23 @@ func (r *ThreadsRepository) GetMetadata(searchKeyword string) (*models.ContentMe
 	query := fmt.Sprintf(`
 	SELECT COUNT(*) AS COUNT 
 	FROM %s T 
+	JOIN %s U ON T.AUTHOR = U.UID
 	WHERE IS_AVAILABLE=TRUE 
-		AND (NULLIF(trim($1), '') IS NULL -- skip if blank
+		AND (
+			-- 1) Empty keyword returns all
+			NULLIF(trim($1), '') IS NULL
+
+			-- 2) Full-text matches
 			OR to_tsvector('english', T.TITLE) @@ websearch_to_tsquery('english', $1)
 			OR EXISTS (
-				SELECT 1 FROM POSTS P 
-				WHERE P.THREAD_ID = T.THREAD_ID 
-					AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $1)
-					AND P.IS_AVAILABLE = TRUE
+			SELECT 1
+			FROM POSTS P
+			WHERE P.THREAD_ID = T.THREAD_ID
+				AND P.IS_AVAILABLE = TRUE
+				AND to_tsvector('english', P.CONTENT) @@ websearch_to_tsquery('english', $1)
 			)
-			-- Trigram-backed partial matches
+
+			-- 3) Trigram-accelerated substring matches on thread and posts
 			OR T.TITLE   ILIKE '%%' || $1 || '%%'
 			OR T.PREVIEW ILIKE '%%' || $1 || '%%'
 			OR EXISTS (
@@ -211,7 +227,10 @@ func (r *ThreadsRepository) GetMetadata(searchKeyword string) (*models.ContentMe
 				AND P.IS_AVAILABLE = TRUE
 				AND P.CONTENT ILIKE '%%' || $1 || '%%'
 			)
-		);`, THREADS_TABLE)
+
+			-- 4) Author name match (non-anonymous only)
+			OR (NOT T.IS_ANON AND U.NAME ILIKE '%%' || $1 || '%%')
+		);`, THREADS_TABLE, USERS_TABLE)
 
 	row, _ := r.db.Query(context.Background(), query, searchKeyword)
 	defer row.Close()
