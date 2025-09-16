@@ -105,7 +105,7 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 			P.IS_AVAILABLE,
 			P.IS_HEADER,
 			P.VALIDATION_STATUS,
-			P.VALIDATED_BY,
+			U2.NAME AS VALIDATED_BY,
 			-- Conditionally return author name or 'ANONYMOUS'
 			CASE 
 				WHEN P.IS_ANON THEN 'ANONYMOUS'
@@ -137,6 +137,7 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 			WHEN P.IS_HEADER THEN P.THREAD_ID::TEXT 
 			ELSE P.POST_ID::TEXT 
 		END
+		LEFT JOIN USERS U2 ON P.VALIDATED_BY = U2.UID
 		WHERE P.THREAD_ID = $2  -- Thread ID parameter
 		AND P.IS_AVAILABLE = TRUE
 		ORDER BY P.TIME_CREATED ASC;
