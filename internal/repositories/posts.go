@@ -104,6 +104,8 @@ func (r *PostsRepository) GetPostsByThreadId(threadID string, uid string) ([]mod
 			P.FLAGGED,
 			P.IS_AVAILABLE,
 			P.IS_HEADER,
+			P.VALIDATION_STATUS,
+			P.VALIDATED_BY,
 			-- Conditionally return author name or 'ANONYMOUS'
 			CASE 
 				WHEN P.IS_ANON THEN 'ANONYMOUS'
@@ -221,7 +223,22 @@ func (r *PostsRepository) Update(postID string, updated_post models.DbPost) erro
 		return err
 	}
 
-	utils.Logger.Debug().Msg(fmt.Sprintf("Content of post with id %v successfully updated", postID))
+	utils.Logger.Debug().Msgf("Content of post with id %v successfully updated", postID)
+	return nil
+}
+
+// Update validation status of a post
+func (r *PostsRepository) UpdateValidationStatus(postID string, status models.ValidationStatus, validatedBy string) error {
+	query := fmt.Sprintf(`
+	UPDATE %s SET validation_status = $1, validated_by = $2 WHERE post_id = $3 AND is_available = true;`, POSTS_TABLE)
+
+	_, err := r.Db.Exec(context.Background(), query, status, validatedBy, postID)
+	if err != nil {
+		utils.Logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	utils.Logger.Debug().Msgf("Validation status of post with id %v successfully updated", postID)
 	return nil
 }
 
