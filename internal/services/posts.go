@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"strings"
 
 	constants "github.com/ntu-onemdp/onemdp-backend/config"
@@ -78,6 +79,16 @@ func (s *PostService) UpdatePost(updated_post models.DbPost, uid string) error {
 	}
 
 	return s.postRepo.Update(updated_post.PostID, updated_post)
+}
+
+// Validate post
+func (s *PostService) UpdateValidationStatus(postID string, status string, validatedBy string) error {
+	// Convert validation status to enum
+	validationStatus, isValid := models.ParseValidationStatus(status)
+	if !isValid {
+		return errors.New("invalid validation status")
+	}
+	return s.postRepo.UpdateValidationStatus(postID, validationStatus, validatedBy)
 }
 
 // Delete post only if author matches the author of the post or if user is admin or staff

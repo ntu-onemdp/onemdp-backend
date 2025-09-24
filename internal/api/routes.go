@@ -177,6 +177,10 @@ func RegisterPostRoutes(router *gin.RouterGroup) {
 	router.DELETE("/:post_id", func(c *gin.Context) {
 		posts.DeletePostsHandler(c)
 	})
+
+	router.POST("/:post_id/validate", func(c *gin.Context) {
+		posts.ValidatePostHandler(c)
+	}, middlewares.AuthGuard(models.Staff)) // Not optimal to have AuthGuard here since there is double checking, refactor in the future.
 }
 
 // Routes starting with /articles
